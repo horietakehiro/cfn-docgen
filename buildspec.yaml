@@ -1,0 +1,47 @@
+# https://docs.aws.amazon.com/ja_jp/codebuild/latest/userguide/build-spec-ref.html
+version: 0.2
+
+# env:
+#   variables:
+#     SAMPLING:
+#     DOMAIN_NAME:
+#     DOMAIN_OWNER:
+#     REPOSITORY_NAME:
+
+
+phases:
+
+  install:
+    runtime-versions:
+      python: 3.8
+
+  pre_build:
+    commands:
+      - aws codeartifact login --tool twine --domain ${DOMAIN_NAME} --domain-owner ${DOMAIN_OWNER} --repository ${REPOSITORY_NAME}
+      - git config --global credential.helper '!aws codecommit credential-helper $@'
+      - git config --global credential.UseHttpPath true
+      - git pull origin master --tags
+      - pip install -r ./requirements.txt
+
+  build:
+    commands:
+      - pytest -v --junit-xml UnitTestReports.xml --cov=app --cov-report=xml ./tests/
+
+  post_build:
+    commands:
+      - echo version `git tag -l | tail -n 1`
+      - CFN_DOCGEN_VERSION=`git tag -l | tail -n 1` python setup.py sdist bdist_wheel 
+      - twine upload --repository codeartifact dist/*
+
+reports:
+  UnitTestReports:
+    files:
+      - ./UnitTestReports.xml
+    file-format: JUNITXML
+  UnitTestCoverage:
+    files:
+      - ./coverage.xml
+    file-format: COBERTURAXML
+
+# artifacts:
+#   files:
