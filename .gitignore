@@ -11,6 +11,9 @@ cfn_docgen.egg-info
 memo.txt
 *.csv
 *.md
+!sample/*.md
+!sample/*.csv
+!sample/*.xlsx
 !README.md
 *.log
 tests/cache
