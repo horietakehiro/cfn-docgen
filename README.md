@@ -4,12 +4,14 @@
 
 ---
 
-cfn-docgen is a command line tool that generates the table-formatted CloudFormation(cfn) definition file(csv/excel/md) from the original, yaml or json formatted template file. 
-ALl the definitions of each sections of cfn template, listed below, are flattened as table format, and listed in each sheets(in xlsx) or each files(csv/md).
+cfn-docgen is a command line tool that generates the table-formatted CloudFormation(cfn) definition file from the original, yaml or json formatted template file. 
+ALl the definitions of each sections of cfn template, listed below, are flattened as table format, and listed in each sheets(in xlsx) or each files(in other format).
 - Parameters
 - Mappings
 - Resources
   - Properties
+    - Summary
+    - Detail
   - CreationPolicy
   - UpdatePolicy
   - UpdateReplacePolicy
@@ -28,7 +30,7 @@ Additionally, you can add your own comments to each resources and each propertie
 
 ---
 
-## Basic usage
+## How to usage
 
 ---
 
@@ -40,37 +42,44 @@ Usage: cfn-docgen [OPTIONS]
   Document generator from cfn template files
 
 Options:
-  --in TEXT            Input cfn template file path (yaml/json)  [required]
-  --fmt [xlsx|md|csv]  Output file format.  [default: xlsx]
-  --omit               If set, optional properties whose actual values are not
-                       set in input template file will not be written in
-                       output file.
-  --refresh            If set, fristly remove all existing cache files and
-                       download them again.
-  --region TEXT        AWS region name for referencing resource specs. If not
-                       set, the value set as environment variable
-                       `CFN_DOCGEN_AWS_REGION` is used. If the environment
-                       variable is not set, use the value of AWS CLI default
-                       profile
-  --verbose            If set, stdout DEBUG level logs
-  --help               Show this message and exit.
+  --in TEXT                 Input cfn template file path (yaml/json)
+                            [required]
+  --fmt [xlsx|md|csv|html]  Output file format.  [default: xlsx]
+  --omit                    If set, optional properties whose actual values
+                            are not set in input template file will not be
+                            written in output file.
+  --refresh                 If set, fristly remove all existing cache files
+                            and download them again.
+  --region TEXT             AWS region name for referencing resource specs. If
+                            not set, the value set as environment variable
+                            `CFN_DOCGEN_AWS_REGION` is used. If the
+                            environment variable is not set, use the value of
+                            AWS CLI default profile
+  --verbose                 If set, stdout DEBUG level logs
+  --help                    Show this message and exit.
+```
 
-# example(output as xlsx file)
+### example(output as xlsx file)
+
+```Bash
 $ cfn-docgen --in sample/sample-template.json
 # stdout some log messages...
 $ ls ./sample
 sample-template.json  sample-template.xlsx
+```
 
-# example(output as md/csv file)
+### example(output as other format file)
+
+```Bash
 $ cfn-docgen --in sample/sample-template.json --fmt md
 # stdout some log messages...
 $ ls ./sample
 sample-template.json           sample-template_Resources_CreationPolicy.md  sample-template_Resources_UpdatePolicy.md
 sample-template_Mappings.md    sample-template_Resources_DeletionPolicy.md  sample-template_Resources_UpdateReplacePolicy.md
 sample-template_Outputs.md     sample-template_Resources_DependsOn.md
-sample-template_Parameters.md  sample-template_Resources_Property.md
+sample-template_Parameters.md  sample-template_Resources_Property_Summary.md
+sample-template_Resources_Property_Detail.md
 ```
-You can see the full output examples in [sample](./sample/) directory.
 
 ---
 

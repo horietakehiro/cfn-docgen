@@ -6,20 +6,10 @@ Parameters:
     Description: App name
     Type: String
     Default: cfn-docgen
-  # ArtifactBucket:
-  #   Description: Bucket name for codepipeline artifact 
-  #   Type: String
-  # RepositoryName:
-  #   Description: Name of source repository
-  #   Type: String 
-  #   Default: cfn-docgen
   SamplingParamName:
     Description: Paramter name of sampling number of unittest
     Type: String
     Default: /cfn-docgen/sampling
-  # DomainName:
-  #   Description: Domain name of CodeArtifact
-  #   Type: String
   ArtifactRepositoryName:
     Description: Repository name of CodeArtifact
     Type: String
@@ -42,8 +32,6 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
         - arn:aws:iam::aws:policy/CloudWatchFullAccess
-        # - arn:aws:iam::aws:policy/AWSCodeCommitFullAccess
-        # - arn:aws:iam::aws:policy/AWSCodeArtifactAdminAccess
       Policies:
         - PolicyName: get-parameter-policy
           PolicyDocument:
@@ -109,114 +97,5 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH
             - Type: HEAD_REF
-              Pattern: ^refs/heads/master
+              Pattern: ^refs/heads/release
   
-  # PipelineRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     Path: /
-  #     ManagedPolicyArns:
-  #       - arn:aws:iam::aws:policy/AWSCodePipelineFullAccess
-  #       - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
-  #       - arn:aws:iam::aws:policy/AWSCodeCommitFullAccess
-  #       - arn:aws:iam::aws:policy/AmazonS3FullAccess
-      
-  #     AssumeRolePolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - codepipeline.amazonaws.com
-  #           Action:
-  #             - 'sts:AssumeRole'
-
-  # Pipeline:
-  #   Type: AWS::CodePipeline::Pipeline
-  #   Properties: 
-  #     ArtifactStore: 
-  #       Location: !Ref ArtifactBucket
-  #       Type: S3
-  #     Name: !Sub ${AppName}-pipeline
-  #     RestartExecutionOnUpdate: false
-  #     RoleArn: !GetAtt PipelineRole.Arn
-  #     Stages: 
-  #       - Name: Source
-  #         Actions:
-  #           - ActionTypeId:
-  #               Category: Source
-  #               Owner: AWS
-  #               Provider: CodeCommit
-  #               Version: 1
-  #             Configuration:
-  #               BranchName: master
-  #               OutputArtifactFormat: CODEBUILD_CLONE_REF
-  #               PollForSourceChanges: false
-  #               RepositoryName: !Ref RepositoryName
-  #             Name: Source
-  #             Namespace: SourceVariable
-  #             OutputArtifacts:
-  #               - Name: SourceArtifact
-  #             Region: !Ref AWS::Region
-  #             RunOrder: 1
-  #       - Name: Build
-  #         Actions:
-  #           - ActionTypeId:
-  #               Category: Build
-  #               Owner: AWS
-  #               Provider: CodeBuild
-  #               Version: 1
-  #             Configuration:
-  #               ProjectName: !Ref BuildProject
-  #               # TBD
-  #             Name: Build
-  #             Namespace: BuildVariables
-  #             OutputArtifacts:
-  #               - Name: BuildArtifact
-  #             InputArtifacts:
-  #               - Name: SourceArtifact
-  #             Region: !Ref AWS::Region
-  #             RunOrder: 1
-
-
-  # EventRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     Path: /
-  #     ManagedPolicyArns:
-  #       - arn:aws:iam::aws:policy/AWSCodePipelineFullAccess
-  #     AssumeRolePolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - events.amazonaws.com
-  #           Action:
-  #             - 'sts:AssumeRole'
-
-  # PushEvent:
-  #   Type: AWS::Events::Rule
-  #   Properties:
-  #     Description: When push event happen to codecommit repository, start pipeline
-  #     EventPattern:
-  #       Fn::Sub: |
-  #         {
-  #           "source": ["aws.codecommit"],
-  #           "detail-type": ["CodeCommit Repository State Change"],
-  #           "resources": ["arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${RepositoryName}"],
-  #           "detail": {
-  #             "event": ["referenceCreated", "referenceUpdated"],
-  #             "referenceType": ["branch"],
-  #             "referenceName": ["master"]
-  #           }
-  #         }
-  #     State: ENABLED
-  #     Targets:
-  #     - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Pipeline}
-  #       RoleArn: !GetAtt EventRole.Arn
-  #       Id: StartPipeline
-
-
-
-# Outputs:

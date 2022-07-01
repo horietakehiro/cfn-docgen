@@ -6,7 +6,7 @@ from app import util
 @click.command(name="cfn-docgen")
 @click.option("--in", "in_filepath", required=True, help="Input cfn template file path (yaml/json)")
 # @click.option("--out", "out_filepath", required=False, default=None, help="Output file path.")
-@click.option("--fmt", "fmt", required=False, default="xlsx", help="Output file format.", type=click.Choice(["xlsx", "md", "csv"]), show_default=True)
+@click.option("--fmt", "fmt", required=False, default="xlsx", help="Output file format.", type=click.Choice(["xlsx", "md", "csv", "html"]), show_default=True)
 @click.option("--omit", required=False, default=False, is_flag=True, help="If set, optional properties whose actual values are not set in input template file will not be written in output file.",)
 @click.option("--refresh", required=False, default=False, is_flag=True, help="If set, fristly remove all existing cache files and download them again.",)
 @click.option("--region", required=False, default=None, help="AWS region name for referencing resource specs. If not set, the value set as environment variable `CFN_DOCGEN_AWS_REGION` is used. If the environment variable is not set, use the value of AWS CLI default profile")

@@ -103,7 +103,7 @@ class MainTestCase(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_filepath), result.exc_info)
 
 
-    @parameterized.expand(["xlsx", "md", "csv"])
+    @parameterized.expand(["xlsx", "md", "csv", "html"])
     def test_main_arg_fmt(self, fmt):
         in_filepath = self.cfn_filepaths[0]
         # expected_filepath_pattern = f"{in_filepath.split('.')[0]}*.{fmt}"
@@ -133,12 +133,12 @@ class MainTestCase(unittest.TestCase):
             # main.main, ["--in", in_filepath]
             main.main, f"--in {in_filepath}"
         )
-        full_data = self.load_excel_sheet(expected_filepath, "Resources_Property")
+        full_data = self.load_excel_sheet(expected_filepath, "Resources_Property_Detail")
 
         result = runner.invoke(
             main.main, f"--in {in_filepath} --omit"
         )
-        omitted_data = self.load_excel_sheet(expected_filepath, "Resources_Property")
+        omitted_data = self.load_excel_sheet(expected_filepath, "Resources_Property_Detail")
 
         self.assertEqual(full_data.shape[1], omitted_data.shape[1])
         self.assertGreater(full_data.shape[0], omitted_data.shape[0])

@@ -70,7 +70,7 @@ class CfnResource(object):
         """
         convert resource and its property as dataframe
         """
-        subcategory = name.split("_")[-1]
+        subcategory = name.split("_")[1]
 
         if subcategory == "Property":
             return self.prop_to_df(subcategory)
@@ -94,7 +94,7 @@ class CfnResource(object):
     
     def prop_to_df(self, name:str) -> pd.DataFrame:
         df = pd.DataFrame(columns=[
-            "Property", "Value", "UserNote" ,"Description", "Required", "Type", "UpdateType",
+            "Property", "Value", "UserNote", "Required", "Type", "UpdateType", "Description",
         ])
 
         for prop_id, prop in self.properties.items():
@@ -449,7 +449,7 @@ class CfnProperty(object):
     def repr(self) -> str:
         return self.fqid
 
-    def is_truncated(self, is_parent_truncated:bool=False) -> bool:
+    def is_omittable(self, is_parent_omittable:bool=False) -> bool:
         if self.omitable is not None:
             return self.omitable
 
@@ -462,19 +462,19 @@ class CfnProperty(object):
                 self.omitable = True
                 return self.omitable
             else: # required = True
-                self.omitable = is_parent_truncated == True
+                self.omitable = is_parent_omittable == True
                 return self.omitable
 
         else:
-            is_current_truncated = self.required == False
+            is_current_omittable = self.required == False
 
         results = []
         for props in self.child_props.values():
             if isinstance(props, list):
                 for prop in props:
-                    results.append(prop.is_truncated(is_current_truncated))
+                    results.append(prop.is_omittable(is_current_omittable))
             else:
-                results.append(props.is_truncated(is_current_truncated))
+                results.append(props.is_omittable(is_current_omittable))
         self.omitable = all(results)
         return self.omitable
 
@@ -483,11 +483,11 @@ class CfnProperty(object):
             "Property": [self.repr()],
             "Value": [self.value],
             "UserNote": [self.note],
-            "Description": [self.doc_description],
             "Required": [self.doc_required],
             "Type": [self.doc_type],
             "UpdateType": [self.doc_update],
-            "IsTruncated": [self.is_truncated()],
+            "IsOmittable": [self.is_omittable()],
+            "Description": [self.doc_description],
             # "FQID": [self.fqid]
         })
 
@@ -702,7 +702,7 @@ class CfnTemplate(object):
         targets = {
             "Parameters": self.parameters,
             "Mappings": self.mappings,
-            "Resources_Property": self.resources,
+            "Resources_Property_Detail": self.resources,
             "Resources_CreationPolicy": self.resources,
             "Resources_DeletionPolicy": self.resources,
             "Resources_DependsOn": self.resources,
@@ -713,12 +713,18 @@ class CfnTemplate(object):
         dfs = dict()
         for name, items in targets.items():
             df = self.to_df(items=items, name=name)
-            if name == "Resources_Property":
+            if name == "Resources_Property_Detail":
                 df = df.sort_values(["ResourceType", "ResourceId", "Property"])
                 if self.is_omit:
-                    df = df[df["IsTruncated"] == False]
+                    df = df[df["IsOmittable"] == False]
             dfs[name] = df
 
+        # summarize properties
+        target_cols = ["ResourceType", "ResourceId", "ResourceNote"]
+        dfs["Resources_Property_Summary"] = (
+            dfs["Resources_Property_Detail"].groupby(target_cols, dropna=False)
+            .count().reset_index().sort_values(target_cols)
+        )[target_cols]
         return dfs
 
     def load_template(self) -> dict:
@@ -739,6 +745,7 @@ class CfnTemplate(object):
             "xlsx": self.to_excel,
             "md": self.to_md,
             "csv": self.to_csv,
+            "html": self.to_html,
         }
 
         if filepath is None:
@@ -774,6 +781,17 @@ class CfnTemplate(object):
             except FileNotFoundError:
                 pass
             df.to_csv(path, index=False)
+
+    def to_html(self, filepath:str):
+        dfs = self.merge_df()
+        for name, df in dfs.items():
+            path, ext = os.path.splitext(filepath)
+            path = f"{path}_{name}{ext}"
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass
+            df.to_html(path, index=False)
         
 
     def to_excel(self, filepath:str):
