@@ -44,7 +44,14 @@ Resources:
         - arn:aws:iam::aws:policy/CloudWatchFullAccess
         # - arn:aws:iam::aws:policy/AWSCodeCommitFullAccess
         # - arn:aws:iam::aws:policy/AWSCodeArtifactAdminAccess
-
+      Policies:
+        - PolicyName: get-parameter-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParameters
+                Resource: '*'
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
