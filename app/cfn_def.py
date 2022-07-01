@@ -283,6 +283,8 @@ class CfnProperty(object):
     def should_stop(self, resource_type:str, fqid:str) -> bool:
 
         # logger.error(f"{resource_type}/{fqid}")
+        if self.definition is not None:
+            return True
 
         if resource_type == "AWS::EMR::InstanceGroupConfig" and fqid == "Configurations[0].Configurations":
             return True

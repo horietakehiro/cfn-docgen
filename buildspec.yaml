@@ -17,10 +17,6 @@ phases:
 
   pre_build:
     commands:
-      - aws codeartifact login --tool twine --domain ${DOMAIN_NAME} --domain-owner ${DOMAIN_OWNER} --repository ${REPOSITORY_NAME}
-      - git config --global credential.helper '!aws codecommit credential-helper $@'
-      - git config --global credential.UseHttpPath true
-      - git pull origin master --tags
       - pip install -r ./requirements.txt
 
   build:
@@ -29,9 +25,8 @@ phases:
 
   post_build:
     commands:
-      - echo version `git tag -l | tail -n 1`
-      - CFN_DOCGEN_VERSION=`git tag -l | tail -n 1` python setup.py sdist bdist_wheel 
-      - twine upload --repository codeartifact dist/*
+      - python setup.py sdist bdist_wheel
+      - twine upload --repository pypi --username __token__ --password ${API_TOKEN} dist/*
 
 reports:
   UnitTestReports:
