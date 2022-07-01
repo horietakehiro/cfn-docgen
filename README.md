@@ -26,14 +26,6 @@ Additionally, you can add your own comments to each resources and each propertie
 
 ---
 
-## Installation
-```Bash
-$ aws codeartifact login --tool pip --repository horie-t --domain ht-burdock --domain-owner 382098889955
-$ pip install cfn-docgen
-```
-
----
-
 ## Basic usage
 
 ---

@@ -7,14 +7,14 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name = 'cfn-docgen',
-    version = os.environ.get("CFN_DOCGEN_VERSION", "0.0.1"),
+    version = "0.0.2",
     author = 'Takehiro Horie',
-    author_email = 'nashhoward1312@docomo.ne.jp',
+    author_email = 'horie.takehiro@outlook.jp',
     license = 'MIT License',
     description = 'Document generator from cfn template files.',
     long_description = long_description,
     long_description_content_type = "text/markdown",
-    url = 'https://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/cfn-docgen',
+    url = 'https://github.com/horietakehiro/cfn-docgen',
     py_modules = ['main', 'app'],
     packages = find_packages(),
     install_requires = [requirements],

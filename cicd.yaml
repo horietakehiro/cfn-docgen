@@ -23,7 +23,7 @@ Parameters:
   ArtifactRepositoryName:
     Description: Repository name of CodeArtifact
     Type: String
-
+  
 
 Resources:
 
