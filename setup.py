@@ -7,7 +7,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name = 'cfn-docgen',
-    version = "0.0.5",
+    version = "0.0.6",
     author = 'Takehiro Horie',
     author_email = 'horie.takehiro@outlook.jp',
     license = 'MIT License',
