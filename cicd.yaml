@@ -83,7 +83,7 @@ Resources:
             Value: !Ref AppName
           - Name: CFN_DOCGEN_REGION
             Type: PLAINTEXT
-            Value: AWS::Region
+            Value: !Ref AWS::Region
 
         Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
         ImagePullCredentialsType: CODEBUILD

@@ -46,6 +46,6 @@ artifacts:
     - ./warnings.log
 cache:
   paths:
-    - /root/.cfn-docgen/cache/**/*
+    - /root/.cfn-docgen/cache/*.json
     - /root/.cache/pip/**/*
 
