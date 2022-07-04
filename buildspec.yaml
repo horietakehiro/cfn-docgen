@@ -20,10 +20,12 @@ phases:
       - pip install -r ./requirements.txt
 
   build:
+    on-failure: ABORT
     commands:
       - pytest -v --junit-xml UnitTestReports.xml --cov=app --cov-report=xml ./tests/
 
   post_build:
+    on-failure: ABORT
     commands:
       - python setup.py sdist bdist_wheel
       - twine upload --repository pypi --username __token__ --password ${API_TOKEN} dist/*
