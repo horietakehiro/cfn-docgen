@@ -21,6 +21,9 @@ Parameters:
     Description: Source URL of github repository
     Type: String
     Default: https://github.com/horietakehiro/cfn-docgen.git
+  BucketName:
+    Description: S3 bucket name for uploading artifacts 
+    Type: String
 
 Resources:
 
@@ -54,7 +57,12 @@ Resources:
     Type: AWS::CodeBuild::Project
     Properties:
       Artifacts:
-        Type: NO_ARTIFACTS
+        Type: S3
+        Location: !Ref BucketName
+        Name: WarningLogs.log
+        NamespaceType: BUILD_ID
+        Path: BuildArtifacts
+        Packaging: NONE
       Description: Run tests and upload artifacts to pypi
       BadgeEnabled: true
       Environment:
@@ -98,4 +106,7 @@ Resources:
               Pattern: PUSH
             - Type: HEAD_REF
               Pattern: ^refs/heads/release
-  
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_CUSTOM_CACHE

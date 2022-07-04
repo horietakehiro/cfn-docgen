@@ -511,10 +511,14 @@ class CfnSpecification(object):
                     try:
                         paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.next_sibling.find_all("p")
                     except AttributeError as ex:
-                        if self.is_except_resource(resource_name, prop_id):
-                            continue
-                        else:
-                            raise ex
+                        # if self.is_except_resource(resource_name, prop_id):
+                        #     continue
+                        # else:
+                        #     raise ex
+                        fail_msg = f"get detailed resource spec for {resource_name}/{prop_id}/{prop_html_id} from {doc_url} failed"
+                        logger.warning(fail_msg)
+                        prop["DocDescription"] = fail_msg
+                        paragraphs = ""
                 for i, p in enumerate(paragraphs):
                     # get description
                     if i == 0:
@@ -640,11 +644,15 @@ class CfnSpecification(object):
                     try:
                         paragraphs = soup.find("h1", {"id": prop_html_id}).next_sibling.next_siblings
                     except AttributeError as ex:
-                        if self.is_except_resource(property_type, prop_id):
-                            continue
-                        else:
-                            logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} : {type(ex)} {ex}")
-                            raise ex
+                        # if self.is_except_resource(property_type, prop_id):
+                        #     continue
+                        # else:
+                        #     logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} : {type(ex)} {ex}")
+                        #     raise ex
+                        fail_msg = f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} from {doc_url} failed"
+                        logger.warning(fail_msg)
+                        prop["DocDescription"] = fail_msg
+                        paragraphs = ""
 
                     for i, p in enumerate(paragraphs):
                         # get description
@@ -677,11 +685,15 @@ class CfnSpecification(object):
                             try:
                                 paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.next_sibling.find_all("p")
                             except AttributeError as ex:
-                                if self.is_except_resource(property_type, prop_id):
-                                    continue
-                                else:
-                                    logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} : {type(ex)} {ex}")
-                                    raise ex
+                                # if self.is_except_resource(property_type, prop_id):
+                                #     continue
+                                # else:
+                                #     logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} : {type(ex)} {ex}")
+                                #     raise ex
+                                fail_msg = f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} from {doc_url} failed"
+                                logger.warning(fail_msg)
+                                prop["DocDescription"] = fail_msg
+                                paragraphs = ""
                         for i, p in enumerate(paragraphs):
                             # get description
                             if i == 0:
