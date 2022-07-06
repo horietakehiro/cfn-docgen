@@ -1,0 +1,20 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: YAML Short form
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Metadata:
+      UserNotes:
+        ResourceNote: これはVPCリソースに対するユーザ独自のコメントです
+        PropNotes:
+          CidrBlock: これはCidrBlockプロパティに対するユーザ独自のコメントです
+          Tags[1].Key: これはTagsプロパティ配列の2番目のKeyプロパティに対するユーザ独自のコメントです
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Tags:
+        - Key: ENV
+          Value: DEV
+        - Key: DEPARTMENT
+          Value: DTBD

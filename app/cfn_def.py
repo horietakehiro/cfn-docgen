@@ -284,7 +284,7 @@ class CfnProperty(object):
 
         # logger.error(f"{resource_type}/{fqid}")
         if self.definition is not None:
-            return True
+            return False
 
         if resource_type == "AWS::EMR::InstanceGroupConfig" and fqid == "Configurations[0].Configurations":
             return True
@@ -377,13 +377,10 @@ class CfnProperty(object):
         #     return True
 
 
-
-
-
-
         if resource_type == "AWS::Rekognition::StreamProcessor" and fqid == "List":
             return True
 
+        return False
 
     def add_child_prop(self):
         """
