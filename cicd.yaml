@@ -24,6 +24,9 @@ Parameters:
   BucketName:
     Description: S3 bucket name for uploading artifacts 
     Type: String
+  SnsTopicArn:
+    Description: Arn of sns topic  
+    Type: String
 
 Resources:
 
@@ -110,3 +113,16 @@ Resources:
         Type: LOCAL
         Modes:
           - LOCAL_CUSTOM_CACHE
+  NotificationRule:
+    Type: AWS::CodeStarNotifications::NotificationRule
+    Properties: 
+      DetailType: BASIC
+      EventTypeIds: 
+        - codebuild-project-build-state-failed
+        - codebuild-project-build-state-succeeded
+      Name: !Sub ${AppName}-build-result-notification
+      Resource: !GetAtt BuildProject.Arn
+      Status: ENABLED
+      Targets: 
+        - TargetType: SNS
+          TargetAddress: !Ref SnsTopicArn
