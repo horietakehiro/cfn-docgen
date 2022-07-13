@@ -699,6 +699,7 @@ class CfnTemplate(object):
         targets = {
             "Parameters": self.parameters,
             "Mappings": self.mappings,
+            "Resources_Property_Summary": self.resources,
             "Resources_Property_Detail": self.resources,
             "Resources_CreationPolicy": self.resources,
             "Resources_DeletionPolicy": self.resources,
