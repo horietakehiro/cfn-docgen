@@ -18,3 +18,4 @@ tests/cache
 *.xml
 .env
 tests/resources
+!sample/sample-template*

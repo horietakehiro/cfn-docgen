@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: sample vpc template
+Parameters:
+  EnvType:
+    Description: env type
+    Type: String
+    Default: dev
+Resources: 
+  VPC:
+    Type: AWS::EC2::VPC
+    Metadata:
+      UserNotes:
+        ResourceNote: This is a note for VPC resource
+        PropNotes:
+          CidrBlock: This is a note for CidrBlock prop
+          Tags[1].Value: This is a note for Value prop of 2nd Tags list prop
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      Tags:
+        - Key: ENV
+          Value: !Ref EnvType
+        - Key: Name
+          Value: SampleVpc

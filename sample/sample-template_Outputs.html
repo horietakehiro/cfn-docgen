@@ -1,0 +1,27 @@
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Name</th>
+      <th>Description</th>
+      <th>Value</th>
+      <th>ExportName</th>
+      <th>Filename</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Bastion</td>
+      <td>IP Address of the Bastion host</td>
+      <td>{'Ref': 'BastionIPAddress'}</td>
+      <td>None</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>URL</td>
+      <td>The URL of the Elastic Beanstalk environment</td>
+      <td>{'Fn::Join': ['', ['http://', {'Fn::GetAtt': ['SampleEnvironment', 'EndpointURL']}]]}</td>
+      <td>None</td>
+      <td>sample-template.json</td>
+    </tr>
+  </tbody>
+</table>
