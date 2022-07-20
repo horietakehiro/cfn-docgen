@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import re
 import boto3 
 
-from app import util
+from cfn_docgen import util
 
 logger = util.get_module_logger(__name__, util.get_verbose())
 

@@ -6,9 +6,9 @@ import unittest
 import random
 
 from . import test_util
-import main
+from cfn_docgen import main
 import pandas as pd
-from app import util
+from cfn_docgen import util
 from click.testing import CliRunner
 from parameterized import parameterized
 

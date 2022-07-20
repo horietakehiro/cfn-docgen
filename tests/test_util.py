@@ -2,7 +2,7 @@ import os
 import json
 import glob
 from typing import List
-from app import cfn_spec
+from cfn_docgen import cfn_spec
 
 def create_template_per_resources(save_dir:str)->List[str]:
     files = glob.glob(os.path.join(save_dir, "*.json"))

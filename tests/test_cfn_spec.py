@@ -1,7 +1,7 @@
 import unittest
 
 import os
-from app import cfn_spec
+from cfn_docgen import cfn_spec
 
 class CfnSpecTestCase(unittest.TestCase):
 
