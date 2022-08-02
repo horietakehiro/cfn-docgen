@@ -15,7 +15,7 @@ setup(
     long_description = long_description,
     long_description_content_type = "text/markdown",
     url = 'https://github.com/horietakehiro/cfn-docgen',
-    py_modules = ['main', 'app'],
+    py_modules = ['cfn_docgen'],
     packages = find_packages(),
     install_requires = [requirements],
     python_requires='>=3.8',
@@ -25,6 +25,6 @@ setup(
     ],
     entry_points = '''
         [console_scripts]
-        cfn-docgen=main:main
+        cfn-docgen=cfn_docgen.main:main
     '''
 )

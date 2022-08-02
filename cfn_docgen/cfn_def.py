@@ -8,7 +8,7 @@ from cfn_flip import to_json
 import tqdm
 from styleframe import StyleFrame, Styler, utils
 
-from app import util
+from cfn_docgen import util
 
 logger = util.get_module_logger(__name__, util.get_verbose())
 
@@ -577,7 +577,7 @@ class CfnMappings(object):
         return df
 
 
-from app import cfn_spec
+from cfn_docgen import cfn_spec
 
 
 

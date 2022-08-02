@@ -1,7 +1,7 @@
 import os
 import click
 
-from app import util
+from cfn_docgen import util
 
 @click.command(name="cfn-docgen")
 @click.option("--in", "in_filepath", required=True, help="Input cfn template file path (yaml/json)")
@@ -32,7 +32,7 @@ def main(
 
 
 
-    from app import cfn_def
+    from cfn_docgen import cfn_def
     # cfn_def.CfnTemplate.reload_specs()
     template = cfn_def.CfnTemplate(
         filepath=in_filepath, omit=omit,
