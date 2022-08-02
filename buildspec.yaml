@@ -22,7 +22,7 @@ phases:
   build:
     on-failure: ABORT
     commands:
-      - pytest -v --junit-xml UnitTestReports.xml --cov=app --cov-report=xml ./tests/
+      - pytest -v --junit-xml UnitTestReports.xml --cov=cfn_docgen --cov-report=xml ./tests/
       - cat /root/.cfn-docgen/log/cfn-docgen.log | { grep WARN || true; } > ./warnings.log
 
   post_build:
