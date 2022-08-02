@@ -411,6 +411,10 @@ class CfnSpecification(object):
         try:
             ret_spec = self.spec["ResourceTypes"][resource_name]
             ret_spec = self.get_detailed_resource_spec(resource_name, ret_spec)
+        except KeyError as ex:
+            if resource_name.startswith("Custom::") or resource_name == "AWS::CloudFormation::CustomResource":
+                logger.warning(f"{resource_name} is custom resource. skip")
+                return {"Properties": {}}
         except Exception as ex:
             logger.error(f"get resource spec for {resource_name} failed : {type(ex)} {ex}")
             raise ex
