@@ -4,6 +4,9 @@ import random
 import shutil
 import unittest
 import random
+import pandas as pd
+import json
+
 
 from . import test_util
 from cfn_docgen import main
@@ -197,3 +200,51 @@ class MainTestCase(unittest.TestCase):
 
         shutil.rmtree(util.CACHE_BASE_DIR)
         shutil.copytree(os.path.join(TEST_DIR, "cache"), util.CACHE_BASE_DIR, )
+
+
+    def test_main_custom_resource(self):
+        filepath = os.path.join(TEST_DIR, "resources", "CustomResource.json")
+        with open(filepath, "w") as fp:
+            fp.write(json.dumps(
+                {
+                    "AWSTemplateFormatVersion": "2010-09-09",
+                    "Description": "Sample template using Custom Resource",
+                    "Resources": {
+                        "SomeCustomResource1": {
+                            "Type": "Custom::SomeCustomResource",
+                            "Properties": {
+                                "ServiceToken": "some-token1",
+                                "Region": {"Ref": "AWS::Region"},
+                                "Prop1": "some-prop1",
+                                "Prop2": {"KEY2": "VAL2"}
+                            }
+                        },
+                        "SomeCustomResource2": {
+                            "Type": "AWS::CloudFormation::CustomResource",
+                            "Version": 1.0,
+                            "Properties": {
+                                "ServiceToken": "some-token2",
+                                "Region": {"Ref": "AWS::Region"},
+                                "Prop3": "some-prop3",
+                                "Prop4": {"KEY4": "VAL4"}
+                            }
+                        }        
+                    }
+                }
+            ))
+        expected_props = {
+            "Prop1": "some-prop1",
+            "Prop2": {"KEY2": "VAL2"},
+            "Prop3": "some-prop3",
+            "Prop4": {"KEY4": "VAL4"}
+        }
+        runner = CliRunner()
+        result = runner.invoke(
+            main.main, f"--in {filepath} --fmt csv"
+        )
+        df = pd.read_csv(filepath.replace(".json", "_Resources_Property_Summary.csv"))
+        self.assertEqual(df.shape[0], 2)
+        df = pd.read_csv(filepath.replace(".json", "_Resources_Property_Detail.csv"))
+        for k, v in expected_props.items():
+            self.assertTrue(k in df["Property"].values.tolist())
+            self.assertTrue(str(v) in df["Value"].values.tolist(), f"{v, df['Value'].values.tolist()}")

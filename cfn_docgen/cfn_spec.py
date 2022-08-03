@@ -404,23 +404,36 @@ class CfnSpecification(object):
         return spec
 
 
-    def get_resource_spec(self, resource_name:str) -> dict:
+    def get_custom_resource_spec(self, name:str, defs:dict):
+        base_spec = self.spec["ResourceTypes"]["AWS::CloudFormation::CustomResource"]
+        base_spec = self.get_detailed_resource_spec("AWS::CloudFormation::CustomResource", base_spec)
+
+        custom_spec = deepcopy(base_spec)
+        for key in defs["Properties"].keys():
+            if key == "ServiceToken":
+                continue
+            custom_spec["Properties"][key] = {}
+
+        return custom_spec
+
+
+    def get_resource_spec(self, resource_name:str, resource_def:dict=None) -> dict:
         """
         return a specified resource spec
         """
         try:
+            if resource_name.startswith("Custom::") or resource_name == "AWS::CloudFormation::CustomResource":
+                custom_resource_spec = self.get_custom_resource_spec(resource_name, resource_def)
+                return custom_resource_spec
+            
             ret_spec = self.spec["ResourceTypes"][resource_name]
             ret_spec = self.get_detailed_resource_spec(resource_name, ret_spec)
-        except KeyError as ex:
-            if resource_name.startswith("Custom::") or resource_name == "AWS::CloudFormation::CustomResource":
-                logger.warning(f"{resource_name} is custom resource. skip")
-                return {"Properties": {}}
+            return ret_spec
+
         except Exception as ex:
             logger.error(f"get resource spec for {resource_name} failed : {type(ex)} {ex}")
             raise ex
-
-        return ret_spec
-
+        
 
     def get_property_spec(self, resource_name:str, property_name:str=None) -> dict:
         """

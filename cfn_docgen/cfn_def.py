@@ -26,6 +26,7 @@ def info_logging(name:str):
 
 class CfnResource(object):
     def __init__(self, resource_id:str, resource_def:dict) -> None:
+
         self.id = resource_id
         self.definition = resource_def
         self.type = resource_def["Type"]
@@ -44,7 +45,7 @@ class CfnResource(object):
         self.user_notes = resource_def.get("Metadata", {}).get("UserNotes", {})
         self.note = self.user_notes.get("ResourceNote")
 
-        self.resource_spec = CfnTemplate.get_spec("resource_spec").get_resource_spec(self.type)
+        self.resource_spec = CfnTemplate.get_spec("resource_spec").get_resource_spec(self.type, self.definition)
         self.property_spec = CfnTemplate.get_spec("resource_spec").get_property_spec(self.type)
 
         self.properties = dict()
@@ -263,6 +264,8 @@ class CfnProperty(object):
 
         # if this prop is primitive, set value
         if self.definition is not None and (self.primitive_type is not None or self.primitive_item_type is not None):
+            self.value = self.definition
+        elif self.resource_type.startswith("Custom::") or self.resource_type == "AWS::CloudFormation::CustomResource":
             self.value = self.definition
         else:
             self.value = None

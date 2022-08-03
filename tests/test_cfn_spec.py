@@ -58,4 +58,3 @@ class CfnSpecTestCase(unittest.TestCase):
 
         self.assertEqual(56, len(property_spec))
 
-    
