@@ -19,3 +19,4 @@ tests/cache
 .env
 tests/resources
 !sample/sample-template*
+.vscode

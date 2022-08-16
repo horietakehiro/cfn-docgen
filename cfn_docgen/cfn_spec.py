@@ -11,6 +11,112 @@ from cfn_docgen import util
 logger = util.get_module_logger(__name__, util.get_verbose())
 
 
+class CfnParameter(object):
+    def __init__(self) -> None:
+        pass
+    
+    def get_document_url(self):
+        return "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html"
+
+    def get_definition(self):
+        return {
+            "Description": {
+                "Required": False,
+                "Type": "String"
+            },
+            "MaxValue": {
+                "Required": False,
+                "Type": "Number"
+            },
+            "MinValue": {
+                "Required": False,
+                "Type": "Number"
+            },
+            "MaxLength": {
+                "Required": False,
+                "Type": "Number"
+            },
+            "MinLength": {
+                "Required": False,
+                "Type": "Number"
+            },
+            "AllowedPattern": {
+                "Required": False,
+                "Type": "String"
+            },
+            "AllowedValues": {
+                "Required": False,
+                "Type": "List"
+            },
+            "ConstraintDescription": {
+                "Required": False,
+                "Type": "String"
+            },
+            "Default": {
+                "Required": False,
+                "Type": "String"
+            },
+            "NoEcho": {
+                "Required": False,
+                "Type": "String"
+            },
+            "Type": {
+                "Required": True,
+                "Type": "String"
+            }
+        }
+
+    def list_allowed_types(self):
+        return [
+            "String",
+            "Number",
+            "CommaDelimitedList",
+            "List<Number>",
+            "AWS::EC2::AvailabilityZone::Name",
+            "AWS::SSM::Parameter::Name",
+            "AWS::SSM::Parameter::Value<String>",
+            "AWS::SSM::Parameter::Value<List<String>>",
+            "AWS::SSM::Parameter::Value<CommaDelimitedList>",
+            "AWS::EC2::Image::Id",
+            "AWS::EC2::Instance::Id",
+            "AWS::EC2::KeyPair::KeyName",
+            "AWS::EC2::SecurityGroup::GroupName",
+            "AWS::EC2::SecurityGroup::Id",
+            "AWS::EC2::Subnet::Id",
+            "AWS::EC2::VPC::Id",
+            "AWS::Route53::HostedZone::Id",
+            "List<AWS::EC2::AvailabilityZone::Name>",
+            "List<AWS::EC2::Image::Id>",
+            "List<AWS::EC2::Instance::Id>",
+            "List<AWS::EC2::SecurityGroup::GroupName>",
+            "List<AWS::EC2::SecurityGroup::Id>",
+            "List<AWS::EC2::Subnet::Id>",
+            "AWS::EC2::Volume::Id",
+            "List<AWS::EC2::Volume::Id>",
+            "List<AWS::EC2::VPC::Id>",
+            "List<AWS::Route53::HostedZone::Id>",
+            "AWS::SSM::Parameter::Value<AWS::EC2::AvailabilityZone::Name>",
+            "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+            "AWS::SSM::Parameter::Value<AWS::EC2::Instance::Id>",
+            "AWS::SSM::Parameter::Value<AWS::EC2::KeyPair::KeyName>",
+            "AWS::SSM::Parameter::Value<AWS::EC2::SecurityGroup::GroupName>",
+            "AWS::SSM::Parameter::Value<AWS::EC2::SecurityGroup::Id>",
+            "AWS::SSM::Parameter::Value<AWS::EC2::Subnet::Id>",
+            "AWS::SSM::Parameter::Value<AWS::EC2::Volume::Id>",
+            "AWS::SSM::Parameter::Value<AWS::EC2::VPC::Id>",
+            "AWS::SSM::Parameter::Value<AWS::Route53::HostedZone::Id>",
+            "AWS::SSM::Parameter::Value<List<AWS::EC2::AvailabilityZone::Name>>",
+            "AWS::SSM::Parameter::Value<List<AWS::EC2::Image::Id>>",
+            "AWS::SSM::Parameter::Value<List<AWS::EC2::Instance::Id>>",
+            "AWS::SSM::Parameter::Value<List<AWS::EC2::KeyPair::KeyName>>",
+            "AWS::SSM::Parameter::Value<List<AWS::EC2::SecurityGroup::GroupName>>",
+            "AWS::SSM::Parameter::Value<List<AWS::EC2::SecurityGroup::Id>>",
+            "AWS::SSM::Parameter::Value<List<AWS::EC2::Subnet::Id>>",
+            "AWS::SSM::Parameter::Value<List<AWS::EC2::Volume::Id>>",
+            "AWS::SSM::Parameter::Value<List<AWS::EC2::VPC::Id>>",
+            "AWS::SSM::Parameter::Value<List<AWS::Route53::HostedZone::Id>>",
+        ]
+
 class CfnResourceAttribute(object):
 
     doc_url = "https://docs.aws.amazon.com/ja_jp/AWSCloudFormation/latest/UserGuide/aws-product-attribute-reference.html"

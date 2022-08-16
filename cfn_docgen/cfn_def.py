@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from copy import deepcopy
 import os
 from typing import List
@@ -65,6 +66,48 @@ class CfnResource(object):
                 self.id, self.type, root_prop_id, root_prop_def, root_prop_spec,
                 self.user_notes.get("PropNotes", None),
             )
+
+    @classmethod
+    def from_json_def(cls, prop_def:dict) -> dict:
+        """
+        convert json formated CfnResource into json formated template definition
+        """
+        prop_def = sorted(prop_def, key=lambda j: j["Property"])
+        template = {
+            prop_def[0]["ResourceId"] : {
+                "Type": prop_def[0]["ResourceType"],
+                "Metadata": {
+                    "UserNotes": {
+                        "ResourceNote": prop_def[0]["ResourceNote"],
+                        "PropNotes": {},
+                    },
+                },
+                "Properties": {},
+            },
+        }
+        for prop in prop_def:
+            if prop["UserNote"] is not None:
+                template[prop_def[0]["ResourceId"]]["Metadata"]["UserNotes"]["PropNotes"][prop["Property"]] = prop["UserNote"]
+
+
+        props = OrderedDict({p["Property"]: p["Value"] for p in prop_def if p["Value"] is not None})
+        d = {}
+        for key, value in props.items():
+            s = d
+            tokens = re.findall(r'\w+', key)
+            for count, (index, next_token) in enumerate(zip(tokens, tokens[1:] + [value]), 1):
+                value = next_token if count == len(tokens) else [] if next_token.isdigit() else {}
+                if isinstance(s, list):
+                    index = int(index)
+                    while index >= len(s):
+                        s.append(value)
+                elif index not in s:
+                    s[index] = value
+                s = s[index]
+        template[prop_def[0]["ResourceId"]]["Properties"] = d
+
+        return template
+
 
 
     def to_df(self, name:str):
