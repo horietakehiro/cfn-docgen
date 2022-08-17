@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from copy import deepcopy
 import os
+import numpy as np
 from typing import List
 import json
 import pandas as pd
@@ -741,6 +742,15 @@ class CfnTemplate(object):
         df = df.reset_index(drop=True)
         return df
 
+    def summarise_resources(self, df) -> pd.DataFrame:
+        target_cols = ["ResourceType", "ResourceId", "ResourceNote"]
+        return (
+            df.groupby(target_cols, dropna=False)
+            .count().reset_index().sort_values(target_cols)
+        )[target_cols].replace([np.NaN], [None])
+
+
+
     def merge_df(self) -> dict:
         targets = {
             "Parameters": self.parameters,
@@ -764,11 +774,7 @@ class CfnTemplate(object):
             dfs[name] = df
 
         # summarize properties
-        target_cols = ["ResourceType", "ResourceId", "ResourceNote"]
-        dfs["Resources_Property_Summary"] = (
-            dfs["Resources_Property_Detail"].groupby(target_cols, dropna=False)
-            .count().reset_index().sort_values(target_cols)
-        )[target_cols]
+        dfs["Resources_Property_Summary"] = self.summarise_resources(dfs["Resources_Property_Detail"])
         return dfs
 
     def load_template(self) -> dict:
