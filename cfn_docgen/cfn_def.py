@@ -740,6 +740,9 @@ class CfnTemplate(object):
         df["Filename"] = os.path.basename(self.filepath)
 
         df = df.reset_index(drop=True)
+
+        df = df.replace([np.NaN], [None])
+
         return df
 
     def summarise_resources(self, df) -> pd.DataFrame:
