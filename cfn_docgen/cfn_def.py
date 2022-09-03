@@ -50,6 +50,8 @@ class CfnResource(object):
         self.resource_spec = CfnTemplate.get_spec("resource_spec").get_resource_spec(self.type, self.definition)
         self.property_spec = CfnTemplate.get_spec("resource_spec").get_property_spec(self.type)
 
+        self.attribute_spec = CfnTemplate.get_spec("resource_spec").get_attribute_spec(self.type)
+
         self.properties = dict()
 
         self.construct_root_props()

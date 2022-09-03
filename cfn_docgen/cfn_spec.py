@@ -11,6 +11,30 @@ from cfn_docgen import util
 logger = util.get_module_logger(__name__, util.get_verbose())
 
 
+
+class CfnOutput(object):
+    def __init__(self) -> None:
+        pass
+    
+    def get_document_url(self):
+        return "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html"
+
+    def get_definition(self):
+        return {
+            "Description": {
+                "Required": False,
+                "Type": "String"
+            },
+            "Value": {
+                "Required": True,
+                "Type": "String",
+            },
+            "ExportName": {
+                "Required": False,
+                "Type": "String",
+            }
+        }
+
 class CfnParameter(object):
     def __init__(self) -> None:
         pass
@@ -567,6 +591,25 @@ class CfnSpecification(object):
         return ret_spec
 
 
+
+    def get_attribute_spec(self, resource_name:str) -> dict:
+        """
+        return a specified resource attribute spec
+        """
+        try:
+            if resource_name.startswith("Custom::") or resource_name == "AWS::CloudFormation::CustomResource":
+                return {}
+            
+            ret_spec = self.spec["ResourceTypes"][resource_name]["Attributes"]
+            return ret_spec
+        except KeyError as ex:
+            logger.warning(f"resource attribute for {resource_name} not found : {type(ex)} {ex}")
+            return {}
+
+        except Exception as ex:
+            logger.error(f"get resource spec for {resource_name} failed : {type(ex)} {ex}")
+            raise ex
+        
 
     def load_html(self, doc_url:str) -> BeautifulSoup:
         """
