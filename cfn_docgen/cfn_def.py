@@ -679,7 +679,8 @@ class CfnTemplate(object):
         self.outputs = self.parse_outputs()
 
         # TODOs
-        self.description = None
+        self.description = self.body.get("Description", None)
+
         self.rules = None
         self.conditions = None
         self.transform = None
