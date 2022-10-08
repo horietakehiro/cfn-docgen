@@ -669,6 +669,7 @@ class CfnTemplate(object):
 
         self.reload_specs()
         self.filepath = filepath
+
         self.body = self.load_template()
         self.is_omit = omit
 
@@ -787,7 +788,7 @@ class CfnTemplate(object):
         """
         load json or yaml cfn template as dict
         """
-        with open(self.filepath, "r") as fp:
+        with open(self.filepath, "r", encoding="utf-8") as fp:
             raw = fp.read()
         logger.info(f"load template file from {self.filepath}")
         if self.filepath.split(".")[-1] != "json":

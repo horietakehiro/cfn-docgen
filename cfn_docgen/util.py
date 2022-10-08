@@ -3,7 +3,7 @@ import shutil
 import os
 from logging import Handler, Logger, getLogger, Formatter, StreamHandler, FileHandler, DEBUG, INFO
 
-APP_BASE_DIR=os.path.join(os.environ["HOME"], ".cfn-docgen")
+APP_BASE_DIR=os.path.join(os.environ.get("HOME", os.environ.get("HOMEPATH")), ".cfn-docgen")
 CACHE_BASE_DIR=os.path.join(APP_BASE_DIR, "cache")
 LOG_BASE_DIR=os.path.join(APP_BASE_DIR, "log")
 os.makedirs(CACHE_BASE_DIR, exist_ok=True)

@@ -101,7 +101,7 @@ class MainTestCase(unittest.TestCase):
         expected_filepath = os.path.splitext(filepath)[0] + ".xlsx"
         runner = CliRunner()
         result = runner.invoke(
-            main.main, f"--in {filepath}"
+            main.main, ["--in", filepath]
         )
         self.assertTrue(os.path.exists(expected_filepath), result.exc_info)
 
@@ -109,9 +109,12 @@ class MainTestCase(unittest.TestCase):
     @parameterized.expand(["xlsx", "md", "csv", "html"])
     def test_main_arg_fmt(self, fmt):
         in_filepath = self.cfn_filepaths[0]
+
+        c = in_filepath.count("\\")
+        print("\\")
         # expected_filepath_pattern = f"{in_filepath.split('.')[0]}*.{fmt}"
         expected_filepath_pattern = os.path.splitext(in_filepath)[0] + f"*.{fmt}"
-
+        print(f"{expected_filepath_pattern=}")
 
         paths = glob.glob(expected_filepath_pattern)
         for p in paths:
@@ -121,10 +124,15 @@ class MainTestCase(unittest.TestCase):
                 pass
 
         runner = CliRunner()
+
+        print(f"--in {in_filepath} --fmt {fmt}")
         result = runner.invoke(
-            main.main, f"--in {in_filepath} --fmt {fmt}"
+            main.main,
+            ["--in", in_filepath, "--fmt", fmt]
         )
         paths = glob.glob(expected_filepath_pattern)
+
+        print(f"{paths=}")
         self.assertGreater(len(paths), 0, result.exception)
 
 
@@ -134,12 +142,12 @@ class MainTestCase(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(
             # main.main, ["--in", in_filepath]
-            main.main, f"--in {in_filepath}"
+            main.main, ["--in", in_filepath]
         )
         full_data = self.load_excel_sheet(expected_filepath, "Resources_Property_Detail")
 
         result = runner.invoke(
-            main.main, f"--in {in_filepath} --omit"
+            main.main, ["--in", in_filepath, "--omit"]
         )
         omitted_data = self.load_excel_sheet(expected_filepath, "Resources_Property_Detail")
 
@@ -161,7 +169,7 @@ class MainTestCase(unittest.TestCase):
 
         runner = CliRunner()
         result = runner.invoke(
-            main.main, f"--in {in_filepath} --region {region}", color=True,
+            main.main, ["--in", in_filepath, "--region", region], color=True,
         )
 
         specs_by_region = glob.glob(os.path.join(util.CACHE_BASE_DIR, "*", "CloudFormationResourceSpecification.json"))
@@ -180,7 +188,7 @@ class MainTestCase(unittest.TestCase):
         in_filepath = self.sample_filepath
         runner = CliRunner()
         result = runner.invoke(
-            main.main, f"--in {in_filepath} --region {region}"
+            main.main, ["--in", in_filepath, "--region", region]
         )
         cache_filepath = os.path.join(util.CACHE_BASE_DIR, region, "CloudFormationResourceSpecification.json")
         prev_timestamp = os.path.getatime(cache_filepath)
@@ -192,7 +200,7 @@ class MainTestCase(unittest.TestCase):
         shutil.copytree(util.CACHE_BASE_DIR, os.path.join(TEST_DIR, "cache"))
 
         result = runner.invoke(
-            main.main, f"--in {in_filepath} --region {region} --refresh"
+            main.main, ["--in" , in_filepath, "--region", region, "--refresh"]
         )
         refreshed_timestamp = os.path.getatime(cache_filepath)
 
@@ -240,7 +248,7 @@ class MainTestCase(unittest.TestCase):
         }
         runner = CliRunner()
         result = runner.invoke(
-            main.main, f"--in {filepath} --fmt csv"
+            main.main, ["--in", filepath, "--fmt", "csv"]
         )
         df = pd.read_csv(filepath.replace(".json", "_Resources_Property_Summary.csv"))
         self.assertEqual(df.shape[0], 2)
