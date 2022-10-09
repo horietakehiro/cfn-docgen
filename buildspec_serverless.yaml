@@ -16,9 +16,9 @@ phases:
 
   pre_build:
     commands:
-      - mkdir -p packages
-      - pip install --target ./packages cfn-docgen
-      - rm -fr ./packages/boto*
+      - mkdir -p python
+      - pip install --target ./python cfn-docgen
+      - rm -fr ./python/boto*
 
   build:
     on-failure: ABORT

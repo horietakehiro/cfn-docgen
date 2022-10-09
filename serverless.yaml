@@ -22,7 +22,7 @@ Resources:
       CompatibleRuntimes:
         - python3.8
         - python3.9
-      ContentUri: ./packages
+      ContentUri: ./python
       Description: cfn-docgen layer
       LayerName: cfn-docgen
       RetentionPolicy: Delete
