@@ -74,7 +74,6 @@ Full example is in [sample](./sample) directory.
 
 ## Requirements
 - python3.8
-- Linux OS
 - AWS CLI
 
 ---

@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  layerLocalPath:
+    Description: lambda layer local file path
+    Type: String
+  lambdaLocalPath:
+    Description: lambda function code local file path
+    Type: String
+  eventBucket:
+    Description: s3 bucket lambda function invokes
+    Type: String
+  
+
+Resources:
+  Layer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      CompatibleArchitectures:
+        - x86_64
+      CompatibleRuntimes:
+        - python3.8
+        - python3.9
+      ContentUri: !Ref layerLocalPath
+      Description: cfn-docgen layer
+      LayerName: cfn-docgen
+      RetentionPolicy: Delete
+
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      Architectures:
+        - x86_64
+      CodeUri: !Ref lambdaLocalPath
+      Description: cfn docgen executor with s3
+      Environment:
+        Variables:
+          HOME: "/tmp/"
+
+      Events:
+        JsonUploadEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref eventBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key: 
+                Rules: 
+                  - Name: prefix
+                    Value: templates/
+                  - Name: suffix
+                    Value: .json
+        YamlUploadEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref eventBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key: 
+                Rules: 
+                  - Name: prefix
+                    Value: templates/
+                  - Name: suffix
+                    Value: .yaml
+      FunctionName: cfn-docgen-serverless
+      Handler: lambda_function.lambda_handler
+      Layers:
+        - !Ref Layer
+      MemorySize: 1024
+      PackageType: Zip
+      Policies:
+        - S3FullAccessPolicy:
+            bucket_name: !Ref eventBucket
+      Role: String
+      Runtime: python3.8
+      Timeout: 600

@@ -1,0 +1,37 @@
+# https://docs.aws.amazon.com/ja_jp/codebuild/latest/userguide/build-spec-ref.html
+version: 0.2
+
+env:
+  exported-variables:
+    COMMIT_ID
+    CFN_S3_BUCKET
+    EVENT_BUCKET
+
+
+phases:
+
+  install:
+    runtime-versions:
+      python: 3.8
+
+  pre_build:
+    commands:
+      - mkdir -p packages
+      - pip install --target ./packages cfn-docgen  
+
+  build:
+    on-failure: ABORT
+    commands:
+      - cd packages && zip -r ../layer-${COMMIT_ID}.zip . && cd ..
+      - zip -g ./lambda-${COMMIT_ID}.zip lambda_function.py
+
+  post_build:
+    on-failure: ABORT
+    commands:
+      - sam deploy -t ./serverless.yaml
+        --stack-name cfn-docgen-serverless
+        --s3-bucket ${CFN_S3_BUCKET} --s3-prefix cfn-docgen 
+        --capabilities CAPABILITY_IAM,CAPABILITY_NAMED_IAM 
+        --parameter-overrides layerLocalPath=layer-${COMMIT_ID}.zip lambdaLocalPath=lambda-${COMMIT_ID}.zip eventBucket=${EVENT_BUCKET}
+        --force
+
