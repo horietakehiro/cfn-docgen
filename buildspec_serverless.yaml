@@ -33,6 +33,6 @@ phases:
         --stack-name cfn-docgen-serverless
         --s3-bucket ${CFN_S3_BUCKET} --s3-prefix cfn-docgen 
         --capabilities CAPABILITY_IAM
-        --parameter-overrides layerLocalPath=layer-${COMMIT_ID}.zip lambdaLocalPath=lambda-${COMMIT_ID}.zip eventBucket=${EVENT_BUCKET}
+        --parameter-overrides eventBucket=${EVENT_BUCKET}
         --force-upload
 
