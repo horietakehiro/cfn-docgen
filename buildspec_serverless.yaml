@@ -17,13 +17,14 @@ phases:
   pre_build:
     commands:
       - mkdir -p packages
-      - pip install --target ./packages cfn-docgen  
+      - pip install --target ./packages cfn-docgen
+      - rm -fr ./packages/boto*
 
   build:
     on-failure: ABORT
     commands:
-      - cd packages && zip -r ../layer-${COMMIT_ID}.zip . && cd ..
-      - zip -g ./lambda-${COMMIT_ID}.zip lambda_function.py
+      - echo skip build step
+      # - zip -g ./lambda-${COMMIT_ID}.zip lambda_function.py
 
   post_build:
     on-failure: ABORT

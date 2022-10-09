@@ -2,12 +2,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
-  layerLocalPath:
-    Description: lambda layer local file path
-    Type: String
-  lambdaLocalPath:
-    Description: lambda function code local file path
-    Type: String
   eventBucket:
     Description: s3 bucket lambda function invokes
     Type: String
@@ -78,6 +72,5 @@ Resources:
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref eventBucket
-      Role: String
       Runtime: python3.8
       Timeout: 600
