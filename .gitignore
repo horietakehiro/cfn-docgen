@@ -20,3 +20,6 @@ tests/cache
 tests/resources
 !sample/sample-template*
 .vscode
+packages
+*.zip
+.aws-sam

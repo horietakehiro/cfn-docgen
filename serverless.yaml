@@ -28,7 +28,7 @@ Resources:
       CompatibleRuntimes:
         - python3.8
         - python3.9
-      ContentUri: !Ref layerLocalPath
+      ContentUri: ./packages
       Description: cfn-docgen layer
       LayerName: cfn-docgen
       RetentionPolicy: Delete
@@ -38,7 +38,7 @@ Resources:
     Properties:
       Architectures:
         - x86_64
-      CodeUri: !Ref lambdaLocalPath
+      CodeUri: ./lambda
       Description: cfn docgen executor with s3
       Environment:
         Variables:
@@ -48,7 +48,7 @@ Resources:
         JsonUploadEvent:
           Type: S3
           Properties:
-            Bucket: !Ref eventBucket
+            Bucket: !Ref Bucket
             Events: s3:ObjectCreated:*
             Filter:
               S3Key: 
@@ -60,7 +60,7 @@ Resources:
         YamlUploadEvent:
           Type: S3
           Properties:
-            Bucket: !Ref eventBucket
+            Bucket: !Ref Bucket
             Events: s3:ObjectCreated:*
             Filter:
               S3Key: 
