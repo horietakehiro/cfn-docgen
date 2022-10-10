@@ -29,6 +29,32 @@ Parameters:
     Type: String
 
 Resources:
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: !Sub cfn-docgen-artifact-${AWS::AccountId}-${AWS::Region}
+  PublishBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref ArtifactBucket
+                - /*
+            Principal:
+              Service: serverlessrepo.amazonaws.com
+            Condition:
+              StringEquals:
+                "aws:SourceAccount":
+                  - !Ref AWS::AccountId
 
   BuildRole:
     Type: AWS::IAM::Role
@@ -87,6 +113,9 @@ Resources:
           - Name: CFN_DOCGEN_REGION
             Type: PLAINTEXT
             Value: !Ref AWS::Region
+          - Name: ARTIFACT_BUCKET
+            Type: PLAINTEXT
+            Value: !Ref ArtifactBucket
 
         Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
         ImagePullCredentialsType: CODEBUILD

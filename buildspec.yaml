@@ -1,8 +1,9 @@
 # https://docs.aws.amazon.com/ja_jp/codebuild/latest/userguide/build-spec-ref.html
 version: 0.2
 
-# env:
-#   variables:
+env:
+  # exported-variables:
+    # - ARTIFACT_BUCKET
 #     SAMPLING:
 #     DOMAIN_NAME:
 #     DOMAIN_OWNER:
@@ -30,6 +31,24 @@ phases:
     commands:
       - python setup.py sdist bdist_wheel
       - twine upload --repository pypi --username __token__ --password ${API_TOKEN} dist/*
+      - sleep 5s
+
+      # publish sma application
+      - mkdir -p layer/python
+      - pip install --target ./layer/python cfn-docgen
+      - rm -fr ./layer/python/boto*
+      - sam package -t serverless.yaml
+        --output-template-file packaged.yaml 
+        --s3-bucket ${ARTIFACT_BUCKET} --s3-prefix cfn-docgen
+      - sam deploy -t packaged.yaml
+        --stack-name cfn-docgen-serverless
+        --capabilities CAPABILITY_IAM
+      - sam publish -t packaged.yaml  --region ${AWS_REGION}
+      - AWS_ACCOUNT_ID=`aws sts get-caller-identity  | jq -r .Account`
+      - aws serverlessrepo  put-application-policy
+        --application-id arn:aws:serverlessrepo:${AWS_REGION}:${AWS_ACCOUNT_ID}:applications/cfn-docgen-serverless 
+        --statements  Principals=*,Actions=Deploy
+
 
 reports:
   UnitTestReports:

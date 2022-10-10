@@ -1,10 +1,22 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: cfn-docgen-serverless
+    Description: cfn-docgen automaticaly generate docs for templates that are stored in a specified s3 bucket
+    Author: horietakehiro
+    SpdxLicenseId: MIT
+    LicenseUrl: LICENSE
+    ReadmeUrl: README.md
+    Labels: ['cloudformation']
+    HomePageUrl: https://github.com/horietakehiro/cfn-docgen
+    # SemanticVersion: 0.0.26
+    SourceCodeUrl: https://github.com/horietakehiro/cfn-docgen
 
-Parameters:
-  eventBucket:
-    Description: s3 bucket lambda function invokes
-    Type: String
+# Parameters:
+#   eventBucket:
+#     Description: s3 bucket lambda function invokes
+#     Type: String
   
 
 Resources:
@@ -12,7 +24,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties: 
       AccessControl: Private
-      BucketName: !Ref eventBucket
+      BucketName: !Sub cfn-docgen-artifact-${AWS::AccountId}-${AWS::Region}
 
   Layer:
     Type: AWS::Serverless::LayerVersion
