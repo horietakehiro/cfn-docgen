@@ -85,6 +85,10 @@ def lambda_handler(event:dict, context:dict):
                 print(f"{command_result.stdout=}")
 
                 upload_files = glob.glob(os.path.join(local_input_dir, "*"))
+                upload_files = list(filter(
+                    lambda file: not file.endswith(".json") and not file.endswith(".yaml"),
+                    upload_files,
+                ))
                 upload_keys = []
                 for file in upload_files:
                     upload_key = os.path.join(os.path.dirname(key), os.path.basename(file))
@@ -94,6 +98,7 @@ def lambda_handler(event:dict, context:dict):
                     )
                     print(f"{upload_result=}")
                     upload_keys.append(f"s3://{upload_key}")
+                print(f"{upload_keys=}")
                 
     except Exception as ex:
         error = traceback.format_exception(type(ex), ex, ex.__traceback__)
