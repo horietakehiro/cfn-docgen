@@ -72,17 +72,22 @@ Full example is in [sample](./sample) directory.
 
 ---
 
-## Requirements
+## Requirements(CLI)
 - python3.8
 - AWS CLI
 
 ---
 
-## Installation
+## Installation(CLI)
+
 ```Bash
 $ pip install cfn-docgen
 ```
 
+## Installation(serverless)
+You can also use this tool on AWS Cloud as serverless application.
+
+You can deploy resources at [AWS Serverless Application Repository](). Once deployed, tha S3 bucket named `cfn-docgen-${AWS::AccountId}-${AWS::Region}` is created on your account. When you upload cfn template json/yaml files  at `templates/` folder of the bucket, cfn-docgen-serverless automatically will be triggered and generates excel docments for them.
 
 ---
 

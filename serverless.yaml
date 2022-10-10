@@ -83,6 +83,6 @@ Resources:
       PackageType: Zip
       Policies:
         - S3FullAccessPolicy:
-            BucketName: !Ref eventBucket
+            BucketName: !Ref Bucket
       Runtime: python3.8
       Timeout: 600
