@@ -10,7 +10,7 @@ Metadata:
     ReadmeUrl: README.md
     Labels: ['cloudformation']
     HomePageUrl: https://github.com/horietakehiro/cfn-docgen
-    # SemanticVersion: 0.0.26
+    SemanticVersion: #__VERSION__
     SourceCodeUrl: https://github.com/horietakehiro/cfn-docgen
 
 # Parameters:
