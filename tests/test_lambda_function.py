@@ -4,7 +4,7 @@ import json
 import unittest
 import datetime as dt
 
-from lambda_function import lambda_handler
+from serverless.lambda_function import lambda_handler
 
 s3 = boto3.client("s3")
 

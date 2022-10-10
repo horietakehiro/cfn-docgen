@@ -16,9 +16,9 @@ phases:
 
   pre_build:
     commands:
-      - mkdir -p python
-      - pip install --target ./python cfn-docgen
-      - rm -fr ./python/boto*
+      - mkdir -p layer/python
+      - pip install --target ./layer/python cfn-docgen
+      - rm -fr ./layer/python/boto*
 
   build:
     on-failure: ABORT
@@ -35,4 +35,5 @@ phases:
         --capabilities CAPABILITY_IAM
         --parameter-overrides eventBucket=${EVENT_BUCKET}
         --force-upload
-
+      # publish as serverless application
+      
