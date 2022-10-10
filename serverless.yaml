@@ -24,7 +24,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties: 
       AccessControl: Private
-      BucketName: !Sub cfn-docgen-artifact-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub cfn-docgen-${AWS::AccountId}-${AWS::Region}
 
   Layer:
     Type: AWS::Serverless::LayerVersion
@@ -40,6 +40,8 @@ Resources:
       RetentionPolicy: Delete
 
   Function:
+    DependsOn:
+      - Bucket
     Type: AWS::Serverless::Function
     Properties:
       Architectures:
@@ -82,7 +84,15 @@ Resources:
       MemorySize: 1024
       PackageType: Zip
       Policies:
-        - S3FullAccessPolicy:
-            BucketName: !Ref Bucket
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: s3:*
+              Resource:
+                - !Sub arn:aws:s3:::cfn-docgen-${AWS::AccountId}-${AWS::Region}
+                - !Sub arn:aws:s3:::cfn-docgen-${AWS::AccountId}-${AWS::Region}/*
+      # - S3FullAccessPolicy:
+      #     BucketName:
+      #       Fn::Sub: cfn-docgen-${AWS::AccountId}-${AWS::Region}
       Runtime: python3.8
       Timeout: 600
