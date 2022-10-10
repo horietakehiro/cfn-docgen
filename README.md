@@ -1,6 +1,6 @@
 # cfn-docgen
 
-![buildbadge](https://codebuild.ap-northeast-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoidERrRjdNRERUMWRqWGc5TW1VTGREYXJkQ1BKc2JremZsRS8vK21jdThTeWlTeEpaVTRJSHU0aVBVTHE2aDJudStCUXF6c2tFWlZQSnFiLzhta216dk1nPSIsIml2UGFyYW1ldGVyU3BlYyI6Ik95ZGR1VHBOZ0pqZUJXZWkiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=release)
+<!-- ![buildbadge](https://codebuild.ap-northeast-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoidERrRjdNRERUMWRqWGc5TW1VTGREYXJkQ1BKc2JremZsRS8vK21jdThTeWlTeEpaVTRJSHU0aVBVTHE2aDJudStCUXF6c2tFWlZQSnFiLzhta216dk1nPSIsIml2UGFyYW1ldGVyU3BlYyI6Ik95ZGR1VHBOZ0pqZUJXZWkiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=release) -->
 
 ---
 
@@ -84,10 +84,12 @@ Full example is in [sample](./sample) directory.
 $ pip install cfn-docgen
 ```
 
-## Installation(serverless)
-You can also use this tool on AWS Cloud as serverless application.
+---
 
-You can deploy resources at [AWS Serverless Application Repository](). Once deployed, tha S3 bucket named `cfn-docgen-${AWS::AccountId}-${AWS::Region}` is created on your account. When you upload cfn template json/yaml files  at `templates/` folder of the bucket, cfn-docgen-serverless automatically will be triggered and generates excel docments for them.
+## Installation(serverless)
+You can also use cfn-docgen on AWS Cloud as serverless application.
+
+You can deploy resources at [AWS Serverless Application Repository](https://ap-northeast-1.console.aws.amazon.com/lambda/home?region=ap-northeast-1#/create/app?applicationId=arn:aws:serverlessrepo:ap-northeast-1:382098889955:applications/cfn-docgen-serverless). Once deployed, tha S3 bucket named `cfn-docgen-${AWS::AccountId}-${AWS::Region}` is created on your account. When you upload cfn template json/yaml files  at `templates/` folder of the bucket, cfn-docgen-serverless automatically will be triggered and generates excel docments for them.
 
 ---
 
