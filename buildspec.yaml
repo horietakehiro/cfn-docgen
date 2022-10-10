@@ -32,25 +32,6 @@ phases:
       - python setup.py sdist bdist_wheel
       - twine upload --repository pypi --username __token__ --password ${API_TOKEN} dist/*
 
-      # publish sma application
-      - mkdir -p layer/python
-      - pip install --target ./layer/python cfn-docgen
-      - rm -fr ./layer/python/boto*
-      - VERSION=`pip freeze --path ./layer/python/ | grep cfn-docgen | sed -e "s/cfn-docgen==//g"`
-      - echo version ${VERSION} will be published
-      - sed -i -e "s/#__VERSION__/${VERSION}/g" serverless.yaml
-      - sam package -t serverless.yaml
-        --output-template-file packaged.yaml 
-        --s3-bucket ${ARTIFACT_BUCKET} --s3-prefix cfn-docgen
-      - sam deploy -t packaged.yaml
-        --stack-name cfn-docgen-serverless
-        --capabilities CAPABILITY_IAM
-      - sam publish -t packaged.yaml  --region ${AWS_REGION}
-      - AWS_ACCOUNT_ID=`aws sts get-caller-identity  | jq -r .Account`
-      - aws serverlessrepo  put-application-policy
-        --application-id arn:aws:serverlessrepo:${AWS_REGION}:${AWS_ACCOUNT_ID}:applications/cfn-docgen-serverless 
-        --statements  Principals=*,Actions=Deploy
-
 
 reports:
   UnitTestReports:

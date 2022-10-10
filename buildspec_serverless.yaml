@@ -1,0 +1,65 @@
+# https://docs.aws.amazon.com/ja_jp/codebuild/latest/userguide/build-spec-ref.html
+version: 0.2
+
+# env:
+  # exported-variables:
+    # - ARTIFACT_BUCKET
+#     SAMPLING:
+#     DOMAIN_NAME:
+#     DOMAIN_OWNER:
+#     REPOSITORY_NAME:
+
+
+phases:
+
+  install:
+    runtime-versions:
+      python: 3.8
+
+  pre_build:
+    commands:
+      - mkdir -p layer/python
+      - pip install --target ./layer/python cfn-docgen
+      - rm -fr ./layer/python/boto*
+      - VERSION=`pip freeze --path ./layer/python/ | grep cfn-docgen | sed -e "s/cfn-docgen==//g"`
+      - echo version ${VERSION} will be published
+      - sed -i -e "s/#__VERSION__/${VERSION}/g" serverless.yaml
+
+  build:
+    on-failure: ABORT
+    commands:
+      - sam package -t serverless.yaml
+        --output-template-file packaged.yaml 
+        --s3-bucket ${ARTIFACT_BUCKET} --s3-prefix cfn-docgen
+      - sam deploy -t packaged.yaml
+        --stack-name cfn-docgen-serverless
+        --capabilities CAPABILITY_IAM
+
+  post_build:
+    on-failure: ABORT
+    commands:
+      - sam publish -t packaged.yaml  --region ${AWS_REGION}
+      - AWS_ACCOUNT_ID=`aws sts get-caller-identity  | jq -r .Account`
+      - aws serverlessrepo  put-application-policy
+        --application-id arn:aws:serverlessrepo:${AWS_REGION}:${AWS_ACCOUNT_ID}:applications/cfn-docgen-serverless 
+        --statements  Principals=*,Actions=Deploy
+
+
+# reports:
+#   UnitTestReports:
+#     files:
+#       - ./UnitTestReports.xml
+#     file-format: JUNITXML
+#   UnitTestCoverage:
+#     files:
+#       - ./coverage.xml
+#     file-format: COBERTURAXML
+
+# artifacts:
+#   files:
+#     - ./warnings.log
+# cache:
+#   paths:
+#     - /root/.cfn-docgen/cache/*.json
+#     - /root/.cache/pip/**/*
+

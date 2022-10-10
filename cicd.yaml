@@ -27,6 +27,9 @@ Parameters:
   SnsTopicArn:
     Description: Arn of sns topic  
     Type: String
+  GitHubConnectionArn:
+    Description: codestar connection arn for github
+    Type: String
 
 Resources:
   ArtifactBucket:
@@ -55,7 +58,22 @@ Resources:
               StringEquals:
                 "aws:SourceAccount":
                   - !Ref AWS::AccountId
-
+  CodePiplineRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - codepipeline.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: Service Role for Codepipeline
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Path: /
   BuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -65,14 +83,6 @@ Resources:
         # - arn:aws:iam::aws:policy/AmazonS3FullAccess
         # - arn:aws:iam::aws:policy/CloudWatchFullAccess
         - arn:aws:iam::aws:policy/AdministratorAccess
-      Policies:
-        - PolicyName: get-parameter-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action: ssm:GetParameters
-                Resource: '*'
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -83,18 +93,19 @@ Resources:
             Action:
               - 'sts:AssumeRole'
 
-  BuildProject:
+  BuildProject1:
     Type: AWS::CodeBuild::Project
     Properties:
       Artifacts:
-        Type: S3
-        Location: !Ref BucketName
-        Name: WarningLogs.log
-        NamespaceType: BUILD_ID
-        Path: BuildArtifacts
-        Packaging: NONE
+        Type: CODEPIPELINE
+        # Type: S3
+        # Location: !Ref BucketName
+        # Name: WarningLogs.log
+        # NamespaceType: BUILD_ID
+        # Path: BuildArtifacts
+        # Packaging: NONE
       Description: Run tests and upload artifacts to pypi
-      BadgeEnabled: true
+      # BadgeEnabled: true
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         EnvironmentVariables:
@@ -114,6 +125,44 @@ Resources:
           - Name: CFN_DOCGEN_REGION
             Type: PLAINTEXT
             Value: !Ref AWS::Region
+
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: false
+        Type: LINUX_CONTAINER 
+      Name: !Sub ${AppName}-buildproject-1
+      ServiceRole: !Ref BuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: ./buildspec.yaml
+        # ReportBuildStatus: true
+        # Type: GITHUB
+        # Location: !Ref SourceURL
+        # Auth:
+        #   Type: OAUTH
+      # Triggers:
+      #   BuildType: BUILD
+      #   Webhook: true
+      #   FilterGroups:
+      #     - - Type: EVENT
+      #         Pattern: PUSH
+      #       - Type: HEAD_REF
+      #         Pattern: ^refs/heads/release
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_CUSTOM_CACHE
+
+  BuildProject2:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Description: Publish serverless application
+      # BadgeEnabled: true
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
           - Name: ARTIFACT_BUCKET
             Type: PLAINTEXT
             Value: !Ref ArtifactBucket
@@ -122,37 +171,83 @@ Resources:
         ImagePullCredentialsType: CODEBUILD
         PrivilegedMode: false
         Type: LINUX_CONTAINER 
-      Name: !Sub ${AppName}-buildproject
+      Name: !Sub ${AppName}-buildproject-2
       ServiceRole: !Ref BuildRole
       Source:
-        ReportBuildStatus: true
-        BuildSpec: ./buildspec.yaml
-        Type: GITHUB
-        Location: !Ref SourceURL
-        Auth:
-          Type: OAUTH
-      Triggers:
-        BuildType: BUILD
-        Webhook: true
-        FilterGroups:
-          - - Type: EVENT
-              Pattern: PUSH
-            - Type: HEAD_REF
-              Pattern: ^refs/heads/release
+        Type: CODEPIPELINE
+        BuildSpec: ./buildspec_serverless.yaml
+        # ReportBuildStatus: true
       Cache:
         Type: LOCAL
         Modes:
           - LOCAL_CUSTOM_CACHE
-  NotificationRule:
-    Type: AWS::CodeStarNotifications::NotificationRule
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
     Properties: 
-      DetailType: BASIC
-      EventTypeIds: 
-        - codebuild-project-build-state-failed
-        - codebuild-project-build-state-succeeded
-      Name: !Sub ${AppName}-build-result-notification
-      Resource: !GetAtt BuildProject.Arn
-      Status: ENABLED
-      Targets: 
-        - TargetType: SNS
-          TargetAddress: !Ref SnsTopicArn
+      ArtifactStore: 
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Name: !Sub ${AppName}-pipeline
+      # RestartExecutionOnUpdate: true
+      RoleArn:
+        Fn::GetAtt: [CodePiplineRole, Arn]
+      Stages: 
+        - Name: Source
+          Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: 1
+              Configuration:
+                BranchName: release
+                OutputArtifactFormat: CODE_ZIP
+                ConnectionArn: !Ref GitHubConnectionArn
+                FullRepositoryId: horietakehiro/cfn-docgen
+              Name: Source
+              Namespace: SourceVariables
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Region:
+                Ref: AWS::Region
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName:
+                  Ref: BuildProject1
+              Name: Build
+              Namespace: BuildVariables
+              OutputArtifacts:
+                - Name: BuildArtifact
+              InputArtifacts:
+                - Name: SourceArtifact
+              Region:
+                Ref: AWS::Region
+              RunOrder: 1
+
+        - Name: Publish
+          Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName:
+                  Ref: BuildProject2
+              Name: Publish
+              Namespace: PublishVariables
+              OutputArtifacts:
+                - Name: PublishArtifact
+              InputArtifacts:
+                - Name: SourceArtifact
+              Region:
+                Ref: AWS::Region
+              RunOrder: 1
