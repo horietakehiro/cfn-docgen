@@ -61,9 +61,10 @@ Resources:
     Properties:
       Path: /
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
-        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        # - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+        # - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        # - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/AdministratorAccess
       Policies:
         - PolicyName: get-parameter-policy
           PolicyDocument:

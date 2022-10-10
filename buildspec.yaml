@@ -1,7 +1,7 @@
 # https://docs.aws.amazon.com/ja_jp/codebuild/latest/userguide/build-spec-ref.html
 version: 0.2
 
-env:
+# env:
   # exported-variables:
     # - ARTIFACT_BUCKET
 #     SAMPLING:
