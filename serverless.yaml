@@ -20,6 +20,28 @@ Metadata:
   
 
 Resources:
+  FunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 's3:*'
+                Resource: !Sub arn:aws:s3:::cfn-docgen-${AWS::AccountId}-${AWS::Region}
+      Path: /
+
   Bucket:
     Type: AWS::S3::Bucket
     Properties: 
@@ -40,8 +62,8 @@ Resources:
       RetentionPolicy: Delete
 
   Function:
-    DependsOn:
-      - Bucket
+    # DependsOn:
+    #   - Bucket
     Type: AWS::Serverless::Function
     Properties:
       Architectures:
@@ -83,16 +105,17 @@ Resources:
         - !Ref Layer
       MemorySize: 1024
       PackageType: Zip
-      Policies:
-        - Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: s3:*
-              Resource:
-                - !Sub arn:aws:s3:::cfn-docgen-${AWS::AccountId}-${AWS::Region}
-                - !Sub arn:aws:s3:::cfn-docgen-${AWS::AccountId}-${AWS::Region}/*
+      # Policies:
+      #   - Version: 2012-10-17
+      #     Statement:
+      #       - Effect: Allow
+      #         Action: s3:*
+      #         Resource:
+      #           - !Sub arn:aws:s3:::cfn-docgen-${AWS::AccountId}-${AWS::Region}
+      #           - !Sub arn:aws:s3:::cfn-docgen-${AWS::AccountId}-${AWS::Region}/*
       # - S3FullAccessPolicy:
       #     BucketName:
       #       Fn::Sub: cfn-docgen-${AWS::AccountId}-${AWS::Region}
       Runtime: python3.8
       Timeout: 600
+      Role: !GetAtt FunctionRole.Arn
