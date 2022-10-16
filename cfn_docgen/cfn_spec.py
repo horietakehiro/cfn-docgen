@@ -661,6 +661,33 @@ class CfnSpecification(object):
         add detailed spec information from its CloudFormation User Guide page
         """
 
+        
+        if os.environ.get("CFN_DOCGEN_GET_DETAIL", "FALSE") != "TRUE":
+            doc_url = resource_spec.get("Documentation", "-")
+            new_prop_spec = dict()
+            for prop_id, prop in resource_spec["Properties"].items():
+                prop["DocDescription"] = doc_url
+                prop["DocRequired"] = prop.get("Required", "-")
+                prop["DocUpdate requires"] = prop.get("UpdateType", "-")
+                if prop.get("PrimitiveType", ""):
+                    prop["DocType"] = prop["PrimitiveType"]
+                elif prop.get("Type", ""):
+                    if prop.get("PrimitiveItemType", ""):
+                        prop["DocType"] = prop["Type"] + " of " + prop["PrimitiveItemType"]
+                    elif prop.get("ItemType", ""):
+                        prop["DocType"] = prop["Type"] + " of " + prop["ItemType"]
+                    else:
+                        prop["DocType"] = prop["Type"]
+                else:
+                    prop["DocType"] = "-"
+
+                new_prop_spec[prop_id] = prop
+            
+            resource_spec["Properties"] = new_prop_spec
+
+            return resource_spec
+
+
         # load html 
         doc_url = resource_spec["Documentation"]
         doc_url = self.modify_doc_url(resource_name, doc_url)
@@ -788,6 +815,55 @@ class CfnSpecification(object):
         """
         add detailed spec information from cfn reference pages
         """
+        if os.environ.get("CFN_DOCGEN_GET_DETAIL", "FALSE") != "TRUE":
+            new_prop_spec = dict()
+            property_type, prop_id, prop_html_id = None, None, None
+            for property_type, properties in prop_spec.items():
+
+                doc_url = properties.get("Documentation", "-")
+                if properties.get("Properties") is None:
+                    prop_id = property_type.split(".")[-1]
+                    properties["DocDescription"] = doc_url
+                    properties["DocRequired"] = properties.get("Required", "-")
+                    properties["DocUpdate requires"] = properties.get("UpdateType", "-")
+                    if properties.get("PrimitiveType", ""):
+                        properties["DocType"] = properties["PrimitiveType"]
+                    elif properties.get("Type", ""):
+                        if properties.get("PrimitiveItemType", ""):
+                            properties["DocType"] = properties["Type"] + " of " + properties["PrimitiveItemType"]
+                        elif properties.get("ItemType", ""):
+                            properties["DocType"] = properties["Type"] + " of " + properties["ItemType"]
+                        else:
+                            properties["DocType"] = properties["Type"]
+
+                    else:
+                        properties["DocType"] = "-"
+
+                    new_prop["Properties"][prop_id] = properties
+                    new_prop_spec[property_type] = deepcopy(new_prop)
+                else:
+                    for prop_id, prop in properties["Properties"].items():
+                        prop["DocDescription"] = doc_url
+                        prop["DocRequired"] = prop.get("Required", "-")
+                        prop["DocUpdate requires"] = prop.get("UpdateType", "-")
+                        if prop.get("PrimitiveType", ""):
+                            prop["DocType"] = prop["PrimitiveType"]
+                        elif prop.get("Type", ""):
+                            if prop.get("PrimitiveItemType", ""):
+                                prop["DocType"] = prop["Type"] + " of " + prop["PrimitiveItemType"]
+                            elif prop.get("ItemType", ""):
+                                prop["DocType"] = prop["Type"] + " of " + prop["ItemType"]
+                            else:
+                                prop["DocType"] = prop["Type"]
+                        else:
+                            prop["DocType"] = "-"
+
+                        properties["Properties"][prop_id] = prop
+
+                    
+                    new_prop_spec[property_type] = properties
+            return new_prop_spec
+
         new_prop_spec = dict()
         property_type, prop_id, prop_html_id = None, None, None
         for property_type, properties in prop_spec.items():
