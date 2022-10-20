@@ -819,6 +819,8 @@ class CfnSpecification(object):
             new_prop_spec = dict()
             property_type, prop_id, prop_html_id = None, None, None
             for property_type, properties in prop_spec.items():
+                new_prop = dict()
+                new_prop["Properties"] = dict()
 
                 doc_url = properties.get("Documentation", "-")
                 if properties.get("Properties") is None:
