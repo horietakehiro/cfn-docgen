@@ -19,7 +19,7 @@ def get_verbose():
 def get_module_logger(module:str, verbose:bool) -> Logger:
     logger = getLogger(module)
     logger = _set_handler(logger, StreamHandler(), verbose)
-    logger = _set_handler(logger, FileHandler(os.path.join(LOG_BASE_DIR, "cfn-docgen.log")), True)
+    logger = _set_handler(logger, FileHandler(os.path.join(LOG_BASE_DIR, "cfn-docgen.log"), mode="w+"), True)
     logger.setLevel(DEBUG)
     logger.propagate = False
     return logger
