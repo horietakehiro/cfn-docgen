@@ -30,6 +30,10 @@ Parameters:
   GitHubConnectionArn:
     Description: codestar connection arn for github
     Type: String
+  DockerHubPasswordParamName:
+    Description: Paramter name of password for pushing image to DockerHub  
+    Type: String
+
 
 Resources:
   ArtifactBucket:
@@ -182,6 +186,64 @@ Resources:
         Modes:
           - LOCAL_CUSTOM_CACHE
 
+  BuildProject2:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Description: Publish serverless application
+      # BadgeEnabled: true
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ARTIFACT_BUCKET
+            Type: PLAINTEXT
+            Value: !Ref ArtifactBucket
+
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: false
+        Type: LINUX_CONTAINER 
+      Name: !Sub ${AppName}-buildproject-2
+      ServiceRole: !Ref BuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: ./buildspec_serverless.yaml
+        # ReportBuildStatus: true
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_CUSTOM_CACHE
+
+  BuildProject3:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Description: Publish docker image
+      # BadgeEnabled: true
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: DOCKERHUB_PASSWORD
+            Type: PARAMETER_STORE
+            Value: !Ref DockerHubPasswordParamName
+
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER 
+      Name: !Sub ${AppName}-buildproject-3
+      ServiceRole: !Ref BuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: ./buildspec_docker.yaml
+        # ReportBuildStatus: true
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_CUSTOM_CACHE
+
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties: 
@@ -242,6 +304,24 @@ Resources:
               Configuration:
                 ProjectName:
                   Ref: BuildProject2
+              Name: Publish
+              Namespace: PublishVariables
+              OutputArtifacts:
+                - Name: PublishArtifact
+              InputArtifacts:
+                - Name: SourceArtifact
+              Region:
+                Ref: AWS::Region
+              RunOrder: 1
+
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName:
+                  Ref: BuildProject3
               Name: Publish
               Namespace: PublishVariables
               OutputArtifacts:

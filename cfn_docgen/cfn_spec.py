@@ -2,14 +2,16 @@ from copy import deepcopy
 import os
 import requests
 import json
-from bs4 import BeautifulSoup
-import re
-import boto3 
+# from bs4 import BeautifulSoup
+# import re
+# import boto3
 
 from cfn_docgen import util
 
 logger = util.get_module_logger(__name__, util.get_verbose())
 
+class FeatureSuppressError(Exception):
+    pass
 
 
 class CfnOutput(object):
@@ -146,32 +148,34 @@ class CfnResourceAttribute(object):
     doc_url = "https://docs.aws.amazon.com/ja_jp/AWSCloudFormation/latest/UserGuide/aws-product-attribute-reference.html"
 
     def __init__(self) -> None:
-        self.doc = self._load_doc()
+        # self.doc = self._load_doc()
         self.allowrd_resources = self.get_allowed_resources()
 
     def _load_doc(self) -> str:
+        raise NotImplementedError
 
-        local_filepath = os.path.join(util.CACHE_BASE_DIR, os.path.basename(self.doc_url))
-        if not os.path.exists(local_filepath):
-            resp = requests.get(self.doc_url)
-            with open(local_filepath, "w", encoding="utf-8") as fp:
-                fp.write(resp.content.decode())
+        # local_filepath = os.path.join(util.CACHE_BASE_DIR, os.path.basename(self.doc_url))
+        # if not os.path.exists(local_filepath):
+        #     resp = requests.get(self.doc_url)
+        #     with open(local_filepath, "w", encoding="utf-8") as fp:
+        #         fp.write(resp.content.decode())
         
-        with open(local_filepath, "r", encoding="utf-8") as fp:
-            raw = fp.read()
-        return raw
+        # with open(local_filepath, "r", encoding="utf-8") as fp:
+        #     raw = fp.read()
+        # return raw
 
 
     def get_allowed_resources(self) -> list:
+        raise NotImplementedError
 
-        soup = BeautifulSoup(self.doc, "html.parser")
+        # soup = BeautifulSoup(self.doc, "html.parser")
 
-        list_items = soup.find_all("li", {"class": "listitem"})
-        resources = []
-        for item in list_items:
-            resources.append(item.get_text(strip=True))
+        # list_items = soup.find_all("li", {"class": "listitem"})
+        # resources = []
+        # for item in list_items:
+        #     resources.append(item.get_text(strip=True))
 
-        return resources
+        # return resources
 
     def get_definition(self):
         raise NotImplementedError
@@ -182,8 +186,20 @@ class CfnUpdatePolicy(CfnResourceAttribute):
     doc_url = "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-updatepolicy.html"
 
     def __init__(self) -> None:
-        self.doc = self._load_doc()
+        # self.doc = self._load_doc()
         self.allowed_resources = self.get_allowed_resources()
+
+    def get_allowed_resources(self) -> list:
+        return [
+            "AWS::AppStream::Fleet",
+            "AWS::AutoScaling::AutoScalingGroup",
+            "AWS::ElastiCache::ReplicationGroup",
+            "AWS::OpenSearchService::Domain",
+            "AWS::Elasticsearch::Domain",
+            "AWS::Lambda::Alias",
+        ]
+
+
 
     def get_definition(self, resource_type:str) -> dict:
         if not resource_type in self.allowed_resources:
@@ -336,8 +352,19 @@ class CfnDeletionPolicy(CfnResourceAttribute):
     doc_url = "https://docs.aws.amazon.com/ja_jp/AWSCloudFormation/latest/UserGuide/aws-attribute-deletionpolicy.html"
 
     def __init__(self) -> None:
-        self.doc = self._load_doc()
+        # self.doc = self._load_doc()
         self.allowed_resources = self.get_allowed_resources()
+
+    def get_allowed_resources(self) -> list:
+        return [
+            "AWS::EC2::Volume",
+            "AWS::ElastiCache::CacheCluster",
+            "AWS::ElastiCache::ReplicationGroup",
+            "AWS::Neptune::DBCluster",
+            "AWS::RDS::DBCluster",
+            "AWS::RDS::DBInstance",
+            "AWS::Redshift::Cluster",
+        ]
 
     def get_definition(self, resource_type:str) -> dict:
         if not resource_type in self.allowed_resources:
@@ -361,8 +388,17 @@ class CfnCreationPolicy(CfnResourceAttribute):
     doc_url = "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-creationpolicy.html"
 
     def __init__(self) -> None:
-        self.doc = self._load_doc()
+        # self.doc = self._load_doc()
         self.allowed_resources = self.get_allowed_resources()
+
+    def get_allowed_resources(self) -> list:
+        return [
+            "AWS::AppStream::Fleet",
+            "AWS::AutoScaling::AutoScalingGroup",
+            "AWS::EC2::Instance",
+            "AWS::CloudFormation::WaitCondition",
+        ]
+
 
 
     def get_definition(self, resource_type:str) -> dict:
@@ -416,8 +452,20 @@ class CfnUpdateReplacePolicy(CfnResourceAttribute):
     doc_url = "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-updatereplacepolicy.html"
 
     def __init__(self) -> None:
-        self.doc = self._load_doc()
+        # self.doc = self._load_doc()
         self.allowed_resources = self.get_allowed_resources()
+    
+    def get_allowed_resources(self) -> list:
+        return [
+            "AWS::EC2::Volume",
+            "AWS::ElastiCache::CacheCluster",
+            "AWS::ElastiCache::ReplicationGroup",
+            "AWS::Neptune::DBCluster",
+            "AWS::RDS::DBCluster",
+            "AWS::RDS::DBInstance",
+            "AWS::Redshift::Cluster",
+        ]
+
 
     def get_definition(self, resource_type:str) -> dict:
         if not resource_type in self.allowed_resources:
@@ -497,14 +545,9 @@ class CfnSpecification(object):
             logger.debug(f"get region name from argument: {region_name}")
             return region_name
         
-        try:
-            region_name = os.environ["CFN_DOCGEN_AWS_REGION"]
-            logger.debug(f"get region name from environment variable : {region_name}")
-            return region_name
-        except KeyError:
-            profile = boto3.client("sts")
-            logger.debug(f"get region name from aws cli default profile")
-            return profile.meta.region_name
+        region_name = os.environ.get("CFN_DOCGEN_AWS_REGION", "ap-northeast-1")
+        logger.debug(f"get region name from environment variable CFN_DOCGEN_AWS_REGION : {region_name}")
+        return region_name
 
 
     def load_spec(self) -> dict:
@@ -611,28 +654,28 @@ class CfnSpecification(object):
             raise ex
         
 
-    def load_html(self, doc_url:str) -> BeautifulSoup:
-        """
-        load the html file and return it as BeautifulSoup object
-        if the html file does not exist, downalod it from the url
-        if the BeautifulSoup object of the html file cached in memory, return it
-        """
-        try:
-            soup = self.html_cache[doc_url]
-        except KeyError:
-            filepath = os.path.join(
-                util.CACHE_BASE_DIR, os.path.basename(doc_url),
-            )
-            if not os.path.exists(filepath):
-                resp = requests.get(doc_url)
-                with open(filepath, "w", encoding="utf-8") as fp:
-                    fp.write(resp.content.decode())
-                logger.debug(f"download cfn reference file from {doc_url}")        
-            with open(filepath, "r", encoding="utf-8") as fp:
-                doc_body = fp.read()
-            soup = BeautifulSoup(doc_body, "html.parser")
-            self.html_cache[doc_url] = soup
-        return soup
+    # def load_html(self, doc_url:str):
+    #     """
+    #     load the html file and return it as BeautifulSoup object
+    #     if the html file does not exist, downalod it from the url
+    #     if the BeautifulSoup object of the html file cached in memory, return it
+    #     """
+    #     try:
+    #         soup = self.html_cache[doc_url]
+    #     except KeyError:
+    #         filepath = os.path.join(
+    #             util.CACHE_BASE_DIR, os.path.basename(doc_url),
+    #         )
+    #         if not os.path.exists(filepath):
+    #             resp = requests.get(doc_url)
+    #             with open(filepath, "w", encoding="utf-8") as fp:
+    #                 fp.write(resp.content.decode())
+    #             logger.debug(f"download cfn reference file from {doc_url}")        
+    #         with open(filepath, "r", encoding="utf-8") as fp:
+    #             doc_body = fp.read()
+    #         soup = BeautifulSoup(doc_body, "html.parser")
+    #         self.html_cache[doc_url] = soup
+    #     return soup
 
     def is_except_resource(self, resource_type:str, prop_type:str) -> bool:
         if resource_type == "AWS::IoTWireless::TaskDefinition" and prop_type == "LoRaWANUpdateGatewayTaskEntry":
@@ -687,50 +730,53 @@ class CfnSpecification(object):
 
             return resource_spec
 
+        else:
+            raise FeatureSuppressError("The feature about CFN_DOCGEN_GET_DETAIL is now suppressed.")
+            
 
-        # load html 
-        doc_url = resource_spec["Documentation"]
-        doc_url = self.modify_doc_url(resource_name, doc_url)
-        soup = self.load_html(doc_url)
+        # # load html 
+        # doc_url = resource_spec["Documentation"]
+        # doc_url = self.modify_doc_url(resource_name, doc_url)
+        # soup = self.load_html(doc_url)
         
-        new_prop_spec = dict()
-        prop_id, prop_html_id, = None, None
-        try:
-            for prop_id, prop in resource_spec["Properties"].items():
-                prop_html_id = prop["Documentation"].split("#")[-1]
-                try:
-                    paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.find_all("p")
-                except AttributeError:
-                    try:
-                        paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.next_sibling.find_all("p")
-                    except AttributeError as ex:
-                        # if self.is_except_resource(resource_name, prop_id):
-                        #     continue
-                        # else:
-                        #     raise ex
-                        fail_msg = f"get detailed resource spec for {resource_name}/{prop_id}/{prop_html_id} from {doc_url} failed"
-                        logger.warning(fail_msg)
-                        prop["DocDescription"] = fail_msg
-                        paragraphs = ""
-                for i, p in enumerate(paragraphs):
-                    # get description
-                    if i == 0:
-                        description = p.get_text()
-                        description = re.sub(r"\s\s+", " ", description.replace("\n", ""))
-                        key, value = "Description", description
-                    else:
-                        try:
-                            key, value = p.get_text().split(": ")
-                        except ValueError:
-                            continue
-                    prop[f"Doc{key}"] = value
-                new_prop_spec[prop_id] = prop
-            resource_spec["Properties"] = new_prop_spec
-        except Exception as ex:
-            logger.error(f"get detailed resource spec for {resource_name}/{prop_id}/{prop_html_id} from {doc_url} failed : {type(ex)} {ex}")
-            raise ex
+        # new_prop_spec = dict()
+        # prop_id, prop_html_id, = None, None
+        # try:
+        #     for prop_id, prop in resource_spec["Properties"].items():
+        #         prop_html_id = prop["Documentation"].split("#")[-1]
+        #         try:
+        #             paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.find_all("p")
+        #         except AttributeError:
+        #             try:
+        #                 paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.next_sibling.find_all("p")
+        #             except AttributeError as ex:
+        #                 # if self.is_except_resource(resource_name, prop_id):
+        #                 #     continue
+        #                 # else:
+        #                 #     raise ex
+        #                 fail_msg = f"get detailed resource spec for {resource_name}/{prop_id}/{prop_html_id} from {doc_url} failed"
+        #                 logger.warning(fail_msg)
+        #                 prop["DocDescription"] = fail_msg
+        #                 paragraphs = ""
+        #         for i, p in enumerate(paragraphs):
+        #             # get description
+        #             if i == 0:
+        #                 description = p.get_text()
+        #                 description = re.sub(r"\s\s+", " ", description.replace("\n", ""))
+        #                 key, value = "Description", description
+        #             else:
+        #                 try:
+        #                     key, value = p.get_text().split(": ")
+        #                 except ValueError:
+        #                     continue
+        #             prop[f"Doc{key}"] = value
+        #         new_prop_spec[prop_id] = prop
+        #     resource_spec["Properties"] = new_prop_spec
+        # except Exception as ex:
+        #     logger.error(f"get detailed resource spec for {resource_name}/{prop_id}/{prop_html_id} from {doc_url} failed : {type(ex)} {ex}")
+        #     raise ex
         
-        return resource_spec
+        # return resource_spec
 
 
     def modify_doc_url(self, property_type:str, doc_url:str) ->str:
@@ -866,102 +912,106 @@ class CfnSpecification(object):
                     new_prop_spec[property_type] = properties
             return new_prop_spec
 
-        new_prop_spec = dict()
-        property_type, prop_id, prop_html_id = None, None, None
-        for property_type, properties in prop_spec.items():
+        else:
+            raise FeatureSuppressError("The feature about CFN_DOCGEN_GET_DETAIL is now suppressed.")
 
-            try:
-                doc_url = properties["Documentation"]
-                doc_url = self.modify_doc_url(property_type, doc_url)
 
-                soup = self.load_html(doc_url)
+        # new_prop_spec = dict()
+        # property_type, prop_id, prop_html_id = None, None, None
+        # for property_type, properties in prop_spec.items():
 
-                if properties.get("Properties") is None:
-                    prop = deepcopy(properties)
-                    prop_id = property_type.split(".")[-1]
-                    # prop["Properties"] = dict()
-                    new_prop = dict()
-                    new_prop["Properties"] = dict()
-                    prop_html_id = os.path.basename(prop["Documentation"]).split(".")[0]
-                    prop_html_id = self.modify_html_id(prop_html_id, resource_name)
+        #     try:
+        #         doc_url = properties["Documentation"]
+        #         doc_url = self.modify_doc_url(property_type, doc_url)
 
-                    try:
-                        paragraphs = soup.find("h1", {"id": prop_html_id}).next_sibling.next_siblings
-                    except AttributeError as ex:
-                        # if self.is_except_resource(property_type, prop_id):
-                        #     continue
-                        # else:
-                        #     logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} : {type(ex)} {ex}")
-                        #     raise ex
-                        fail_msg = f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} from {doc_url} failed"
-                        logger.warning(fail_msg)
-                        prop["DocDescription"] = fail_msg
-                        paragraphs = ""
+        #         soup = self.load_html(doc_url)
 
-                    for i, p in enumerate(paragraphs):
-                        # get description
-                        if i == 0:
-                            description = p.get_text()
-                            description = re.sub(r"\s\s+", " ", description.replace("\n", ""))
-                            key, value = "Description", description
-                        else:
-                            try:
-                                text = p.get_text()
-                                key, value = text.split(": ")
-                            except ValueError as ex:
-                                additional_description = re.sub(r"\s\s+", " ", text.replace("\n", ""))
-                                key, value = "Description", prop.get("DocDescription", "") + "\n" + additional_description
-                                pass
-                        prop[f"Doc{key}"] = value
-                    new_prop["Properties"][prop_id] = prop
-                    new_prop_spec[property_type] = deepcopy(new_prop)
-                else:
+        #         if properties.get("Properties") is None:
+        #             prop = deepcopy(properties)
+        #             prop_id = property_type.split(".")[-1]
+        #             # prop["Properties"] = dict()
+        #             new_prop = dict()
+        #             new_prop["Properties"] = dict()
+        #             prop_html_id = os.path.basename(prop["Documentation"]).split(".")[0]
+        #             prop_html_id = self.modify_html_id(prop_html_id, resource_name)
 
-                    for prop_id, prop in properties["Properties"].items():
-                        prop_html_id = prop["Documentation"].split("#")[-1]
-                        prop_html_id = self.modify_html_id(prop_html_id, resource_name)
+        #             try:
+        #                 paragraphs = soup.find("h1", {"id": prop_html_id}).next_sibling.next_siblings
+        #             except AttributeError as ex:
+        #                 # if self.is_except_resource(property_type, prop_id):
+        #                 #     continue
+        #                 # else:
+        #                 #     logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} : {type(ex)} {ex}")
+        #                 #     raise ex
+        #                 fail_msg = f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} from {doc_url} failed"
+        #                 logger.warning(fail_msg)
+        #                 prop["DocDescription"] = fail_msg
+        #                 paragraphs = ""
 
-                        # logger.debug(f"{property_type}/{prop_id}")
+        #             for i, p in enumerate(paragraphs):
+        #                 # get description
+        #                 if i == 0:
+        #                     description = p.get_text()
+        #                     description = re.sub(r"\s\s+", " ", description.replace("\n", ""))
+        #                     key, value = "Description", description
+        #                 else:
+        #                     try:
+        #                         text = p.get_text()
+        #                         key, value = text.split(": ")
+        #                     except ValueError as ex:
+        #                         additional_description = re.sub(r"\s\s+", " ", text.replace("\n", ""))
+        #                         key, value = "Description", prop.get("DocDescription", "") + "\n" + additional_description
+        #                         pass
+        #                 prop[f"Doc{key}"] = value
+        #             new_prop["Properties"][prop_id] = prop
+        #             new_prop_spec[property_type] = deepcopy(new_prop)
+        #         else:
 
-                        try:
-                            paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.find_all("p")
-                        except AttributeError:
-                            try:
-                                paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.next_sibling.find_all("p")
-                            except AttributeError as ex:
-                                # if self.is_except_resource(property_type, prop_id):
-                                #     continue
-                                # else:
-                                #     logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} : {type(ex)} {ex}")
-                                #     raise ex
-                                fail_msg = f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} from {doc_url} failed"
-                                logger.warning(fail_msg)
-                                prop["DocDescription"] = fail_msg
-                                paragraphs = ""
-                        for i, p in enumerate(paragraphs):
-                            # get description
-                            if i == 0:
-                                description = p.get_text()
-                                description = re.sub(r"\s\s+", " ", description.replace("\n", ""))
-                                key, value = "Description", description
-                            else:
-                                try:
-                                    text = p.get_text()
-                                    key, value = text.split(": ")
-                                except ValueError as ex:
-                                    # logger.debug(f"a skippable error occured {resource_name}/{property_name}/{property_type}/{prop_id} : {type(ex)} {ex}")
-                                    additional_description = re.sub(r"\s\s+", " ", text.replace("\n", ""))
-                                    key, value = "Description", prop.get("DocDescription", "") + "\n" + additional_description
-                                    pass
-                            prop[f"Doc{key}"] = value
-                        properties["Properties"][prop_id] = prop
+        #             for prop_id, prop in properties["Properties"].items():
+        #                 prop_html_id = prop["Documentation"].split("#")[-1]
+        #                 prop_html_id = self.modify_html_id(prop_html_id, resource_name)
+
+        #                 # logger.debug(f"{property_type}/{prop_id}")
+
+        #                 try:
+        #                     paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.find_all("p")
+        #                 except AttributeError:
+        #                     try:
+        #                         paragraphs = soup.find("a", {"id": prop_html_id}).parent.next_sibling.next_sibling.find_all("p")
+        #                     except AttributeError as ex:
+        #                         # if self.is_except_resource(property_type, prop_id):
+        #                         #     continue
+        #                         # else:
+        #                         #     logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} : {type(ex)} {ex}")
+        #                         #     raise ex
+        #                         fail_msg = f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} from {doc_url} failed"
+        #                         logger.warning(fail_msg)
+        #                         prop["DocDescription"] = fail_msg
+        #                         paragraphs = ""
+        #                 for i, p in enumerate(paragraphs):
+        #                     # get description
+        #                     if i == 0:
+        #                         description = p.get_text()
+        #                         description = re.sub(r"\s\s+", " ", description.replace("\n", ""))
+        #                         key, value = "Description", description
+        #                     else:
+        #                         try:
+        #                             text = p.get_text()
+        #                             key, value = text.split(": ")
+        #                         except ValueError as ex:
+        #                             # logger.debug(f"a skippable error occured {resource_name}/{property_name}/{property_type}/{prop_id} : {type(ex)} {ex}")
+        #                             additional_description = re.sub(r"\s\s+", " ", text.replace("\n", ""))
+        #                             key, value = "Description", prop.get("DocDescription", "") + "\n" + additional_description
+        #                             pass
+        #                     prop[f"Doc{key}"] = value
+        #                 properties["Properties"][prop_id] = prop
 
                     
-                    new_prop_spec[property_type] = properties
-            except Exception as ex:
-                logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} from {doc_url} failed : {type(ex)} {ex}")
-                raise ex
+        #             new_prop_spec[property_type] = properties
+        #     except Exception as ex:
+        #         logger.error(f"get detailed property spec for {resource_name}/{property_name}/{property_type}/{prop_id}/{prop_html_id} from {doc_url} failed : {type(ex)} {ex}")
+        #         raise ex
             
-        return new_prop_spec
+        # return new_prop_spec
 
 

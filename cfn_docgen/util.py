@@ -1,4 +1,3 @@
-import glob
 import shutil
 import os
 from logging import Handler, Logger, getLogger, Formatter, StreamHandler, FileHandler, DEBUG, INFO

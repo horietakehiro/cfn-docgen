@@ -1,9 +1,7 @@
 import os
-import subprocess
 import boto3
 import tempfile
 import glob
-import json
 import traceback
 from click.testing import CliRunner
 from cfn_docgen import main
