@@ -304,10 +304,10 @@ Resources:
               Configuration:
                 ProjectName:
                   Ref: BuildProject2
-              Name: Publish
-              Namespace: PublishVariables
+              Name: PublishServerless
+              Namespace: PublishVariablesServerless
               OutputArtifacts:
-                - Name: PublishArtifact
+                - Name: PublishArtifactServerless
               InputArtifacts:
                 - Name: SourceArtifact
               Region:
@@ -322,10 +322,10 @@ Resources:
               Configuration:
                 ProjectName:
                   Ref: BuildProject3
-              Name: Publish
-              Namespace: PublishVariables
+              Name: PublishDocker
+              Namespace: PublishVariablesDocker
               OutputArtifacts:
-                - Name: PublishArtifact
+                - Name: PublishArtifactDocker
               InputArtifacts:
                 - Name: SourceArtifact
               Region:
