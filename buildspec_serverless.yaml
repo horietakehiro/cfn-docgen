@@ -19,7 +19,7 @@ phases:
   pre_build:
     commands:
       - mkdir -p layer/python
-      - pip install --target ./layer/python cfn-docgen
+      - pip install --target ./layer/python cfn-docgen --upgrade
       - rm -fr ./layer/python/boto*
       - VERSION=`pip freeze --path ./layer/python/ | grep cfn-docgen | sed -e "s/cfn-docgen==//g"`
       - echo version ${VERSION} will be published
