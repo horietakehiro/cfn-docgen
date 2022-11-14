@@ -38,19 +38,19 @@ Resources:
 ```
 you can generate a content like below.
 
-| ResourceId   | ResourceType   | ResourceNote               | Property           | Value       | UserNote                                    | Required   | Type        | UpdateType   | Description                                                                                     | IsOmittable   | Filename   |
-|:-------------|:---------------|:---------------------------|:-------------------|:------------|:--------------------------------------------|:-----------|:------------|:-------------|:------------------------------------------------------------------------------------------------|:--------------|:-----------|
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | CidrBlock          | 10.0.0.0/16 | これはCidrBlockプロパティに対するユーザ独自のコメントです           | False      | String      | Immutable    | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | False         | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | EnableDnsHostnames |             |                                             | False      | Boolean     | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | True          | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | EnableDnsSupport   |             |                                             | False      | Boolean     | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | True          | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | InstanceTenancy    |             |                                             | False      | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | True          | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | Ipv4IpamPoolId     |             |                                             | False      | String      | Immutable    | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | True          | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | Ipv4NetmaskLength  |             |                                             | False      | Integer     | Immutable    | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | True          | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | Tags               |             |                                             | False      | List of Tag | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | False         | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | Tags[0].Key        | ENV         |                                             | True       | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html | False         | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | Tags[0].Value      | DEV         |                                             | True       | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html | False         | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | Tags[1].Key        | DEPARTMENT  | これはTagsプロパティ配列の2番目のKeyプロパティに対するユーザ独自のコメントです | True       | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html | False         | cfn.yaml   |
-| VPC          | AWS::EC2::VPC  | これはVPCリソースに対するユーザ独自のコメントです | Tags[1].Value      | DTBD        |                                             | True       | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html | False         | cfn.yaml   |
+| ResourceId   | ResourceType   | ResourceNote                    | Property           | Value              | UserNote                                            | Required   | Type        | UpdateType   | Description                                                                                     | IsOmittable   | Filename   |
+|:-------------|:---------------|:--------------------------------|:-------------------|:-------------------|:----------------------------------------------------|:-----------|:------------|:-------------|:------------------------------------------------------------------------------------------------|:--------------|:-----------|
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | CidrBlock          | 10.0.0.0/16        | This is a note for CidrBlock prop                   | False      | String      | Immutable    | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | False         | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | EnableDnsHostnames |                    |                                                     | False      | Boolean     | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | True          | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | EnableDnsSupport   | True               |                                                     | False      | Boolean     | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | False         | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | InstanceTenancy    |                    |                                                     | False      | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | True          | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | Ipv4IpamPoolId     |                    |                                                     | False      | String      | Immutable    | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | True          | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | Ipv4NetmaskLength  |                    |                                                     | False      | Integer     | Immutable    | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | True          | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | Tags               |                    |                                                     | False      | List of Tag | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html         | False         | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | Tags[0].Key        | ENV                |                                                     | True       | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html | False         | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | Tags[0].Value      | {'Ref': 'EnvType'} |                                                     | True       | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html | False         | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | Tags[1].Key        | Name               |                                                     | True       | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html | False         | cfn.yaml   |
+| VPC          | AWS::EC2::VPC  | This is a note for VPC resource | Tags[1].Value      | SampleVpc          | This is a note for Value prop of 2nd Tags list prop | True       | String      | Mutable      | http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html | False         | cfn.yaml   |
 
 
 
@@ -58,7 +58,7 @@ The key features of this tool are,
 
 - All of the properties of each resource, including ones you omit to define, are listed in generated file.
   - In the example above, properties `EnableDnsHostnames`, `InstanceTenancy`, `Ipv4IpamPoolId`, and `Ipv4NetmaskLength` are omitted in original cfn template file, but listed in generated file.
-- References for each resource and property listed at [official User Guide](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) are merged in generated file as columns `Required`, `Type`, `UpdateType`, and `Description`.
+<!-- - References for each resource and property listed at [official User Guide](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) are merged in generated file as columns `Required`, `Type`, `UpdateType`, and `Description`. -->
 - You can add custom notes for each resource and property at `Metadata` section in each resource.
   - You can add custom note for a resource at `Metadata.UserNotes.ResourceNote`
   - You can add custom notes for properties at `Metadata.UserNotes.PropNotes.{PropertyName}`
@@ -68,17 +68,27 @@ The key features of this tool are,
   - In excel format, all of definitions are separated by sheets. 
   - In other format, all of definitions are separated by files.
 
-Full example is in [sample](./sample) directory.
+For more example, see [sample](./sample) directory.
 
 ---
 
-## Requirements(CLI)
-- python3.8
-- AWS CLI
+## Basic command usage
+
+```Bash
+$ cfn-docgen --in sample/sample-template.json --fmt xlsx
+```
+
 
 ---
 
-## Installation(CLI)
+## Install
+
+---
+
+### CLI(Linux/Windows)
+
+- Prerequirements
+  - python>=3.8
 
 ```Bash
 $ pip install cfn-docgen
@@ -86,46 +96,52 @@ $ pip install cfn-docgen
 
 ---
 
-## Installation(GUI)
+### Docker
+
+We also provide cfn-docgen as Docker image.
+
+```Bash
+# pull image from DockerHub
+$ docker pull horietakehiro/cfn-docgen:latest
+
+# local directory(before)
+$ tree /tmp/sample/
+/tmp/sample/
+└── sample-template.json
+
+0 directories, 1 files
+
+# run as command
+$ docker run \
+  -v /tmp/sample/:/tmp/ \
+  -v ~/.cfn-docgen/:/root/.cfn-docgen/ \
+  horietakehiro/cfn-docgen:latest --in /tmp/sample-template.json --fmt xlsx
+
+# local directory(after)
+$ tree /tmp/sample/
+/tmp/sample/
+├── sample-template.json
+└── sample-template.xlsx
+
+0 directories, 2 files
+```
+
+---
+
+### GUI(Windows only)
 
 We also provide cfn-docgen as GUI application [here](https://github.com/horietakehiro/cfn-docgen-gui).
 
-
 ---
 
-## Installation(serverless)
+### serverless
 You can also use cfn-docgen on AWS Cloud as serverless application.
 
-You can deploy resources at [AWS Serverless Application Repository](https://ap-northeast-1.console.aws.amazon.com/lambda/home?region=ap-northeast-1#/create/app?applicationId=arn:aws:serverlessrepo:ap-northeast-1:382098889955:applications/cfn-docgen-serverless). Once deployed, tha S3 bucket named `cfn-docgen-${AWS::AccountId}-${AWS::Region}` is created on your account. When you upload cfn template json/yaml files  at `templates/` folder of the bucket, cfn-docgen-serverless automatically will be triggered and generates excel docments for them.
+You can deploy resources at [AWS Serverless Application Repository](https://ap-northeast-1.console.aws.amazon.com/lambda/home?region=ap-northeast-1#/create/app?applicationId=arn:aws:serverlessrepo:ap-northeast-1:382098889955:applications/cfn-docgen-serverless).
+
+Once deployed, tha S3 bucket named `cfn-docgen-${AWS::AccountId}-${AWS::Region}` is created on your account. 
+
+When you upload cfn template json/yaml files  at `templates/` folder of the bucket, cfn-docgen-serverless automatically will be triggered and generates excel docments for them.
 
 ---
-
-## Command usage
-```Bash
-$ cfn-docgen --help
-Usage: cfn-docgen [OPTIONS]
-
-  Document generator from cfn template files
-
-Options:
-  --in TEXT                 Input cfn template file path (yaml/json)
-                            [required]
-  --fmt [xlsx|md|csv|html]  Output file format.  [default: xlsx]
-  --omit                    If set, optional properties whose actual values
-                            are not set in input template file will not be
-                            written in output file.
-  --refresh                 If set, fristly remove all existing cache files
-                            and download them again.
-  --region TEXT             AWS region name for referencing resource specs. If
-                            not set, the value set as environment variable
-                            `CFN_DOCGEN_AWS_REGION` is used. If the
-                            environment variable is not set, use the value of
-                            AWS CLI default profile
-  --verbose                 If set, stdout DEBUG level logs
-  --help                    Show this message and exit.
-
-
-# example command usage
-$ cfn-docgen --in sample/sample-template.json --fmt html
-```
 
