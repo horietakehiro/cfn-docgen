@@ -81,7 +81,7 @@ $ cfn-docgen --in sample/sample-template.json --fmt xlsx
 
 ---
 
-## Install
+## How to use
 
 ---
 
@@ -145,3 +145,16 @@ When you upload cfn template json/yaml files  at `templates/` folder of the buck
 
 ---
 
+### API
+
+You can directry handle data as pandas DataFrame.
+
+```Python
+import pandas as pd
+from cfn_docgen import cfn_def
+cfn_template = cfn_def.CfnTemplate("./sample/sample-template.json")
+property_df = cfn_template.to_df(cfn_template.resources, "Resources_Property")
+assert isinstance(property_df, pd.DataFrame)
+```
+
+---
