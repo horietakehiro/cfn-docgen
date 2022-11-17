@@ -9,6 +9,7 @@ import re
 from cfn_flip import to_json
 import tqdm
 from styleframe import StyleFrame, Styler, utils
+import warnings
 
 from cfn_docgen import util
 
@@ -537,7 +538,10 @@ class CfnProperty(object):
             # "FQID": [self.fqid]
         })
 
-        df = pd.concat([df, tmp_df])
+        with warnings.catch_warnings():
+            warnings.simplefilter(action='ignore', category=FutureWarning)
+            df = pd.concat([df, tmp_df])
+            
         if self.value is None:
             for props in self.child_props.values():
                 if isinstance(props, list):
