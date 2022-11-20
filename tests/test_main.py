@@ -210,6 +210,28 @@ class MainTestCase(unittest.TestCase):
         shutil.copytree(os.path.join(TEST_DIR, "cache"), util.CACHE_BASE_DIR, )
 
 
+    @parameterized.expand(["all", "white", "blank"])
+    def test_main_arg_style(self, style):
+        in_filepath = self.cfn_filepaths[0]
+
+        expected_filepath_pattern = os.path.splitext(in_filepath)[0] + f".xlsx"
+        paths = glob.glob(expected_filepath_pattern)
+        for p in paths:
+            try:
+                os.remove(p)
+            except FileNotFoundError:
+                pass
+
+        runner = CliRunner()
+        result = runner.invoke(
+            main.main,
+            ["--in", in_filepath, "--style", style]
+        )
+        paths = glob.glob(expected_filepath_pattern)
+
+        self.assertGreater(len(paths), 0, result.exception)
+
+
     def test_main_custom_resource(self):
         filepath = os.path.join(TEST_DIR, "resources", "CustomResource.json")
         with open(filepath, "w") as fp:

@@ -669,13 +669,14 @@ class CfnTemplate(object):
         #     "update_replace_policy": cfn_spec.CfnUpdateReplacePolicy(),
         # }[spec_name]
 
-    def __init__(self, filepath:str, omit:bool=False) -> None:
+    def __init__(self, filepath:str, omit:bool=False, style:str="white") -> None:
 
         self.reload_specs()
         self.filepath = filepath
 
         self.body = self.load_template()
         self.is_omit = omit
+        self.font_style = style
 
 
         self.parameters = self.parse_parameters()
@@ -877,6 +878,19 @@ class CfnTemplate(object):
                 if "Description" in sf.columns.tolist():
                     sf.set_column_width(columns="Description", width=100)
                 sf.apply_column_style(cols_to_style=sf.columns, styler_obj=style)
+
+                
+                if name == "Resources_Property_Detail":
+                    if self.font_style == "all":
+                        pass
+                    elif self.font_style == "white":
+                        sf.apply_style_by_indexes(
+                            indexes_to_style=sf[sf['ResourceId'].duplicated(keep="first")],
+                            cols_to_style=["ResourceId", "ResourceType", "ResourceNote"],
+                            styler_obj=Styler(font_color=utils.colors.white),
+                        )
+                    elif self.font_style == "blank":
+                        sf.loc[sf["ResourceId"].duplicated(keep="first"), ["ResourceId", "ResourceType", "ResourceNote"]] = None
 
                 sf.to_excel(
                     writer, index=False, sheet_name=name,
