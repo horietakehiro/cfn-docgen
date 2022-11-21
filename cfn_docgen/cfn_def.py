@@ -692,6 +692,8 @@ class CfnTemplate(object):
         self.transform = None
         self.metadata = None
 
+        self.cols_to_styled = ["ResourceId", "ResourceType", "ResourceNote"]
+
 
     @info_logging("parameters")
     def parse_parameters(self) -> List[CfnParameter]:
@@ -821,6 +823,11 @@ class CfnTemplate(object):
 
         logger.info(f"save generated file as {fmt} at {filepath}")
 
+    def blank_duplicated_rows(self, df:pd.DataFrame, blanked:str=None) -> pd.DataFrame:
+        df.loc[df["ResourceId"].duplicated(keep="first"), self.cols_to_styled] = blanked
+        return df
+
+
     def to_md(self, filepath:str):
         dfs = self.merge_df()
 
@@ -831,6 +838,10 @@ class CfnTemplate(object):
                 os.remove(path)
             except FileNotFoundError:
                 pass
+            if name == "Resources_Property_Detail":
+                if self.font_style == "blank":
+                    df = self.blank_duplicated_rows(df, blanked="")
+
             df.to_markdown(path, index=False)
         
     def to_csv(self, filepath:str):
@@ -842,6 +853,10 @@ class CfnTemplate(object):
                 os.remove(path)
             except FileNotFoundError:
                 pass
+            if name == "Resources_Property_Detail":
+                if self.font_style == "blank":
+                    df = self.blank_duplicated_rows(df, blanked="")
+
             df.to_csv(path, index=False)
 
     def to_html(self, filepath:str):
@@ -853,6 +868,11 @@ class CfnTemplate(object):
                 os.remove(path)
             except FileNotFoundError:
                 pass
+
+            if name == "Resources_Property_Detail":
+                if self.font_style == "blank":
+                    df = self.blank_duplicated_rows(df, blanked="")
+
             df.to_html(path, index=False)
         
 
@@ -886,11 +906,11 @@ class CfnTemplate(object):
                     elif self.font_style == "white":
                         sf.apply_style_by_indexes(
                             indexes_to_style=sf[sf['ResourceId'].duplicated(keep="first")],
-                            cols_to_style=["ResourceId", "ResourceType", "ResourceNote"],
+                            cols_to_style=self.cols_to_styled,
                             styler_obj=Styler(font_color=utils.colors.white),
                         )
                     elif self.font_style == "blank":
-                        sf.loc[sf["ResourceId"].duplicated(keep="first"), ["ResourceId", "ResourceType", "ResourceNote"]] = None
+                        sf = self.blank_duplicated_rows(sf)
 
                 sf.to_excel(
                     writer, index=False, sheet_name=name,

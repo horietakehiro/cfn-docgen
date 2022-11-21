@@ -10,7 +10,7 @@ from cfn_docgen import util
 @click.option("--omit", required=False, default=False, is_flag=True, help="If set, optional properties whose actual values are not set in input template file will not be written in output file.",)
 @click.option("--refresh", required=False, default=False, is_flag=True, help="If set, fristly remove all existing cache files and download them again.",)
 @click.option("--region", required=False, default=None, help="AWS region name for referencing resource specs. If not set, the value set as environment variable `CFN_DOCGEN_AWS_REGION` is used. If the environment variable is not set, use the value of AWS CLI default profile")
-@click.option("--style", required=False, default="white", help="Excel font style.", type=click.Choice(["white", "blank", "all"]), show_default=True)
+@click.option("--style", required=False, default="white", help="Table style. Option white is available only when '--fmt' option is xsls.", type=click.Choice(["white", "blank", "all"]), show_default=True)
 @click.option("--verbose", required=False, is_flag=True, help="If set, stdout DEBUG level logs")
 @click.version_option()
 def main(
