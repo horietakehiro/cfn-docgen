@@ -549,7 +549,7 @@ class CfnProperty(object):
                         df = prop.set_record(df)
                 else:
                     df = props.set_record(df)
-
+            
 
         return df
 
@@ -842,6 +842,11 @@ class CfnTemplate(object):
                 if self.font_style == "blank":
                     df = self.blank_duplicated_rows(df, blanked="")
 
+                df["Value"] = df["Value"].apply(
+                    lambda v: json.dumps(v, indent=2).replace("\n", "<br>").replace(" ", "&nbsp;")
+                        if isinstance(v, dict) else v
+                )
+
             df.to_markdown(path, index=False)
         
     def to_csv(self, filepath:str):
@@ -873,7 +878,12 @@ class CfnTemplate(object):
                 if self.font_style == "blank":
                     df = self.blank_duplicated_rows(df, blanked="")
 
-            df.to_html(path, index=False)
+                df["Value"] = df["Value"].apply(
+                    lambda v: json.dumps(v, indent=2).replace("\n", "<br>").replace(" ", "&nbsp;")
+                        if isinstance(v, dict) else v
+                )
+
+            df.to_html(path, index=False, escape=False)
         
 
     def to_excel(self, filepath:str):
@@ -893,10 +903,16 @@ class CfnTemplate(object):
         style = Styler(horizontal_alignment=utils.horizontal_alignments.left)
         with StyleFrame.ExcelWriter(filepath, mode="a", if_sheet_exists="overlay") as writer:
             for name, df in dfs.items():
+                if name == "Resources_Property_Detail":
+                    df["Value"] = df["Value"].apply(
+                        lambda v: json.dumps(v, indent=2)
+                            if isinstance(v, dict) else v
+                    )
+                    df = df.reset_index(drop=True)
+
                 sf = StyleFrame(df)
                 sf.set_column_width(columns=sf.columns, width=25)
-                if "Description" in sf.columns.tolist():
-                    sf.set_column_width(columns="Description", width=100)
+                # sf.set_row_height(rows=sf.row_indexes, height=15)
                 sf.apply_column_style(cols_to_style=sf.columns, styler_obj=style)
 
                 
@@ -912,8 +928,19 @@ class CfnTemplate(object):
                     elif self.font_style == "blank":
                         sf = self.blank_duplicated_rows(sf)
 
+                    row_units = df["Value"].apply(
+                        lambda v: v.count("\n") if isinstance(v, str) else 0
+                    )
+                    row_units = row_units[row_units > 0]
+                    for i,u in zip(row_units.index, row_units.values):
+                        sf.set_row_height(rows=i+2, height=(u+1)*15)
+                        print(i,u)
+                    sf.set_column_width(columns="Value", width=50)
+
+
                 sf.to_excel(
                     writer, index=False, sheet_name=name,
                     startcol=1, startrow=1,
                     freeze_panes=(2,2),
+                    # best_fit=list(sf.columns) if name == "Resources_Property_Detail" else None, 
                 )
