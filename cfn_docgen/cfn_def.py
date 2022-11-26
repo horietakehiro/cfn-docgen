@@ -934,7 +934,6 @@ class CfnTemplate(object):
                     row_units = row_units[row_units > 0]
                     for i,u in zip(row_units.index, row_units.values):
                         sf.set_row_height(rows=i+2, height=(u+1)*15)
-                        print(i,u)
                     sf.set_column_width(columns="Value", width=50)
 
 
