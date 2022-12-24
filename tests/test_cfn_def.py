@@ -37,7 +37,7 @@ class CfnDefTestCase(unittest.TestCase):
 
         resource = cfn_def.CfnResource(resource_id, resource_def)
 
-        resource_json = resource.to_df("Resource_Property_Detail").to_dict(orient="records")
+        resource_json = resource.to_df("Resource_Detail").to_dict(orient="records")
         expected_resource = {
             resource_id: resource_def
         }

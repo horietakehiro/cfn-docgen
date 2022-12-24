@@ -144,12 +144,12 @@ class MainTestCase(unittest.TestCase):
             # main.main, ["--in", in_filepath]
             main.main, ["--in", in_filepath]
         )
-        full_data = self.load_excel_sheet(expected_filepath, "Resources_Property_Detail")
+        full_data = self.load_excel_sheet(expected_filepath, "Resources_Detail")
 
         result = runner.invoke(
             main.main, ["--in", in_filepath, "--omit"]
         )
-        omitted_data = self.load_excel_sheet(expected_filepath, "Resources_Property_Detail")
+        omitted_data = self.load_excel_sheet(expected_filepath, "Resources_Detail")
 
         self.assertEqual(full_data.shape[1], omitted_data.shape[1])
         self.assertGreater(full_data.shape[0], omitted_data.shape[0])
@@ -272,9 +272,9 @@ class MainTestCase(unittest.TestCase):
         result = runner.invoke(
             main.main, ["--in", filepath, "--fmt", "csv"]
         )
-        df = pd.read_csv(filepath.replace(".json", "_Resources_Property_Summary.csv"))
+        df = pd.read_csv(filepath.replace(".json", "_Resources_Summary.csv"))
         self.assertEqual(df.shape[0], 2)
-        df = pd.read_csv(filepath.replace(".json", "_Resources_Property_Detail.csv"))
+        df = pd.read_csv(filepath.replace(".json", "_Resources_Detail.csv"))
         for k, v in expected_props.items():
             self.assertTrue(k in df["Property"].values.tolist())
             self.assertTrue(str(v) in df["Value"].values.tolist(), f"{v, df['Value'].values.tolist()}")

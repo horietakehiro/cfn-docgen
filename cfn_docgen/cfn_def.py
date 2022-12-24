@@ -37,7 +37,7 @@ class CfnResource(object):
         
         self.creation_policy_def = resource_def.get("CreationPolicy", None)
         self.creation_policy_doc = CfnTemplate.get_spec("creation_policy").get_definition(self.type)
-        self.deletion_policy_def = resource_def.get("DeletionPolicy", None)
+        self.deletion_policy_def = resource_def.get("DeletionPolicy", "Delete")
         self.deletion_policy_doc = CfnTemplate.get_spec("deletion_policy").get_definition(self.type)
         self.update_policy_def = resource_def.get("UpdatePolicy", None)
         self.update_policy_doc = CfnTemplate.get_spec("update_policy").get_definition(self.type)
@@ -119,8 +119,9 @@ class CfnResource(object):
         convert resource and its property as dataframe
         """
         subcategory = name.split("_")[1]
-
-        if subcategory == "Property":
+        if subcategory == "Summary":
+            return self.summary_to_df(subcategory)
+        if subcategory == "Detail":
             return self.prop_to_df(subcategory)
         if subcategory == "CreationPolicy":
             return self.creation_policy_to_df(subcategory)
@@ -139,6 +140,35 @@ class CfnResource(object):
         df.insert(0, "ResourceId", self.id)
 
         return df
+
+    def summary_to_df(self, name:str) -> pd.DataFrame:
+        # df = pd.DataFrame(columns=[
+        #     "ResourceId", "ResourceType", "ResourceNote", "DependsOn",
+        #     "CreationPolicy", "DeletionPolicy", "UpdatePolicy", "UpdateReplacePolicy",
+        # ])
+
+        df = dict()
+        df["ResourceId"] = [self.id]
+        df["ResourceType"] = [self.type]
+        df["ResourceNote"] = [self.note]
+        df["DependsOn"] = [self.depends_on_def]
+        if self.creation_policy_def is not None and isinstance(self.creation_policy_def, dict):
+            creation_policy = [json.dumps(self.creation_policy_def, indent=2)]
+        else:
+            creation_policy = [self.creation_policy_def]
+        df["CreationPolicy"] = creation_policy
+        df["DeletionPolicy"] = [self.deletion_policy_def]
+        if self.update_policy_def is not None and isinstance(self.update_policy_def, dict):
+            update_policy = [json.dumps(self.update_policy_def, indent=2)]
+        else:
+            update_policy = [self.update_policy_def]
+        df["UpdatePolicy"] = update_policy
+        df["UpdateReplacePolicy"] = [self.update_replace_polocy_def]
+
+        df = pd.DataFrame(df)
+        df.index.name = name
+
+        return df 
     
     def prop_to_df(self, name:str) -> pd.DataFrame:
         df = pd.DataFrame(columns=[
@@ -766,29 +796,47 @@ class CfnTemplate(object):
 
 
     def merge_df(self) -> dict:
-        targets = {
-            "Parameters": self.parameters,
-            "Mappings": self.mappings,
-            "Resources_Property_Summary": self.resources,
-            "Resources_Property_Detail": self.resources,
-            "Resources_CreationPolicy": self.resources,
-            "Resources_DeletionPolicy": self.resources,
-            "Resources_DependsOn": self.resources,
-            "Resources_UpdatePolicy": self.resources,
-            "Resources_UpdateReplacePolicy": self.resources,
-            "Outputs": self.outputs,
-        }
+        # targets = {
+        #     "Parameters": self.parameters,
+        #     "Mappings": self.mappings,
+        #     "Resources_Summary": self.resources,
+        #     "Resources_Detail": self.resources,
+        #     # "Resources_CreationPolicy": self.resources,
+        #     # "Resources_DeletionPolicy": self.resources,
+        #     # "Resources_DependsOn": self.resources,
+        #     # "Resources_UpdatePolicy": self.resources,
+        #     # "Resources_UpdateReplacePolicy": self.resources,
+        #     "Outputs": self.outputs,
+        # }
         dfs = dict()
-        for name, items in targets.items():
-            df = self.to_df(items=items, name=name)
-            if name == "Resources_Property_Detail":
-                df = df.sort_values(["ResourceType", "ResourceId", "Property"])
-                if self.is_omit:
-                    df = df[df["IsOmittable"] == False]
-            dfs[name] = df
+        dfs["Parameters"] = self.to_df(items=self.parameters, name="Parameters")
+        dfs["Mappings"] = self.to_df(items=self.mappings, name="Mappings")
+        dfs["Outputs"] = self.to_df(items=self.outputs, name="Outputs")
+
+        dfs["Resources_Summary"] = self.to_df(items=self.resources, name="Resources_Summary")        
+        tmp_df = self.to_df(items=self.resources, name="Resources_Detail")
+        tmp_df.sort_values(["ResourceType", "ResourceId", "Property"])
+        if self.is_omit:
+            tmp_df = tmp_df[tmp_df["IsOmittable"] == False]
+        dfs["Resources_Detail"] = tmp_df
+
+        dfs["Resources_DependsOn"] = self.to_df(items=self.resources, name="Resources_DependsOn")        
+        dfs["Resources_CreationPolicy"] = self.to_df(items=self.resources, name="Resources_CreationPolicy")
+        dfs["Resources_DeletionPolicy"] = self.to_df(items=self.resources, name="Resources_DeletionPolicy")
+        dfs["Resources_UpdatePolicy"] = self.to_df(items=self.resources, name="Resources_UpdatePolicy")
+        dfs["Resources_UpdateReplacePolicy"] = self.to_df(items=self.resources, name="Resources_UpdateReplacePolicy")
+        
+
+        # for name, items in targets.items():
+        #     df = self.to_df(items=items, name=name)
+        #     if name == "Resources_Detail":
+        #         df = df.sort_values(["ResourceType", "ResourceId", "Property"])
+        #         if self.is_omit:
+        #             df = df[df["IsOmittable"] == False]
+        #     dfs[name] = df
 
         # summarize properties
-        dfs["Resources_Property_Summary"] = self.summarise_resources(dfs["Resources_Property_Detail"])
+        # dfs["Resources_Summary"] = self.summarise_resources(dfs["Resources_Detail"])
         return dfs
 
     def load_template(self) -> dict:
@@ -838,7 +886,7 @@ class CfnTemplate(object):
                 os.remove(path)
             except FileNotFoundError:
                 pass
-            if name == "Resources_Property_Detail":
+            if name == "Resources_Detail":
                 if self.font_style == "blank":
                     df = self.blank_duplicated_rows(df, blanked="")
 
@@ -858,7 +906,7 @@ class CfnTemplate(object):
                 os.remove(path)
             except FileNotFoundError:
                 pass
-            if name == "Resources_Property_Detail":
+            if name == "Resources_Detail":
                 if self.font_style == "blank":
                     df = self.blank_duplicated_rows(df, blanked="")
 
@@ -874,7 +922,7 @@ class CfnTemplate(object):
             except FileNotFoundError:
                 pass
 
-            if name == "Resources_Property_Detail":
+            if name == "Resources_Detail":
                 if self.font_style == "blank":
                     df = self.blank_duplicated_rows(df, blanked="")
 
@@ -903,7 +951,7 @@ class CfnTemplate(object):
         style = Styler(horizontal_alignment=utils.horizontal_alignments.left)
         with StyleFrame.ExcelWriter(filepath, mode="a", if_sheet_exists="overlay") as writer:
             for name, df in dfs.items():
-                if name == "Resources_Property_Detail":
+                if name == "Resources_Detail":
                     df["Value"] = df["Value"].apply(
                         lambda v: json.dumps(v, indent=2)
                             if isinstance(v, dict) else v
@@ -916,7 +964,7 @@ class CfnTemplate(object):
                 sf.apply_column_style(cols_to_style=sf.columns, styler_obj=style)
 
                 
-                if name == "Resources_Property_Detail":
+                if name == "Resources_Detail":
                     if self.font_style == "all":
                         pass
                     elif self.font_style == "white":
@@ -941,5 +989,5 @@ class CfnTemplate(object):
                     writer, index=False, sheet_name=name,
                     startcol=1, startrow=1,
                     freeze_panes=(2,2),
-                    # best_fit=list(sf.columns) if name == "Resources_Property_Detail" else None, 
+                    # best_fit=list(sf.columns) if name == "Resources_Detail" else None, 
                 )

@@ -1,9 +1,645 @@
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
+      <th>ResourceId</th>
+      <th>ResourceType</th>
+      <th>ResourceNote</th>
+      <th>Property</th>
+      <th>Selected</th>
+      <th>Description</th>
       <th>Filename</th>
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td>VPC</td>
+      <td>AWS::EC2::VPC</td>
+      <td>VPCリソースに対するコメント.</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>VPC</td>
+      <td>AWS::EC2::VPC</td>
+      <td>VPCリソースに対するコメント.</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicSubnet</td>
+      <td>AWS::EC2::Subnet</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicSubnet</td>
+      <td>AWS::EC2::Subnet</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InternetGateway</td>
+      <td>AWS::EC2::InternetGateway</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InternetGateway</td>
+      <td>AWS::EC2::InternetGateway</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>GatewayToInternet</td>
+      <td>AWS::EC2::VPCGatewayAttachment</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>GatewayToInternet</td>
+      <td>AWS::EC2::VPCGatewayAttachment</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicRouteTable</td>
+      <td>AWS::EC2::RouteTable</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicRouteTable</td>
+      <td>AWS::EC2::RouteTable</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicRoute</td>
+      <td>AWS::EC2::Route</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicRoute</td>
+      <td>AWS::EC2::Route</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicSubnetRouteTableAssociation</td>
+      <td>AWS::EC2::SubnetRouteTableAssociation</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicSubnetRouteTableAssociation</td>
+      <td>AWS::EC2::SubnetRouteTableAssociation</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicNetworkAcl</td>
+      <td>AWS::EC2::NetworkAcl</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicNetworkAcl</td>
+      <td>AWS::EC2::NetworkAcl</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundHTTPPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundHTTPPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundHTTPSPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundHTTPSPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundSSHPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundSSHPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundEphemeralPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundEphemeralPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>OutboundPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>OutboundPublicNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicSubnetNetworkAclAssociation</td>
+      <td>AWS::EC2::SubnetNetworkAclAssociation</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PublicSubnetNetworkAclAssociation</td>
+      <td>AWS::EC2::SubnetNetworkAclAssociation</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateSubnet</td>
+      <td>AWS::EC2::Subnet</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateSubnet</td>
+      <td>AWS::EC2::Subnet</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateRouteTable</td>
+      <td>AWS::EC2::RouteTable</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateRouteTable</td>
+      <td>AWS::EC2::RouteTable</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateSubnetRouteTableAssociation</td>
+      <td>AWS::EC2::SubnetRouteTableAssociation</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateSubnetRouteTableAssociation</td>
+      <td>AWS::EC2::SubnetRouteTableAssociation</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateRoute</td>
+      <td>AWS::EC2::Route</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateRoute</td>
+      <td>AWS::EC2::Route</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateNetworkAcl</td>
+      <td>AWS::EC2::NetworkAcl</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateNetworkAcl</td>
+      <td>AWS::EC2::NetworkAcl</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundPrivateNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>InboundPrivateNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>OutBoundPrivateNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>OutBoundPrivateNetworkAclEntry</td>
+      <td>AWS::EC2::NetworkAclEntry</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateSubnetNetworkAclAssociation</td>
+      <td>AWS::EC2::SubnetNetworkAclAssociation</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>PrivateSubnetNetworkAclAssociation</td>
+      <td>AWS::EC2::SubnetNetworkAclAssociation</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>NATIPAddress</td>
+      <td>AWS::EC2::EIP</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>NATIPAddress</td>
+      <td>AWS::EC2::EIP</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>NATDevice</td>
+      <td>AWS::EC2::Instance</td>
+      <td>This is a ec2 instance</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>NATDevice</td>
+      <td>AWS::EC2::Instance</td>
+      <td>This is a ec2 instance</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>NATSecurityGroup</td>
+      <td>AWS::EC2::SecurityGroup</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>NATSecurityGroup</td>
+      <td>AWS::EC2::SecurityGroup</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>BastionIPAddress</td>
+      <td>AWS::EC2::EIP</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>BastionIPAddress</td>
+      <td>AWS::EC2::EIP</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>BastionHost</td>
+      <td>AWS::EC2::Instance</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>BastionHost</td>
+      <td>AWS::EC2::Instance</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>BastionSecurityGroup</td>
+      <td>AWS::EC2::SecurityGroup</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>BastionSecurityGroup</td>
+      <td>AWS::EC2::SecurityGroup</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>BeanstalkSecurityGroup</td>
+      <td>AWS::EC2::SecurityGroup</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>BeanstalkSecurityGroup</td>
+      <td>AWS::EC2::SecurityGroup</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>WebServerRole</td>
+      <td>AWS::IAM::Role</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>WebServerRole</td>
+      <td>AWS::IAM::Role</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>WebServerRolePolicy</td>
+      <td>AWS::IAM::Policy</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>WebServerRolePolicy</td>
+      <td>AWS::IAM::Policy</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>WebServerInstanceProfile</td>
+      <td>AWS::IAM::InstanceProfile</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>WebServerInstanceProfile</td>
+      <td>AWS::IAM::InstanceProfile</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>SampleApplication</td>
+      <td>AWS::ElasticBeanstalk::Application</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>SampleApplication</td>
+      <td>AWS::ElasticBeanstalk::Application</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>SampleApplicationVersion</td>
+      <td>AWS::ElasticBeanstalk::ApplicationVersion</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>SampleApplicationVersion</td>
+      <td>AWS::ElasticBeanstalk::ApplicationVersion</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>SampleEnvironment</td>
+      <td>AWS::ElasticBeanstalk::Environment</td>
+      <td>None</td>
+      <td>Delete</td>
+      <td>True</td>
+      <td>CloudFormation deletes the resource and all its content if applicable during stack deletion. You can add this deletion policy to any resource type. By default, if you don't specify a DeletionPolicy, CloudFormation deletes your resources. However, be aware of the following considerations: For AWS::RDS::DBCluster resources, the default policy is Snapshot. For AWS::RDS::DBInstance resources that don't specify the DBClusterIdentifier property, the default policy is Snapshot. For Amazon S3 buckets, you must delete all objects in the bucket for deletion to succeed.</td>
+      <td>sample-template.json</td>
+    </tr>
+    <tr>
+      <td>SampleEnvironment</td>
+      <td>AWS::ElasticBeanstalk::Environment</td>
+      <td>None</td>
+      <td>Retain</td>
+      <td>False</td>
+      <td>CloudFormation keeps the resource without deleting the resource or its contents when its stack is deleted. You can add this deletion policy to any resource type. When CloudFormation completes the stack deletion, the stack will be in Delete_Complete state; however, resources that are retained continue to exist and continue to incur applicable charges until you delete those resources. For update operations, the following considerations apply: If a resource is deleted, the DeletionPolicy retains the physical resource but ensures that it's deleted from CloudFormation's scope. If a resource is updated such that a new physical resource is created to replace the old resource, then the old resource is completely deleted, including from CloudFormation's scope.</td>
+      <td>sample-template.json</td>
+    </tr>
   </tbody>
 </table>

@@ -1,0 +1,44 @@
+ResourceId,ResourceType,ResourceNote,DependsOn,CreationPolicy,DeletionPolicy,UpdatePolicy,UpdateReplacePolicy,Filename
+VPC,AWS::EC2::VPC,VPCリソースに対するコメント.,[],,Delete,,,sample-template.json
+PublicSubnet,AWS::EC2::Subnet,,[],,Delete,,,sample-template.json
+InternetGateway,AWS::EC2::InternetGateway,,[],,Delete,,,sample-template.json
+GatewayToInternet,AWS::EC2::VPCGatewayAttachment,,[],,Delete,,,sample-template.json
+PublicRouteTable,AWS::EC2::RouteTable,,[],,Delete,,,sample-template.json
+PublicRoute,AWS::EC2::Route,,GatewayToInternet,,Delete,,,sample-template.json
+PublicSubnetRouteTableAssociation,AWS::EC2::SubnetRouteTableAssociation,,[],,Delete,,,sample-template.json
+PublicNetworkAcl,AWS::EC2::NetworkAcl,,[],,Delete,,,sample-template.json
+InboundHTTPPublicNetworkAclEntry,AWS::EC2::NetworkAclEntry,,[],,Delete,,,sample-template.json
+InboundHTTPSPublicNetworkAclEntry,AWS::EC2::NetworkAclEntry,,[],,Delete,,,sample-template.json
+InboundSSHPublicNetworkAclEntry,AWS::EC2::NetworkAclEntry,,[],,Delete,,,sample-template.json
+InboundEphemeralPublicNetworkAclEntry,AWS::EC2::NetworkAclEntry,,[],,Delete,,,sample-template.json
+OutboundPublicNetworkAclEntry,AWS::EC2::NetworkAclEntry,,[],,Delete,,,sample-template.json
+PublicSubnetNetworkAclAssociation,AWS::EC2::SubnetNetworkAclAssociation,,[],,Delete,,,sample-template.json
+PrivateSubnet,AWS::EC2::Subnet,,[],,Delete,,,sample-template.json
+PrivateRouteTable,AWS::EC2::RouteTable,,[],,Delete,,,sample-template.json
+PrivateSubnetRouteTableAssociation,AWS::EC2::SubnetRouteTableAssociation,,[],,Delete,,,sample-template.json
+PrivateRoute,AWS::EC2::Route,,[],,Delete,,,sample-template.json
+PrivateNetworkAcl,AWS::EC2::NetworkAcl,,[],,Delete,,,sample-template.json
+InboundPrivateNetworkAclEntry,AWS::EC2::NetworkAclEntry,,[],,Delete,,,sample-template.json
+OutBoundPrivateNetworkAclEntry,AWS::EC2::NetworkAclEntry,,[],,Delete,,,sample-template.json
+PrivateSubnetNetworkAclAssociation,AWS::EC2::SubnetNetworkAclAssociation,,[],,Delete,,,sample-template.json
+NATIPAddress,AWS::EC2::EIP,,GatewayToInternet,,Delete,,,sample-template.json
+NATDevice,AWS::EC2::Instance,This is a ec2 instance,[],"{
+  ""AutoScalingCreationPolicy"": {
+    ""MinSuccessfulInstancesPercent"": 80
+  },
+  ""ResourceSignal"": {
+    ""Count"": 10,
+    ""Timeout"": ""PT5M""
+  }
+}",Delete,,,sample-template.json
+NATSecurityGroup,AWS::EC2::SecurityGroup,,[],,Delete,,,sample-template.json
+BastionIPAddress,AWS::EC2::EIP,,GatewayToInternet,,Delete,,,sample-template.json
+BastionHost,AWS::EC2::Instance,,[],,Delete,,,sample-template.json
+BastionSecurityGroup,AWS::EC2::SecurityGroup,,[],,Delete,,,sample-template.json
+BeanstalkSecurityGroup,AWS::EC2::SecurityGroup,,[],,Delete,,,sample-template.json
+WebServerRole,AWS::IAM::Role,,[],,Delete,,,sample-template.json
+WebServerRolePolicy,AWS::IAM::Policy,,[],,Delete,,,sample-template.json
+WebServerInstanceProfile,AWS::IAM::InstanceProfile,,[],,Delete,,,sample-template.json
+SampleApplication,AWS::ElasticBeanstalk::Application,,[],,Delete,,,sample-template.json
+SampleApplicationVersion,AWS::ElasticBeanstalk::ApplicationVersion,,[],,Delete,,,sample-template.json
+SampleEnvironment,AWS::ElasticBeanstalk::Environment,,[],,Delete,,,sample-template.json
