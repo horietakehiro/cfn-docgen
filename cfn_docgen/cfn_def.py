@@ -362,6 +362,12 @@ class CfnProperty(object):
 
     def should_stop(self, resource_type:str, fqid:str) -> bool:
 
+        with open("tmp.txt", "a") as fp:
+            if isinstance(self.definition, dict):
+                d = json.dumps(self.definition)
+            else:
+                d = ""
+            fp.write(d + "\n")
         # logger.error(f"{resource_type}/{fqid}")
         if self.definition is not None:
             return False
@@ -386,8 +392,14 @@ class CfnProperty(object):
             return True
         if resource_type == "AWS::WAFv2::WebACL" and re.match(r"^Rules\[0\]\.Statement\.[0-9a-zA-Z]+Statement\.[0-9a-zA-Z]*(Statements\[0\]|Statement)\.", fqid):
             return True
+        if resource_type == "AWS::WAFv2::WebACL" and self.definition is None:
+            return True
         if resource_type == "AWS::WAFv2::RuleGroup" and re.match(r"^Rules\[0\]\.Statement\.[0-9a-zA-Z]+Statement\.[0-9a-zA-Z]*(Statements\[0\]|Statement)\.", fqid):
             return True
+
+        if resource_type == "AWS::WAFv2::RuleGroup" and self.definition is None:
+            return True
+
         if resource_type == "AWS::AmplifyUIBuilder::Component" and fqid == "BindingProperties.BindingProperties.Predicates[0].Or[0].Or":
             logger.debug("match")
             return True
