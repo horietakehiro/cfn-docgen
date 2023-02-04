@@ -46,6 +46,7 @@ class CfnResource(object):
         self.depends_on_def = resource_def.get("DependsOn", [])
 
         self.user_notes = resource_def.get("Metadata", {}).get("UserNotes", {})
+        self.prop_notes = self.flatten_json(self.user_notes.get("PropNotes", None))
         self.note = self.user_notes.get("ResourceNote")
 
         self.resource_spec = CfnTemplate.get_spec("resource_spec").get_resource_spec(self.type, self.definition)
@@ -56,6 +57,28 @@ class CfnResource(object):
         self.properties = dict()
 
         self.construct_root_props()
+
+    def flatten_json(self, y):
+        if y is None:
+            return None
+        out = {}
+
+        def flatten(x, name=''):
+            if type(x) is dict:
+                for a in x:
+                    flatten(x[a], name + a + '.')
+            elif type(x) is list:
+                i = 0
+                if name.endswith("."):
+                    name = name[:-1]
+                for a in x:
+                    flatten(a, name + f"[{str(i)}]" + '.')
+                    i += 1
+            else:
+                out[name[:-1]] = x
+        flatten(y)
+        return out
+
 
     def construct_root_props(self):
         """
@@ -68,7 +91,8 @@ class CfnResource(object):
                 root_prop_def = None
             self.properties[root_prop_id] = CfnProperty(
                 self.id, self.type, root_prop_id, root_prop_def, root_prop_spec,
-                self.user_notes.get("PropNotes", None),
+                # self.user_notes.get("PropNotes", None),
+                self.prop_notes
             )
 
     @classmethod

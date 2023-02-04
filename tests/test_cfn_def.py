@@ -42,5 +42,46 @@ class CfnDefTestCase(unittest.TestCase):
             resource_id: resource_def
         }
         ret_resource = cfn_def.CfnResource.from_json_def(resource_json)
-        print(json.dumps(ret_resource, indent=2))
         self.assertDictEqual(ret_resource, expected_resource)
+
+
+    def test_from_json_v2(self):
+
+        resource_id = "VPC"
+        resource_def = {
+            'Type': 'AWS::EC2::VPC',
+            'Metadata': {
+                'UserNotes': {
+                    'ResourceNote': 'これはVPCリソースに対するユーザ独自のコメントです',
+                    'PropNotes': {
+                        'CidrBlock': 'これはCidrBlockプロパティに対するユーザ独自のコメントです',
+                        'Tags': [
+                            {
+
+                            },
+                            {
+                                'Key': 'これはTagsプロパティ配列の2番目のKeyプロパティに対するユーザ独自のコメントです'
+                            }
+                        ]
+                    }
+                }
+            },
+            'Properties': {
+                'CidrBlock': '10.0.0.0/16',
+                'Tags': [
+                    {'Key': 'ENV', 'Value': 'DEV'},
+                    {'Key': 'DEPARTMENT', 'Value': 'SOMU'}
+                ]
+            }
+        }
+
+        resource = cfn_def.CfnResource(resource_id, resource_def)
+        resource_df = resource.to_df("Resource_Detail")
+        row = resource_df[resource_df["Property"] == "Tags[1].Key"]
+        user_note = row["UserNote"].values[0]
+        self.assertEqual(user_note, "これはTagsプロパティ配列の2番目のKeyプロパティに対するユーザ独自のコメントです")
+        # expected_resource = {
+        #     resource_id: resource_def
+        # }
+        # ret_resource = cfn_def.CfnResource.from_json_def(resource_json)
+        # self.assertDictEqual(ret_resource, expected_resource)
