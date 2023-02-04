@@ -385,13 +385,6 @@ class CfnProperty(object):
         return self.parent_prop_id + f"[{self.index}].{self.id}"
 
     def should_stop(self, resource_type:str, fqid:str) -> bool:
-
-        with open("tmp.txt", "a") as fp:
-            if isinstance(self.definition, dict):
-                d = json.dumps(self.definition)
-            else:
-                d = ""
-            fp.write(d + "\n")
         # logger.error(f"{resource_type}/{fqid}")
         if self.definition is not None:
             return False
