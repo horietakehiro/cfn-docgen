@@ -90,12 +90,13 @@ def docgen(
 @click.option("--resource-type", "resource_type" ,required=True, help="AWS CloudFormation resource type for generating metadata skelton (e.g. AWS::EC2::VPC)",)
 @click.option("--recursive", "recursive", required=False, default=False, is_flag=True, help="if set, generate skelton recursively",)
 @click.option("--fmt", "fmt", required=False, default="yaml", type=click.Choice(["yaml", "json"]), help="skelton format",show_default=True)
-def skelton(resource_type:str, recursive:bool=False, fmt:str="yaml"):
+@click.option("--section", "section", required=False, default="metadata", type=click.Choice(["all", "metadata", "properties"]), help="section to be generated skelton",show_default=True)
+def skelton(resource_type:str, recursive:bool=False, fmt:str="yaml", section:str="metadata"):
     """
     stdout cfn-docgen metadata skelton for given resource type
     """
     from cfn_docgen.cfn_skelton import CfnSkelton
-    s = CfnSkelton(resource_type, recursive)
+    s = CfnSkelton(resource_type, recursive, fmt, section)
     res = s.main()
 
     click.echo(res)

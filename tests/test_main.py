@@ -7,6 +7,7 @@ import random
 import pandas as pd
 import json
 
+import pytest 
 
 from . import test_util
 from cfn_docgen import main
