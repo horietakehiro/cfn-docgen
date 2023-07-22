@@ -1,0 +1,168 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template creates 1 VPC, and 2 public subnets in it.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label: 
+          default: General Params
+        Parameters: 
+          - AppName
+          - EnvType
+          
+  # CfnDocgen:
+  #   Description:
+  #   Mappings:
+  #   Conditions:
+
+
+Parameters:
+  AppName:
+    Description: This value is used as a part of each resources' name
+    Type: String
+    Default: sample-app
+    MinLength: 1
+    MaxLength: 20
+  EnvType:
+    Description: This value is used as a part of each resources' name
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+
+Mappings:
+  CidrBlockMap:
+    dev:
+      VPC: 10.0.0.0/16
+      PublicSubnet1: 10.0.0.0/24
+      PublicSubnet2: 10.0.1.0/24
+    prod:
+      VPC: 10.10.0.0/16
+      PublicSubnet1: 10.10.0.0/24
+      PublicSubnet2: 10.10.1.0/24
+
+Conditions:
+  EnvCondition:
+    Fn::Equals:
+      - !Ref EnvType
+      - prod
+
+Rules:
+  RegionRule:
+    Assertions:
+      - Assert:
+          Fn::Equals:
+            - !Ref AWS::Region
+            - ap-northeast-1
+        AssertDescription: This template is available only in ap-northeast-1
+
+Resources: 
+
+  VPC:
+    Metadata:
+      CfnDocgen:
+        ResourceComment: アプリケーションサーバを稼働させるために使用するVPC
+        PropComment:
+          EnableDnsHostnames: アプリケーションサーバのホスト名でパブリックIPを名前解決できるように有効化する
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrBlockMap
+          - !Ref EnvType
+          - VPC
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: 
+        - Key: Name
+          Value:
+            Fn::Sub: ${AppName}-${EnvType}-vpc
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - !GetAZs ""
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrBlockMap
+          - !Ref EnvType
+          - PublicSubnet1
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AppName}-${EnvType}-public-subnet-1
+      VpcId: !Ref VPC
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - !GetAZs ""
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrBlockMap
+          - !Ref EnvType
+          - PublicSubnet2
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AppName}-${EnvType}-public-subnet-2
+      VpcId: !Ref VPC
+
+  IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties: 
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AppName}-${EnvType}-igw
+
+  PublicRouteTable:
+    Metadata:
+      CfnDocgen:
+        ResourceComment: パブリックサブネットからIGWへのルートを設定するためのルートテーブル
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AppName}-${EnvType}-public-rt
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+
+  PublicRtAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+  PublicRtAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+Outputs:
+  VpcId:
+    Description: vpc id
+    Value: !Ref VPC
+    Export: 
+      Name: !Sub ${AppName}-${EnvType}-vpc-id
+  PublicSubnetId1:
+    Description: public subnet id 1
+    Value: !Ref PublicRtAssociation1
+  PublicSubnetId2:
+    Description: public subnet id 2
+    Value: !Ref PublicRtAssociation2
+  ProdMessage:
+    Condition: EnvCondition
+    Value: This template is deployed for PROD environment
+  
