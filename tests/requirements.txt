@@ -2,3 +2,4 @@ behave>=1.2.6
 pylint-behave>=1.0.2
 pylance>=0.5.9
 pylint>=2.17.4
+pytest>=7.4.0

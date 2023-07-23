@@ -9,10 +9,24 @@ Metadata:
           - AppName
           - EnvType
           
-  # CfnDocgen:
-  #   Description:
-  #   Mappings:
-  #   Conditions:
+  CfnDocgen:
+    Description: |
+      このテンプレートファイル東京リージョン上で以下のリソースを作成します
+      - VPC
+      - パブリックサブネット(2AZに1つずつ)
+
+      ![Archtecture](./images/sample-template.drawio.png)
+
+
+      **注意点**
+      - このテンプレートファイルは**東京リージョン**上でのみの使用に制限しています
+      - このテンプレートファイルを使用する前に、[東京リージョン上に作成可能なVPCの最大数の設定](https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas/L-F678F1CE)を確認することを推奨します(デフォルトは5VPC)**
+    Mappings:
+      CidrBlockMap: CidrBlocks for each environment
+    Conditions:
+      EnvCondition: Check if the value of parameter `EnvType` is `prod`
+    Rules:
+      RegionRule: This template is available only in ap-northeast-1
 
 
 Parameters:
@@ -122,6 +136,8 @@ Resources:
           Value: !Sub ${AppName}-${EnvType}-igw
 
   PublicRouteTable:
+    DependsOn:
+      - IgwAttachment
     Metadata:
       CfnDocgen:
         ResourceComment: パブリックサブネットからIGWへのルートを設定するためのルートテーブル
@@ -150,6 +166,12 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet2
 
+  IgwAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref IGW
+      VpcId: !Ref VPC
+
 Outputs:
   VpcId:
     Description: vpc id
@@ -158,10 +180,10 @@ Outputs:
       Name: !Sub ${AppName}-${EnvType}-vpc-id
   PublicSubnetId1:
     Description: public subnet id 1
-    Value: !Ref PublicRtAssociation1
+    Value: !Ref PublicSubnet1
   PublicSubnetId2:
     Description: public subnet id 2
-    Value: !Ref PublicRtAssociation2
+    Value: !Ref PublicSubnet2
   ProdMessage:
     Condition: EnvCondition
     Value: This template is deployed for PROD environment
