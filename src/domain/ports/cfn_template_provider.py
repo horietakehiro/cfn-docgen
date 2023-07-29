@@ -1,8 +1,15 @@
-from abc import ABC
+from abc import ABC, abstractmethod
+from typing import Optional
+from src.domain.model.cfn_template import CfnTemplateDefinition
 
-class CfnTemplateProvider(ABC):
+from src.domain.ports.file_loader import IFileLoader
 
-    def __init__(self) -> None:
+class ICfnTemplateProvider(ABC):
+
+    def __init__(self, file_loader:IFileLoader) -> None:
         super().__init__()
 
-    
+    @abstractmethod
+    def load_template(self) -> CfnTemplateDefinition:
+        """load cfn template file(either json or yaml format) as dict"""
+
