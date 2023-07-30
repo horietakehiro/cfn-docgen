@@ -102,6 +102,8 @@ CidrBlocks for each environment
 
 ## Conditions
 
+---
+
 ### EnvCondition
 
 Check if the value of parameter `EnvType` is `prod`
