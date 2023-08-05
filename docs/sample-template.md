@@ -144,7 +144,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-
 |-|-|-|-|-|-|
 |-|-|-|-|Delete|Delete|
 
-|Property|Value|Comment|Type|Required|UpdateType|
+|Property|Value|Description|Type|Required|UpdateType|
 |-|-|-|-|-|-|
 |Tags|-|-|List of Tag|false|Mutable|
 |&nbsp;&nbsp;[0]Key|Name|-|String|true|Mutable|
@@ -162,7 +162,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-
 |-|-|-|-|-|-|
 |-|-|-|-|Delete|Delete|
 
-|Property|Value|Comment|Type|Required|UpdateType|
+|Property|Value|Description|Type|Required|UpdateType|
 |-|-|-|-|-|-|
 |CarrierGatewayId|-|-|String|false|Mutable|
 |DestinationCidrBlock|0.0.0.0/0|-|String|true|Immutable|
@@ -188,7 +188,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-
 |-|-|-|-|-|-|
 |<ul><li>IgwAttachment</li></ul>|-|-|-|Delete|Delete|
 
-|Property|Value|Comment|Type|Required|UpdateType|
+|Property|Value|Description|Type|Required|UpdateType|
 |-|-|-|-|-|-|
 |Tags|-|-|List of Tag|false|Mutable|
 |&nbsp;&nbsp;[0]Key|Name|-|String|true|Mutable|
@@ -205,7 +205,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-
 |-|-|-|-|-|-|
 |-|-|-|-|Delete|Delete|
 
-|Property|Value|Comment|Type|Required|UpdateType|
+|Property|Value|Description|Type|Required|UpdateType|
 |-|-|-|-|-|-|
 |AssignIpv6AddressOnCreation|-|-|Boolean|false|Mutable|
 |AvailabilityZone|{<br/>&nbsp;&nbsp;"Fn::Select": [<br/>&nbsp;&nbsp;&nbsp;&nbsp;0,<br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Fn::GetAZs": ""<br/>&nbsp;&nbsp;&nbsp;&nbsp;}<br/>&nbsp;&nbsp;]<br/>}|-|String|false|Immutable|
@@ -235,7 +235,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-
 |-|-|-|-|-|-|
 |-|-|-|-|Delete|Delete|
 
-|Property|Value|Comment|Type|Required|UpdateType|
+|Property|Value|Description|Type|Required|UpdateType|
 |-|-|-|-|-|-|
 |AssignIpv6AddressOnCreation|-|-|Boolean|false|Mutable|
 |AvailabilityZone|{<br/>&nbsp;&nbsp;"Fn::Select": [<br/>&nbsp;&nbsp;&nbsp;&nbsp;1,<br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Fn::GetAZs": ""<br/>&nbsp;&nbsp;&nbsp;&nbsp;}<br/>&nbsp;&nbsp;]<br/>}|-|String|false|Immutable|
@@ -265,7 +265,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-
 |-|-|-|-|-|-|
 |-|-|-|-|Delete|Delete|
 
-|Property|Value|Comment|Type|Required|UpdateType|
+|Property|Value|Description|Type|Required|UpdateType|
 |-|-|-|-|-|-|
 |RouteTableId|{<br/>&nbsp;&nbsp;"Ref": "PublicRouteTable"<br/>}|-|String|true|Immutable|
 |SubnetId|{<br/>&nbsp;&nbsp;"Ref": "PublicSubnet1"<br/>}|-|String|true|Immutable|
@@ -280,7 +280,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-
 |-|-|-|-|-|-|
 |-|-|-|-|Delete|Delete|
 
-|Property|Value|Comment|Type|Required|UpdateType|
+|Property|Value|Description|Type|Required|UpdateType|
 |-|-|-|-|-|-|
 |RouteTableId|{<br/>&nbsp;&nbsp;"Ref": "PublicRouteTable"<br/>}|-|String|true|Immutable|
 |SubnetId|{<br/>&nbsp;&nbsp;"Ref": "PublicSubnet2"<br/>}|-|String|true|Immutable|
@@ -297,7 +297,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-
 |-|-|-|-|-|-|
 |-|-|-|-|Delete|Delete|
 
-|Property|Value|Comment|Type|Required|UpdateType|
+|Property|Value|Description|Type|Required|UpdateType|
 |-|-|-|-|-|-|
 CidrBlock|{<br/>&nbsp;&nbsp;"Fn::FindInMap": [<br/>&nbsp;&nbsp;&nbsp;&nbsp;"CidrBlockMap",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"EnvType",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"VPC"<br/>&nbsp;&nbsp;]<br/>}|-|String|false|Immutable|
 |EnableDnsHostnames|true|アプリケーションサーバのホスト名でパブリックIPを名前解決できるように有効化する|Boolean|false|Mutable|
@@ -320,7 +320,7 @@ https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-
 |-|-|-|-|-|-|
 |-|-|-|-|Delete|Delete|
 
-|Property|Value|Comment|Type|Required|UpdateType|
+|Property|Value|Description|Type|Required|UpdateType|
 |-|-|-|-|-|-|
 |InternetGatewayId|{<br/>&nbsp;&nbsp;"Ref": "IGW"<br/>}|-|String|false|Mutable|
 |VpcId|{<br/>&nbsp;&nbsp;"Ref": "VPC"<br/>}|-|String|true|Mutable|

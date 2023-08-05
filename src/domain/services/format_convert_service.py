@@ -59,7 +59,8 @@ class MarkdownConvertService(IFormatConvertService):
         elif len(t) == 0:
             transform = "-"
         else:
-            transform = "<ul>" + "".join([f"<li>{_t}</li>" for _t in t]) + "</ul>"
+            # transform = "<ul>" + "".join([f"<li>{_t}</li>" for _t in t]) + "</ul>"
+            transform = self.list_item(t)
         overview.append(f"|Transform|{transform}|")
 
         return "\n".join(overview)
@@ -119,27 +120,25 @@ class MarkdownConvertService(IFormatConvertService):
         return "\n".join(toc)
 
     def parameters(self, cfn_template:CfnTemplate) -> str:
-        parameters:List[str] = []
+        doc:List[str] = []
 
-        parameters.append("## Parameters")
-        parameters.append("\n---\n")
+        doc.append("## Parameters")
+        doc.append("\n---\n")
 
         parameters_by_group, ungrouped_parameters = cfn_template.get_parameters_by_group()
         for group in sorted([group for group in parameters_by_group.keys()]):
-            parameters.append(f"### {group}")
-            parameters.append("\n---\n")
+            doc.append(f"### {group}")
+            doc.append("\n---\n")
             for parameter in parameters_by_group[group]:
-                parameters.append(self.parameter(parameter))
+                doc.append(self.parameter(parameter))
 
         for parameter in ungrouped_parameters:
-            parameters.append(self.parameter(parameter))
+            doc.append(self.parameter(parameter))
 
-        return "\n".join(parameters)
+        return "\n".join(doc)
     
     def parameter(self, parameter:CfnTemplateParameter) -> str:
         d = parameter.definition
-        if d is None:
-            return ""
         p:List[str] = []
         p.append(f"#### {parameter.name}")
         p.append("")
@@ -151,12 +150,14 @@ class MarkdownConvertService(IFormatConvertService):
         default = "-"
         if d.Default is not None:
             if isinstance(d.Default, list):
-                default = "<ul>" + "".join([f"<li>{str(_d)}</li>" for _d in d.Default]) + "</ul>"
+                # default = "<ul>" + "".join([f"<li>{str(_d)}</li>" for _d in d.Default]) + "</ul>"
+                default = self.list_item(d.Default)
             else:
                 default = str(d.Default)
         allowed_values = "-"
         if d.AllowedValues is not None:
-            allowed_values = "<ul>" + "".join([f"<li>{str(v)}</li>" for v in d.AllowedValues]) + "</ul>"
+            # allowed_values = "<ul>" + "".join([f"<li>{str(v)}</li>" for v in d.AllowedValues]) + "</ul>"
+            allowed_values = self.list_item(d.AllowedValues)
         p.append(
             "|{Type}|{Default}|{AllowedValues}|{AllowedPattern}|{NoEcho}|{MinValue}|{MaxValue}|{MinLength}|{MaxLength}|{ConstraintDescription}|".format(
                 Type=d.Type,
@@ -176,102 +177,133 @@ class MarkdownConvertService(IFormatConvertService):
         return "\n".join(p)
 
     def mappings(self, cfn_template:CfnTemplate) -> str:
-        mappings:List[str] = []
+        doc:List[str] = []
 
-        mappings.append("## Mappings")
+        doc.append("## Mappings")
 
-        m = cfn_template.definition.Mappings
-        for map_name in sorted([map_name for map_name in m.keys()]):
-            mappings.append("\n---\n")
-            mappings.append(f"### {map_name}")
-            mappings.append("")
-            d = cfn_template.get_mapping_description(map_name)
-            mappings.append(d if d is not None else "")
-            mappings.append("")
-            mappings.append("|Map|Key|Value|")
-            mappings.append("|-|-|-|")
-            for key in sorted([key for key in m[map_name].keys()]):
-                mappings.append(f"|{map_name}|{key}|{m[map_name][key]}|")
-            
-        return "\n".join(mappings)
+        mappings = cfn_template.mappings
+        for mapping in sorted(mappings, key=lambda m: m.name):
+            doc.append("\n---\n")
+            doc.append(f"### {mapping.name}")
+            doc.append("")
+            doc.append(mapping.description if mapping.description is not None else "")
+            doc.append("")
+            doc.append("|Map|Key|Value|")
+            doc.append("|-|-|-|")
+            for key in sorted([key for key in mapping.definition.keys()]):
+                doc.append(f"|{mapping.name}|{key}|{mapping.definition[key]}|")
+        return "\n".join(doc)
 
 
     def conditions(self, cfn_template:CfnTemplate) -> str:
-        conditions:List[str] = []
+        doc:List[str] = []
 
-        conditions.append("## Conditions")
+        doc.append("## Conditions")
         
-        c = cfn_template.definition.Conditions
-        for cond_name in sorted([cond_name for cond_name in c.keys()]):
-            conditions.append("\n---\n")
-            conditions.append(f"### {cond_name}")
-            conditions.append("")
-            d = cfn_template.get_condition_description(cond_name)
-            conditions.append(d if d is not None else "")
-            conditions.append("")
-            conditions.append("|Condition|")
-            conditions.append("|-|")
-            conditions.append(f"|{self.escase_json(c[cond_name])}|")
+        conditions = cfn_template.conditions
+        for condition in sorted(conditions, key=lambda c: c.name):
+            doc.append("\n---\n")
+            doc.append(f"### {condition.name}")
+            doc.append("")
+            doc.append(condition.description if condition.description is not None else "")
+            doc.append("")
+            doc.append("|Condition|")
+            doc.append("|-|")
+            if condition.definition is None:
+                continue
+            doc.append(f"|{self.escase_json(condition.definition)}|")
 
-        return "\n".join(conditions)
+        return "\n".join(doc)
 
     def rules(self, cfn_template:CfnTemplate) -> str:
-        rules:List[str] = []
+        doc:List[str] = []
 
-        rules.append("## Rules")
+        doc.append("## Rules")
 
-        r = cfn_template.definition.Rules
-        for rule_name in sorted([rule_name for rule_name in r.keys()]):
-            rules.append("\n---\n")
-            rules.append(f"### {rule_name}")
-            rules.append("")
-            d = cfn_template.get_rule_description(rule_name)
-            rules.append(d if d is not None else "")
-            rules.append("")
-            rules.append("|RuleCondition|")
-            rules.append("|-|")
-            rule_condition = r[rule_name].RuleCondition
-            rules.append(f"|{self.escase_json(rule_condition) if rule_condition is not None else '-'}|")
-            rules.append("")
-            rules.append("|Assert|AssertDescription|")
-            rules.append("|-|-|")
-            assertions = r[rule_name].Assertions
-            if len(assertions) == 0:
-                rules.append("|-|-|")
+        rules = cfn_template.rules
+        for rule in sorted(rules, key=lambda r: r.name):
+            doc.append("\n---\n")
+            doc.append(f"### {rule}")
+            doc.append("")
+            doc.append(rule.description if rule.description is not None else "")
+            doc.append("")
+            doc.append("|RuleCondition|")
+            doc.append("|-|")
+            if rule.definition.RuleCondition is not None:
+                doc.append(f"|{self.escase_json(rule.definition.RuleCondition)}|")
             else:
-                for assertion in assertions:
-                    rules.append(f"|{self.escase_json(assertion.Assert)}|{assertion.AssertDescription}|")
+                doc.append("|-|")
+            doc.append("")
+            doc.append("|Assert|AssertDescription|")
+            doc.append("|-|-|")
+            if len(rule.definition.Assertions) > 0:
+                for assertion in rule.definition.Assertions:
+                    doc.append(f"|{self.escase_json(assertion.Assert)}|{assertion.AssertDescription}|")
+            else:
+                doc.append("|-|-|")
         
-        return "\n".join(rules)
+        return "\n".join(doc)
 
 
     def outputs(self, cfn_template:CfnTemplate) -> str:
 
-        outputs:List[str] = []
+        doc:List[str] = []
 
-        outputs.append("## Outputs")
-        o = cfn_template.definition.Outputs
-        for output_name in sorted([output_name for output_name in o.keys()]):
-            outputs.append("\n---\n")
-            outputs.append(f"### {output_name}")
-            outputs.append("")
-            d = o[output_name].Description
-            outputs.append(d if d is not None else "")
-            outputs.append("")
-            outputs.append("|Value|ExportName|Condition|")
-            outputs.append("|-|-|-|")
-            value = o[output_name].Value
-            export = o[output_name].Export
+        doc.append("## Outputs")
+        outputs = cfn_template.outputs
+        for output in sorted(outputs, key=lambda o: o.name):
+            doc.append("\n---\n")
+            doc.append(f"### {output.name}")
+            doc.append("")
+            definition = output.definition
+            doc.append(definition.Description if definition.Description is not None else "")
+            
+            doc.append("")
+            doc.append("|Value|ExportName|Condition|")
+            doc.append("|-|-|-|")
+            value = definition.Value
+            export = definition.Export
             export_name = export.Name if export is not None else "-"
-            condition = o[output_name].Condition if o[output_name].Condition is not None else "-"
-            outputs.append(f"|{self.escase_json(value)}|{self.escase_json(export_name)}|{condition}|")
+            condition = definition.Condition if definition.Condition is not None else "-"            
+            doc.append(f"|{self.escase_json(value)}|{self.escase_json(export_name)}|{condition}|")
 
-        return "\n".join(outputs)
+        return "\n".join(doc)
 
     def resources(self, cfn_template:CfnTemplate) -> str:
-        resource:List[str] = []
+        doc:List[str] = []
 
-        resource.append("## Resources")
-        r = cfn_template.definition.Resources
-        for r_name, r_type in sorted([(r_name, r[r_name].Type) for r_name in r.keys()], key=lambda r: (r[1], r[0])):
-            
+        doc.append("## Resources")
+        resources = cfn_template.resources
+        for resource in sorted(resources, key=lambda r: (r.definition.Type, r.name)):
+            doc.append("\n---\n")
+            doc.append(f"### {resource.name} ({resource.definition.Type})")
+            doc.append("")
+            doc.append(resource.description if resource.description is not None else "")
+            doc.append("")
+
+            spec = resource.spec
+
+            doc.append(spec.Documentation if spec is not None and spec.Documentation is not None else "")
+            doc.append("")
+            doc.append("|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|")
+            doc.append("|-|-|-|-|-|-|")
+            doc.append("|{DependsOn}|{Condition}|{CreationPolicy}|{UpdatePolicy}|{UpdateReplacePolicy}|{DeletionPolicy}|".format(
+                DependsOn=self.list_item(resource.definition.DependsOn) if resource.definition.DependsOn is not None else "-",
+                Condition=resource.definition.Condition if resource.definition.Condition is not None else "-",
+                CreationPolicy=self.escase_json(resource.definition.CreationPolicy) if resource.definition.CreationPolicy is not None else "-",
+                UpdatePolicy=self.escase_json(resource.definition.UpdatePolicy) if resource.definition.UpdatePolicy is not None else "-",
+                UpdateReplacePolicy=resource.definition.UpdateReplacePolicy,
+                DeletionPolicy=resource.definition.DeletionPolicy,
+            ))
+            doc.append("")
+
+            doc.append("|Property|Value|Description|Type|Required|UpdateType|")
+            doc.append("|-|-|-|-|-|-|")
+            doc.append()
+
+        return "\n".join(doc)
+
+    def list_item(self, l:List[Any]) -> str:
+        return "<ul>" + "".join([f"<li>{str(i)}</li>" for i in l]) + "</ul>"
+
+
