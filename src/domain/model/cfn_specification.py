@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Literal, Mapping, Optional
 from pydantic import BaseModel
 
@@ -46,6 +47,10 @@ class CfnSpecificationPropertyType(BaseModel):
     UpdateType: Optional[Literal["Conditional", "Immutable", "Mutable"]] = None
     Properties: Optional[Mapping[str, CfnSpecificationPropertyTypeProperty]] = None
 
+@dataclass
+class CfnSpecificationForResource:
+    ResourceSpec: CfnSpecificationResourceType
+    PropertySpecs: Mapping[str, CfnSpecificationPropertyType]
 
 class CfnSpecification(BaseModel):
     ResourceSpecificationVersion: str
