@@ -15,4 +15,5 @@
     "terminal.integrated.env.linux": {
         "PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}/tests/features"
     },
+    "python.analysis.autoImportCompletions": true,
 }

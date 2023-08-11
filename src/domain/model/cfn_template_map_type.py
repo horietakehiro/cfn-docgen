@@ -1,5 +1,5 @@
-
-from typing import Mapping, TypeAlias, Union, TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING, Mapping, TypeAlias, Union
 
 if TYPE_CHECKING:
     from src.domain.model.cfn_template_list_type import CfnTemplateResourcePropertyListTypeDefinition

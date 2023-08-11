@@ -1,7 +1,6 @@
 import click
 
 from src.entrypoints.cli.model.cli_model import SupportedFormat
-from src.domain.services
 
 @click.group(name="cfn-docgen")
 @click.version_option()

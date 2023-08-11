@@ -5,15 +5,19 @@ from jsonpath_ng import jsonpath, parse # type: ignore
 from typing import Any, List, Literal, Mapping, Optional, Tuple, TypeAlias, Union, cast, TYPE_CHECKING
 from xmlrpc.client import Boolean
 from pydantic import BaseModel, Field, PositiveInt
-from domain.model.cfn_specification import CfnSpecificationForResource
+from domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationPropertyType, CfnSpecificationPropertyTypeProperty
 
 from domain.ports.cfn_specification_repository import ICfnSpecificationRepository
 
+from src.domain.model.cfn_template_primitive_type import CfnTemplateResourcePropertyPrimitiveTypeDefinition
+CfnTemplateResourcePropertyMapTypeDefinition:TypeAlias = Mapping[Any, Any]
+CfnTemplateResourcePropertyListTypeDefinition:TypeAlias = List[Any]
 if TYPE_CHECKING:
     # for avoiding circular reference
-    from src.domain.model.cfn_template_primitive_type import CfnTemplateResourcePropertyPrimitiveTypeDefinition
-    from src.domain.model.cfn_template_map_type import CfnTemplateResourcePropertyMapTypeDefinition
-    from src.domain.model.cfn_template_list_type import CfnTemplateResourcePropertyListTypeDefinition
+    from src.domain.model.cfn_template_map_type import CfnTemplateResourcePropertyMapTypeDefinition as m
+    from src.domain.model.cfn_template_list_type import CfnTemplateResourcePropertyListTypeDefinition as l
+    CfnTemplateResourcePropertyMapTypeDefinition = m # type: ignore
+    CfnTemplateResourcePropertyListTypeDefinition = l # type: ignore
 
 class CfnTemplateParameterDefinition(BaseModel):
     """based on https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html"""
@@ -174,7 +178,8 @@ class CfnTemplateResourceDefinition(BaseModel):
         if len(definitions) != 1:
             return None
         return definitions[0]
-
+    
+CfnTemplateResourceDefinition.model_rebuild()
 
 class CfnTemplateOutputExportDefinition(BaseModel):
     Name: str | Mapping[str, Any]
@@ -225,7 +230,7 @@ class CfnTemplateParameter:
 
 class CfnTemplateMapping:
 
-    def __init__(self, name:str, definition:Mapping[str, Mapping[str, Mapping[str, Any]]], metadata:CfnTemplateMetadataDefinition|None) -> None:
+    def __init__(self, name:str, definition:Mapping[str, Mapping[str, Any]], metadata:CfnTemplateMetadataDefinition|None) -> None:
         self.name = name
         self.definition = definition
 
@@ -291,34 +296,57 @@ class CfnTemplateResourceChildProperty:
 
         self.description = resource_definition.get_description_for_property(self.json_path)
         self.definition = resource_definition.get_definition_for_property(self.json_path)
-        self.spec = specs.PropertySpecs.get(f"{resource_definition.Type}.{prop_type}")
+        self.property_spec:CfnSpecificationPropertyType|None = None
+        self.primitive_spec:CfnSpecificationPropertyTypeProperty|None = None
 
-        self.properties:Optional[List[CfnTemplateResourceChildProperty]] = []
-        if self.spec is None:
-            return
-        if self.spec.PrimitiveType is not None:
-            return        
-        if self.spec.PrimitiveItemType is not None:
-            return
+        self.property_spec = specs.PropertySpecs.get(f"{resource_definition.Type}.{prop_type}")
+        if self.property_spec is not None and self.property_spec.Properties is not None:
+            self.primitive_spec = self.property_spec.Properties.get(prop_name, None)
+
+        self.properties:List[CfnTemplateResourceChildProperty] = []
+
+        if self.primitive_spec is not None:
+            if (
+                self.primitive_spec.PrimitiveType is not None
+                or self.primitive_spec.PrimitiveItemType is not None
+            ):
+                return
         
-        if self.spec.Type is None:
-            return
+        # if self.property_spec is None:
+        #     return
+        # if self.spec.PrimitiveType is not None:
+        #     return        
+        # if self.spec.PrimitiveItemType is not None:
+        #     return
+        # if self.spec.Type is None:
+        #     return
 
-        child_spec = specs.PropertySpecs.get(f"{resource_definition.Type}.{self.spec.Type}", None)
-        if child_spec is None or child_spec.Properties is None:
+        if self.property_spec is None or self.property_spec.Properties is None:
             return
-        for child_prop_name in child_spec.Properties.keys():
-            match self.spec.Type.lower():
+        for child_prop_name, child_prop_body in self.property_spec.Properties.items():
+            if child_prop_body.Type is None:
+                self.properties.append(
+                    CfnTemplateResourceChildProperty(
+                        prop_name=child_prop_name,
+                        prop_type=self.type,
+                        resource_definition=resource_definition,
+                        specs=specs,
+                        parent_path=self.json_path,
+                        index=None, depth=self.depth+1
+                    )
+                )
+                continue
+            match child_prop_body.Type.lower():
                 case "list":
                     definition_len = len(
-                        cast(CfnTemplateResourcePropertyListTypeDefinition,self.definition) 
+                        cast(List[Any] ,self.definition) 
                         if self.definition is not None else []
                     )
                     for i in range(max(1, definition_len)):
                         self.properties.append(
                             CfnTemplateResourceChildProperty(
                                 prop_name=child_prop_name,
-                                prop_type=child_prop_name,
+                                prop_type=self.type,
                                 resource_definition=resource_definition,
                                 specs=specs,
                                 parent_path=self.json_path,
@@ -327,12 +355,12 @@ class CfnTemplateResourceChildProperty:
                         )
                     continue
                 case "map":
-                    definition_map = cast(CfnTemplateResourcePropertyMapTypeDefinition, self.definition) if self.definition is not None else {"Key": None}
+                    definition_map = cast(Mapping[Any, Any], self.definition) if self.definition is not None else {"Key": None}
                     for key in definition_map.keys():
                         self.properties.append(
                             CfnTemplateResourceChildProperty(
                                 prop_name=f"{child_prop_name}.{key}",
-                                prop_type=child_prop_name,
+                                prop_type=self.type,
                                 resource_definition=resource_definition,
                                 specs=specs,
                                 parent_path=self.json_path,
@@ -344,7 +372,7 @@ class CfnTemplateResourceChildProperty:
                     self.properties.append(
                         CfnTemplateResourceChildProperty(
                             prop_name=child_prop_name,
-                            prop_type=child_prop_name,
+                            prop_type=self.type,
                             resource_definition=resource_definition,
                             specs=specs,
                             parent_path=self.json_path,
@@ -402,7 +430,7 @@ class CfnTemplateResourceRootProperty:
             match self.spec.Type.lower():
                 case "list":
                     definition_len = len(
-                        cast(CfnTemplateResourcePropertyListTypeDefinition,self.definition) 
+                        cast('CfnTemplateResourcePropertyListTypeDefinition',self.definition) 
                         if self.definition is not None else []
                     )
                     for i in range(max(1, definition_len)):
@@ -418,7 +446,7 @@ class CfnTemplateResourceRootProperty:
                         )
                     continue
                 case "map":
-                    definition_map = cast(CfnTemplateResourcePropertyMapTypeDefinition, self.definition) if self.definition is not None else {"Key": None}
+                    definition_map = cast('CfnTemplateResourcePropertyMapTypeDefinition', self.definition) if self.definition is not None else {"Key": None}
                     for key in definition_map.keys():
                         self.properties.append(
                             CfnTemplateResourceChildProperty(
