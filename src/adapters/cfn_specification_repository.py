@@ -1,7 +1,7 @@
 
 import json
 from typing import Mapping
-from domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationPropertyType, CfnSpecificationResourceType
+from domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationRootProperty, CfnSpecificationResource
 from src.domain.model.cfn_specification import CfnSpecification
 from src.domain.ports.cache import IFileCache
 from src.domain.ports.file_loader import IFileLoader
@@ -18,20 +18,20 @@ class CfnSpecificationRepository(ICfnSpecificationRepository):
         else:
             self.spec = CfnSpecification(**json.loads(cached))
 
-    def get_resource_spec(self, resource_type: str) -> CfnSpecificationResourceType:
+    def get_resource_spec(self, resource_type: str) -> CfnSpecificationResource:
         try:
             return self.spec.ResourceTypes[resource_type]
         except KeyError as ex:
             raise ex
 
-    def get_property_spec(self, property_type: str) -> CfnSpecificationPropertyType:
+    def get_property_spec(self, property_type: str) -> CfnSpecificationRootProperty:
         try:
             return self.spec.PropertyTypes[property_type]
         except KeyError as ex:
             raise ex
 
-    def list_properties_for_resource(self, resource_type: str) -> Mapping[str, CfnSpecificationPropertyType]:
-        property_specs:Mapping[str, CfnSpecificationPropertyType] = {}
+    def list_properties_for_resource(self, resource_type: str) -> Mapping[str, CfnSpecificationRootProperty]:
+        property_specs:Mapping[str, CfnSpecificationRootProperty] = {}
         for property_type, property_spec in self.spec.PropertyTypes.items():
             if property_type.startswith(f"{resource_type}.") or property_type == "Tag":
                 property_specs[property_type] = property_spec

@@ -5,7 +5,7 @@ import os
 from re import escape
 from typing import Any, List, Mapping
 
-from src.domain.model.cfn_template import CfnTemplate, CfnTemplateParameter
+from src.domain.model.cfn_template import CfnTemplate, CfnTemplateParameterLeaf
 
 class IFormatConvertService(ABC):
 
@@ -137,7 +137,7 @@ class MarkdownConvertService(IFormatConvertService):
 
         return "\n".join(doc)
     
-    def parameter(self, parameter:CfnTemplateParameter) -> str:
+    def parameter(self, parameter:CfnTemplateParameterLeaf) -> str:
         d = parameter.definition
         p:List[str] = []
         p.append(f"#### {parameter.name}")

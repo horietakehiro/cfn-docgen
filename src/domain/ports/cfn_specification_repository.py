@@ -3,7 +3,7 @@ from typing import Mapping, Optional
 from domain.ports.cache import IFileCache
 from domain.ports.file_loader import IFileLoader
 
-from src.domain.model.cfn_specification import CfnSpecificationPropertyType, CfnSpecificationResourceType, CfnSpecificationForResource
+from src.domain.model.cfn_specification import CfnSpecificationRootProperty, CfnSpecificationResource, CfnSpecificationForResource
 
 
 class ICfnSpecificationRepository(ABC):
@@ -12,16 +12,16 @@ class ICfnSpecificationRepository(ABC):
         super().__init__()
 
     @abstractmethod
-    def get_resource_spec(self, resource_type:str) -> CfnSpecificationResourceType:
+    def get_resource_spec(self, resource_type:str) -> CfnSpecificationResource:
         pass
 
     @abstractmethod
-    def get_property_spec(self, property_type:str) -> CfnSpecificationPropertyType:
+    def get_property_spec(self, property_type:str) -> CfnSpecificationRootProperty:
         pass
 
 
     @abstractmethod
-    def list_properties_for_resource(self, resource_type:str) -> Mapping[str, CfnSpecificationPropertyType]:
+    def list_properties_for_resource(self, resource_type:str) -> Mapping[str, CfnSpecificationRootProperty]:
         pass
 
 
