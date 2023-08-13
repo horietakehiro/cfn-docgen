@@ -3,10 +3,10 @@ import itertools
 import json
 from jsonpath_ng import jsonpath, parse # type: ignore
 
-from typing import Any, List, Literal, Mapping, Optional, Tuple, TypeAlias, Union, cast, TYPE_CHECKING
+from typing import Any, List, Literal, Mapping, MappingView, Optional, Tuple, TypeAlias, Union, cast, TYPE_CHECKING
 from xmlrpc.client import Boolean
 from pydantic import BaseModel, Field, PositiveInt
-from domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationRootProperty, CfnSpecificationChildProperty
+from domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationProperty, CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName, CfnSpecificationPropertyType
 
 from domain.ports.cfn_specification_repository import ICfnSpecificationRepository
 
@@ -99,6 +99,7 @@ class CfnTemplateMetadataDefinition(BaseModel):
     aws_cloudformation_interface:Optional[CfnTemplateMetadataInterface] = Field(default=None, alias="AWS::CloudFormation::Interface")
     CfnDocgen: Optional[CfnTemplateMetadataCfnDocgenDefinition] = None
 
+
 class CfnTemplateRuleAssertDefinition(BaseModel):
     """based on https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/rules-section-structure.html"""
     Assert: Mapping[Any, Any]
@@ -115,6 +116,22 @@ class CfnTemplateRuleDefinition(BaseModel):
 class CfnTemplateResourceMetadataCfnDocgenDefinition(BaseModel):
     Description: Optional[str] = None
     Properties: Optional[Mapping[str, Any]] = None
+
+
+    def get_resource_description(self, ) -> Optional[str]:
+        return self.Description
+
+    def get_property_description_by_json_path(self, json_path:str) -> Optional[str]:
+        if self.Properties is None:
+            return None
+        jsonpath_expr = parse(json_path) # type: ignore
+        descriptions:List[Any] = [f.value for f in jsonpath_expr.find(self.Properties)] # type: ignore
+        if len(descriptions) != 1:
+            return None
+        description = descriptions[0]
+        if not isinstance(description, str):
+            return None
+        return description
 
 class CfnTemplateResourceMetadataDefinition(BaseModel):
     CfnDocgen: Optional[CfnTemplateResourceMetadataCfnDocgenDefinition] = None
@@ -154,36 +171,35 @@ class CfnTemplateResourceDefinition(BaseModel):
     UpdateReplacePolicy: Literal["Delete", "Retain", "Snapshot"] = "Delete"
 
 
-    def get_description_for_property(self, json_path:str) -> Optional[str]:
-        metadata = self.Metadata
-        if metadata is None:
-            return None
-        cfn_docgen = metadata.CfnDocgen
-        if cfn_docgen is None:
-            return None
-        properties = cfn_docgen.Properties
-        if properties is None:
-            return None
+    # def get_description_for_property(self, json_path:str) -> Optional[str]:
+    #     metadata = self.Metadata
+    #     if metadata is None:
+    #         return None
+    #     cfn_docgen = metadata.CfnDocgen
+    #     if cfn_docgen is None:
+    #         return None
+    #     properties = cfn_docgen.Properties
+    #     if properties is None:
+    #         return None
 
-        descriptions:List[str] = []
-        jsonpath_expr = parse(json_path) # type: ignore
-        descriptions = [f.value for f in jsonpath_expr.find(properties)] # type: ignore
-        if len(descriptions) != 1:
-            return None
-        return descriptions[0]
+    #     descriptions:List[str] = []
+    #     jsonpath_expr = parse(json_path) # type: ignore
+    #     descriptions = [f.value for f in jsonpath_expr.find(properties)] # type: ignore
+    #     if len(descriptions) != 1:
+    #         return None
+    #     return descriptions[0]
 
-    def get_definition_for_property(self, json_path:str) -> Optional[CfnTemplateResourcePropertyDefinition]:
-        definitions:List[CfnTemplateResourcePropertyDefinition] = []
-        jsonpath_expr = parse(json_path) # type: ignore
-        definitions = [f.value for f in jsonpath_expr.find(self.Properties)] # type: ignore
-        if len(definitions) != 1:
-            return None
-        return definitions[0]
+    # def get_definition_for_property(self, json_path:str) -> Optional[CfnTemplateResourcePropertyDefinition]:
+    #     definitions:List[CfnTemplateResourcePropertyDefinition] = []
+    #     jsonpath_expr = parse(json_path) # type: ignore
+    #     definitions = [f.value for f in jsonpath_expr.find(self.Properties)] # type: ignore
+    #     if len(definitions) != 1:
+    #         return None
+    #     return definitions[0]
     
-CfnTemplateResourceDefinition.model_rebuild()
-
 class CfnTemplateOutputExportDefinition(BaseModel):
     Name: str | Mapping[str, Any]
+
 class CfnTemplateOutputDefinition(BaseModel):
     """based on https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html"""
     Description: Optional[str] = None
@@ -206,8 +222,8 @@ class CfnTemplateDefinition(BaseModel):
 
     @classmethod
     def from_string(cls, template:str) -> CfnTemplateDefinition:
-        d  = json.loads(template)
-        return CfnTemplateDefinition(**d)
+        j  = json.loads(template)
+        return CfnTemplateDefinition(**j)
 
 
 class CfnTemplateParametersNode:
@@ -243,24 +259,98 @@ class CfnTemplateParametersNode:
 
 
 class CfnTemplateParameterGroupNode:
-
     def __init__(
         self,
         definitions:Mapping[str, CfnTemplateParameterDefinition],
     ) -> None:
         self.leaves = {name: CfnTemplateParameterLeaf(definition) for name, definition in definitions.items()}
-        
 
 class CfnTemplateParameterLeaf:
     def __init__(self, definition:CfnTemplateParameterDefinition) -> None:
         self.definition = definition
-        
+
+class CfnTemplateResourcePropertyNode:
+    def __init__(
+        self,
+        definition:CfnTemplateResourcePropertyDefinition,
+        description:Optional[str],
+        resource_property_spec:Optional[CfnSpecificationProperty],
+        property_spec:Optional[CfnSpecificationPropertyType],
+    ) -> None:
+        pass
+
+class CfnTemplateResourcePropertiesNode:
+    def __init__(
+        self,
+        definitions:Mapping[str, CfnTemplateResourcePropertyDefinition],
+        resource_property_specs:Mapping[str, CfnSpecificationProperty],
+        property_specs:Mapping[str, CfnSpecificationPropertyType],
+        cfn_docgen_metadata:Optional[CfnTemplateResourceMetadataCfnDocgenDefinition],
+    ) -> None:
+        self.property_nodes:Mapping[str, CfnTemplateResourcePropertyNode] = {}
+        # for name, definition in definitions.items():
+        #     resource_property_spec = resource_property_specs.get(name)
+        #     # the prop is a resource prop
+        #     if resource_property_spec is not None:
+        #         # the prop is a prop with primitive type, without property_spec 
+        #         if resource_property_spec.PrimitiveType is not None:
+        #             self.property_nodes[name] = CfnTemplateResourcePropertyNode(
+        #                 definition=definition, 
+        #                 resource_property_spec=resource_property_spec,
+        #                 property_spec=None,
+        #             )
+
+
+
+class CfnTemplateResourceNode:
+    def __init__(
+        self,
+        definition:CfnTemplateResourceDefinition,
+        specs:CfnSpecificationForResource,
+    ) -> None:
+        metadata = definition.Metadata
+        cfn_docgen = metadata.CfnDocgen if metadata is not None else None
+
+        self.description:Optional[str] = cfn_docgen.get_resource_description() if cfn_docgen is not None else None
+        self.creation_policy = definition.CreationPolicy
+        self.update_policy =  definition.UpdatePolicy
+        self.deletion_policy = definition.DeletionPolicy
+        self.update_replace_policy = definition.UpdateReplacePolicy
+        self.metadata = definition.Metadata
+        self.depends_on:List[str] = definition.DependsOn if definition.DependsOn is not None else []
+
+        self.spec = specs.ResourceSpec
+
+        self.properties_node = CfnTemplateResourcePropertiesNode(
+            definitions=definition.Properties,
+            resource_property_specs=specs.ResourceSpec.Properties,
+            property_specs=specs.PropertySpecs,
+            cfn_docgen_metadata=cfn_docgen
+        )
+
+
+
+class CfnTemplateResourcesNode:
+    def __init__(
+        self,
+        definitions:Mapping[str, CfnTemplateResourceDefinition],
+        spec_repository:ICfnSpecificationRepository,
+    ) -> None:
+        self.resource_nodes:Mapping[str, CfnTemplateResourceNode] = {}
+        for name, definition in definitions.items():
+            specs = spec_repository.get_specs_for_resource(CfnSpecificationResourceTypeName(definition.Type))
+            self.resource_nodes[name] = CfnTemplateResourceNode(
+                definition=definition, 
+                specs=specs,
+            )
+
 
 # class CfnTemplateMapping:
 
 #     def __init__(self, name:str, definition:Mapping[str, Mapping[str, Any]], metadata:CfnTemplateMetadataDefinition|None) -> None:
 #         self.name = name
 #         self.definition = definition
+
 
 #         self.description = self.get_description(name, metadata)
 

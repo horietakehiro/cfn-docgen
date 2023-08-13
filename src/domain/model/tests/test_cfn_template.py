@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import Mapping, cast
+from typing import Mapping, Optional, Type, cast
 
 import pytest
 from adapters.cfn_specification_repository import CfnSpecificationRepository
 from adapters.internal.cache import LocalFileCache
 from adapters.internal.file_loader import  RemoteFileLoader
 from config import AppConfig
-from domain.model.cfn_template import CfnTemplateMetadataParameterGroup, CfnTemplateMetadataParameterGroupLabel, CfnTemplateParameterDefinition, CfnTemplateParametersNode
+from domain.model.cfn_template import CfnTemplateDefinition, CfnTemplateMetadataDefinition, CfnTemplateMetadataParameterGroup, CfnTemplateMetadataParameterGroupLabel, CfnTemplateParameterDefinition, CfnTemplateParametersNode, CfnTemplateResourceDefinition, CfnTemplateResourceMetadataCfnDocgenDefinition, CfnTemplateResourceMetadataDefinition, CfnTemplateResourcesNode
 # from src.domain.model.cfn_template import (
 #     CfnTemplateCondition,
 #     CfnTemplateMapping,
@@ -25,6 +25,60 @@ from domain.model.cfn_template import CfnTemplateMetadataParameterGroup, CfnTemp
 #     CfnTemplateRuleAssertDefinition,
 #     CfnTemplateRuleDefinition
 # )
+
+def test_CfnTemplateMetadataDefinition_get_resource_description():
+    description = "some-description"
+    cfn_docgen = CfnTemplateResourceMetadataCfnDocgenDefinition(
+        Description=description
+    )
+
+    d = cfn_docgen.get_resource_description()
+    assert d is not None and d == description
+
+@pytest.mark.parametrize("definition", [
+    (CfnTemplateResourceMetadataCfnDocgenDefinition())
+
+])
+def CfnTemplateResourceMetadataCfnDocgenDefinition_get_resource_description_none(cfn_docgen:CfnTemplateResourceMetadataCfnDocgenDefinition):
+    assert cfn_docgen.get_resource_description() is None
+
+@pytest.mark.parametrize("json_path,expected,", [
+    ("$.ImageId", "imageid"),
+    ("$.CpuOptions.CoreCount", "corecount"),
+    ("$.BlockDeviceMappings", None),
+    ("$.BlockDeviceMappings[1].Ebs.VolumeType", "volumetype"),
+    ("$.Tags", "tags"),
+    ("$.NotExist", None),
+])
+def test_CfnTemplateResourceMetadataCfnDocgenDefinition_get_property_description_by_json_path(
+    json_path:str, expected:Optional[str],
+):
+    definition = CfnTemplateResourceMetadataCfnDocgenDefinition(
+        Properties={
+            "ImageId": "imageid",
+            "CpuOptions": {
+                "CoreCount": "corecount"
+            },
+            "BlockDeviceMappings": [
+                {},
+                {
+                    "Ebs": {
+                        "VolumeType": "volumetype"
+                    }
+                }
+            ],
+            "Tags": "tags"
+        }
+    )
+    d = definition.get_property_description_by_json_path(json_path)
+    if expected is None:
+        assert d is None
+    else:
+        assert d == expected
+
+
+
+
 
 def test_CfnTemplateParametersNode():
     parameter_definitions:Mapping[str, CfnTemplateParameterDefinition] = {
@@ -69,6 +123,90 @@ def test_CfnTemplateParametersNode():
     assert parameter_leaf12 is not None and parameter_leaf12.definition.Type == "Number"
     assert parameter_leaf21 is not None and parameter_leaf21.definition.Type == "CommaDelimitedList"
     assert independent_parameter_leaf is not None and independent_parameter_leaf.definition.Type == "AWS::EC2::AvailabilityZone::Name"
+
+
+@pytest.fixture
+def spec_repository():
+    return CfnSpecificationRepository(
+        loader=RemoteFileLoader(AppConfig.DEFAULT_SPECIFICATION_URL),
+        cache=LocalFileCache(AppConfig())
+    )
+
+def test_CfnTemplateResourcesNode(spec_repository:CfnSpecificationRepository):
+    resource_description = "resource-descirption"
+    property_descriptions = {
+        "ImageId": "imageid",
+        "BlockDeviceMappings": [
+            {
+                "Ebs": "ebs"
+            }
+        ],
+        "Tags": [
+            {},
+            {
+                "Key": "key"
+            }
+        ]
+    }
+    definitions:Mapping[str, CfnTemplateResourceDefinition] = {
+        "Instance": CfnTemplateResourceDefinition(
+            Type="AWS::EC2::Instance",
+            DependsOn=["VPC"],
+            DeletionPolicy="Retain",
+            Metadata=CfnTemplateResourceMetadataDefinition(
+                CfnDocgen=CfnTemplateResourceMetadataCfnDocgenDefinition(
+                    Description=resource_description,
+                    Properties=property_descriptions,
+                )
+            ),
+            Properties={
+                "ImageId": "IMAGEID",
+                "BlockDeviceMappings": [
+                    {
+                        "Ebs": {
+                            "Encrypted" : True,
+                            "VolumeSize" : 0,
+                            "VolumeType" : "VOLUMETYPE"
+                        }
+                    }
+                ],
+                "CpuOptions": {
+                    "CoreCount": 0
+                },
+                "Tags": [
+                    {
+                        "Key": "KEY",
+                        "Value": "VALUE"
+                    },
+                    {
+                        "Key": "KEY",
+                        "Value": "VALUE"
+                    }
+                ]
+            }
+        )
+    }
+
+    resources_node = CfnTemplateResourcesNode(
+        definitions=definitions,
+        spec_repository=spec_repository,
+    )
+
+    instance_node = resources_node.resource_nodes.get("Instance")
+    assert instance_node is not None
+    assert instance_node.description is not None and instance_node.description == resources_node
+    assert len(instance_node.depends_on) == 1 and instance_node.depends_on[0] == "VPC"
+    assert instance_node.deletion_policy == "Retain"
+    assert instance_node.update_policy is None
+    assert instance_node.creation_policy is None
+    assert instance_node.update_replace_policy == "Delete"
+    assert instance_node.spec.Documentation is not None and instance_node.spec.Documentation == "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html"
+
+    properties_node = instance_node.properties_node
+    image_id_node = properties_node.property_nodes.get("ImageId")
+    assert image_id_node is not None
+    # assert image_id_node.
+
 
 
 

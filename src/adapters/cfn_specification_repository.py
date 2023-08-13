@@ -1,7 +1,8 @@
 
 import json
 from typing import Mapping
-from domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationRootProperty, CfnSpecificationResource
+
+from domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName, CfnSpecificationPropertyType, CfnSpecificationResourceType
 from src.domain.model.cfn_specification import CfnSpecification
 from src.domain.ports.cache import IFileCache
 from src.domain.ports.file_loader import IFileLoader
@@ -18,27 +19,27 @@ class CfnSpecificationRepository(ICfnSpecificationRepository):
         else:
             self.spec = CfnSpecification(**json.loads(cached))
 
-    def get_resource_spec(self, resource_type: str) -> CfnSpecificationResource:
+    def get_resource_spec(self, resource_type: CfnSpecificationResourceTypeName) -> CfnSpecificationResourceType:
         try:
-            return self.spec.ResourceTypes[resource_type]
+            return self.spec.ResourceTypes[resource_type.fullname]
         except KeyError as ex:
             raise ex
 
-    def get_property_spec(self, property_type: str) -> CfnSpecificationRootProperty:
+    def get_property_spec(self, property_type: CfnSpecificationPropertyTypeName) -> CfnSpecificationPropertyType:
         try:
-            return self.spec.PropertyTypes[property_type]
+            return self.spec.PropertyTypes[property_type.fullname]
         except KeyError as ex:
             raise ex
 
-    def list_properties_for_resource(self, resource_type: str) -> Mapping[str, CfnSpecificationRootProperty]:
-        property_specs:Mapping[str, CfnSpecificationRootProperty] = {}
+    def list_properties_for_resource(self, resource_type: CfnSpecificationResourceTypeName) -> Mapping[str, CfnSpecificationPropertyType]:
+        property_specs:Mapping[str, CfnSpecificationPropertyType] = {}
         for property_type, property_spec in self.spec.PropertyTypes.items():
-            if property_type.startswith(f"{resource_type}.") or property_type == "Tag":
+            if property_type.startswith(f"{resource_type.fullname}.") or property_type == "Tag":
                 property_specs[property_type] = property_spec
         return property_specs
 
 
-    def get_specs_for_resource(self, resource_type: str) -> CfnSpecificationForResource:
+    def get_specs_for_resource(self, resource_type: CfnSpecificationResourceTypeName) -> CfnSpecificationForResource:
         resource_spec = self.get_resource_spec(resource_type)
         property_specs = self.list_properties_for_resource(resource_type)
         return CfnSpecificationForResource(

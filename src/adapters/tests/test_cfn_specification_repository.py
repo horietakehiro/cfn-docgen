@@ -3,6 +3,7 @@ from adapters.cfn_specification_repository import CfnSpecificationRepository
 from adapters.internal.cache import LocalFileCache
 from adapters.internal.file_loader import RemoteFileLoader
 from config import AppConfig
+from domain.model.cfn_specification import CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName
 
 
 @pytest.fixture
@@ -19,7 +20,7 @@ def repository():
 def test_CfnSpecificationRepository_get_resource_spec(repository:CfnSpecificationRepository):
 
     for resource_type in repository.spec.ResourceTypes.keys():
-        resource_spec = repository.get_resource_spec(resource_type)
+        resource_spec = repository.get_resource_spec(CfnSpecificationResourceTypeName(resource_type))
         assert resource_spec is not None
         if resource_spec.Documentation is not None:
             assert (
@@ -40,21 +41,22 @@ def test_CfnSpecificationRepository_get_resource_spec(repository:CfnSpecificatio
                 ), f"{resource_type}/{prop_name}/{prop}"
 
 def test_CfnSpecificationRepository_get_resource_spec_KeyError(repository:CfnSpecificationRepository):
-    invalid_key = "AWS::Invalid::Key"
+    invalid_key = CfnSpecificationResourceTypeName("AWS::Invalid::Key")
     with pytest.raises(KeyError) as ex:
         repository.get_resource_spec(invalid_key)
-    assert invalid_key in ex.value.args 
+    assert invalid_key.fullname in ex.value.args 
 
 def test_CfnSpecificationRepository_get_property_spec_KeyError(repository:CfnSpecificationRepository):
-    invalid_key = "AWS::Invalid::Key.1"
+    invalid_key = CfnSpecificationPropertyTypeName("AWS::Invalid::Key.1")
     with pytest.raises(KeyError) as ex:
         repository.get_property_spec(invalid_key)
-    assert invalid_key in ex.value.args 
+    assert invalid_key.fullname in ex.value.args 
 
 
 def test_CfnSpecificationRepository_get_property_spec(repository:CfnSpecificationRepository):
     for property_type in repository.spec.PropertyTypes.keys():
-        property_spec = repository.get_property_spec(property_type)
+        print(property_type)
+        property_spec = repository.get_property_spec(CfnSpecificationPropertyTypeName(property_type))
         assert property_spec is not None
         if property_spec.Documentation is not None:
             assert (
@@ -84,15 +86,15 @@ def test_CfnSpecificationRepository_get_property_spec(repository:CfnSpecificatio
                     ), f"{property_type}/{prop_name}/{prop}"
 
 def test_CfnSpecificationRepository_list_properties_for_resource(repository:CfnSpecificationRepository):
-    resource_type = "AWS::EC2::Instance"
+    resource_type = CfnSpecificationResourceTypeName("AWS::EC2::Instance")
     proeprties = repository.list_properties_for_resource(resource_type)
-    assert proeprties.get(f"{resource_type}.BlockDeviceMapping")
-    assert proeprties.get(f"{resource_type}.Ebs")
+    assert proeprties.get(CfnSpecificationPropertyTypeName(f"{resource_type.fullname}.BlockDeviceMapping").fullname)
+    assert proeprties.get(CfnSpecificationPropertyTypeName(f"{resource_type.fullname}.Ebs").fullname)
 
 
 def test_CfnSpecificationRepository_get_specs_for_resources(repository:CfnSpecificationRepository):
-    resource_type = "AWS::EC2::Instance"
+    resource_type = CfnSpecificationResourceTypeName("AWS::EC2::Instance")
     specs = repository.get_specs_for_resource(resource_type)
-    assert specs.PropertySpecs.get(f"{resource_type}.BlockDeviceMapping")
-    assert specs.PropertySpecs.get(f"{resource_type}.Ebs")
+    assert specs.PropertySpecs.get(CfnSpecificationPropertyTypeName(f"{resource_type.fullname}.BlockDeviceMapping").fullname)
+    assert specs.PropertySpecs.get(CfnSpecificationPropertyTypeName(f"{resource_type.fullname}.Ebs").fullname)
 
