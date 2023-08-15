@@ -1,14 +1,13 @@
 import hashlib
 import os
-from config import AppConfig
 from domain.ports.cache import IFileCache
 
 HexHashString = str
 
 class NoFileCache(IFileCache):
 
-    def __init__(self, config: AppConfig) -> None:
-        super().__init__(config)
+    def __init__(self, cache_root_dir: str) -> None:
+        super().__init__(cache_root_dir)
 
     def get(self, filepath: str) -> str | None:
         return None
@@ -18,11 +17,8 @@ class NoFileCache(IFileCache):
 
 class LocalFileCache(IFileCache):
 
-    def __init__(self, config: AppConfig) -> None:
-        self.config = config
-        self.cache_root_dir = os.path.join(
-            self.config.APP_ROOT_DIR, "cache"
-        )
+    def __init__(self, cache_root_dir: str) -> None:
+        self.cache_root_dir = cache_root_dir
         os.makedirs(self.cache_root_dir, exist_ok=True)
 
         self.encoding = "UTF-8"

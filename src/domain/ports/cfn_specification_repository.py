@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Mapping
+from typing import List, Mapping
 from domain.ports.cache import IFileCache
 from domain.ports.file_loader import IFileLoader
 
@@ -8,7 +8,8 @@ from src.domain.model.cfn_specification import CfnSpecificationPropertyTypeName,
 
 class ICfnSpecificationRepository(ABC):
 
-    def __init__(self, loader:IFileLoader, cache:IFileCache) -> None:
+    def __init__(self, loader:IFileLoader, cache:IFileCache, recursive_resource_types:List[str]) -> None:
+        self.recursive_resource_types = recursive_resource_types
         super().__init__()
 
     @abstractmethod
@@ -28,3 +29,6 @@ class ICfnSpecificationRepository(ABC):
     @abstractmethod
     def get_specs_for_resource(self, resource_type:CfnSpecificationResourceTypeName) -> CfnSpecificationForResource:
         pass
+
+    def is_recursive(self, resource_type:CfnSpecificationResourceTypeName) -> bool:
+        return resource_type.fullname in self.recursive_resource_types

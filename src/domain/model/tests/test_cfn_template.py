@@ -1,30 +1,21 @@
 from __future__ import annotations
-from typing import Mapping, Optional, Type, cast
+from typing import Any, Mapping, Optional, cast
 
 import pytest
 from adapters.cfn_specification_repository import CfnSpecificationRepository
 from adapters.internal.cache import LocalFileCache
 from adapters.internal.file_loader import  RemoteFileLoader
 from config import AppConfig
-from domain.model.cfn_template import CfnTemplateDefinition, CfnTemplateMetadataDefinition, CfnTemplateMetadataParameterGroup, CfnTemplateMetadataParameterGroupLabel, CfnTemplateParameterDefinition, CfnTemplateParametersNode, CfnTemplateResourceDefinition, CfnTemplateResourceMetadataCfnDocgenDefinition, CfnTemplateResourceMetadataDefinition, CfnTemplateResourcesNode
-# from src.domain.model.cfn_template import (
-#     CfnTemplateCondition,
-#     CfnTemplateMapping,
-#     CfnTemplateMetadataCfnDocgenDefinition,
-#     CfnTemplateMetadataDefinition,
-#     CfnTemplateMetadataInterface,
-#     CfnTemplateMetadataParameterGroup,
-#     CfnTemplateMetadataParameterGroupLabel,
-#     CfnTemplateParameterLeaf,
-#     CfnTemplateParameterDefinition,
-#     # CfnTemplateResourceChildProperty,
-#     CfnTemplateResourceDefinition,
-#     CfnTemplateResourceMetadataCfnDocgenDefinition,
-#     CfnTemplateResourceMetadataDefinition,
-#     CfnTemplateRule,
-#     CfnTemplateRuleAssertDefinition,
-#     CfnTemplateRuleDefinition
-# )
+from domain.model.cfn_template import (
+    CfnTemplateMetadataParameterGroup,
+    CfnTemplateMetadataParameterGroupLabel,
+    CfnTemplateParameterDefinition,
+    CfnTemplateParametersNode,
+    CfnTemplateResourceDefinition,
+    CfnTemplateResourceMetadataCfnDocgenDefinition,
+    CfnTemplateResourceMetadataDefinition,
+    CfnTemplateResourcesNode
+)
 
 def test_CfnTemplateMetadataDefinition_get_resource_description():
     description = "some-description"
@@ -124,15 +115,27 @@ def test_CfnTemplateParametersNode():
     assert parameter_leaf21 is not None and parameter_leaf21.definition.Type == "CommaDelimitedList"
     assert independent_parameter_leaf is not None and independent_parameter_leaf.definition.Type == "AWS::EC2::AvailabilityZone::Name"
 
+def test_CfnTemplateMappingsNode():
+    raise NotImplementedError
+
 
 @pytest.fixture
 def spec_repository():
     return CfnSpecificationRepository(
         loader=RemoteFileLoader(AppConfig.DEFAULT_SPECIFICATION_URL),
-        cache=LocalFileCache(AppConfig())
+        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+        recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )
 
-def test_CfnTemplateResourcesNode(spec_repository:CfnSpecificationRepository):
+def all_resource_types():
+    spec_repository = CfnSpecificationRepository(
+        loader=RemoteFileLoader(AppConfig.DEFAULT_SPECIFICATION_URL),
+        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+        recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+    )
+    return list(spec_repository.spec.ResourceTypes.keys())
+
+def test_CfnTemplateResourcesNode_aws_ec2_instance(spec_repository:CfnSpecificationRepository):
     resource_description = "resource-descirption"
     property_descriptions = {
         "ImageId": "imageid",
@@ -141,6 +144,7 @@ def test_CfnTemplateResourcesNode(spec_repository:CfnSpecificationRepository):
                 "Ebs": "ebs"
             }
         ],
+        "SecurityGroupIds": "securitygroupids",
         "Tags": [
             {},
             {
@@ -168,19 +172,27 @@ def test_CfnTemplateResourcesNode(spec_repository:CfnSpecificationRepository):
                             "VolumeSize" : 0,
                             "VolumeType" : "VOLUMETYPE"
                         }
+                    },
+                    {
+                        "NoDevice": {} 
                     }
                 ],
                 "CpuOptions": {
                     "CoreCount": 0
                 },
+                "SecurityGroupIds": [
+                    "SECURITYGROUPID1",
+                    "SECURITYGROUPID2",
+                    "SECURITYGROUPID3",
+                ],
                 "Tags": [
                     {
-                        "Key": "KEY",
-                        "Value": "VALUE"
+                        "Key": "KEY1",
+                        "Value": "VALUE1"
                     },
                     {
-                        "Key": "KEY",
-                        "Value": "VALUE"
+                        "Key": "KEY2",
+                        "Value": "VALUE2"
                     }
                 ]
             }
@@ -194,448 +206,242 @@ def test_CfnTemplateResourcesNode(spec_repository:CfnSpecificationRepository):
 
     instance_node = resources_node.resource_nodes.get("Instance")
     assert instance_node is not None
-    assert instance_node.description is not None and instance_node.description == resources_node
+    assert instance_node.description is not None and instance_node.description == resource_description
     assert len(instance_node.depends_on) == 1 and instance_node.depends_on[0] == "VPC"
     assert instance_node.deletion_policy == "Retain"
     assert instance_node.update_policy is None
     assert instance_node.creation_policy is None
     assert instance_node.update_replace_policy == "Delete"
-    assert instance_node.spec.Documentation is not None and instance_node.spec.Documentation == "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html"
+    assert instance_node.spec.Documentation is not None and instance_node.spec.Documentation == "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html"
 
     properties_node = instance_node.properties_node
-    image_id_node = properties_node.property_nodes.get("ImageId")
-    assert image_id_node is not None
-    # assert image_id_node.
 
+    image_id_leaf = properties_node.property_leaves.get("ImageId")
+    assert image_id_leaf is not None
+    assert image_id_leaf.definition == "IMAGEID"
+    assert image_id_leaf.json_path == "$.ImageId"
+    assert image_id_leaf.description == "imageid"
+    assert image_id_leaf.spec.PrimitiveType is not None and image_id_leaf.spec.PrimitiveType == "String"
 
+    cpu_options_node = properties_node.property_nodes.get("CpuOptions")
+    assert cpu_options_node is not None
+    assert cpu_options_node.description is None
+    assert cpu_options_node.json_path == "$.CpuOptions"
+    assert cpu_options_node.spec is not None
+    assert cpu_options_node.spec.Type is not None and cpu_options_node.spec.Type == "CpuOptions"
+    core_count_leaf = cpu_options_node.property_leaves.get("CoreCount")
+    assert core_count_leaf is not None
+    assert core_count_leaf.description is None
+    assert core_count_leaf.json_path == "$.CpuOptions.CoreCount"
+    assert core_count_leaf.spec is not None
+    assert core_count_leaf.spec.PrimitiveType is not None and core_count_leaf.spec.PrimitiveType == "Integer"
+    assert core_count_leaf.definition is not None and core_count_leaf.definition == 0
+    threads_per_core_leaf = cpu_options_node.property_leaves.get("ThreadsPerCore")
+    assert threads_per_core_leaf is not None
+    assert threads_per_core_leaf.description is None
+    assert threads_per_core_leaf.json_path == "$.CpuOptions.ThreadsPerCore"
+    assert threads_per_core_leaf.spec is not None
+    assert threads_per_core_leaf.spec.PrimitiveType is not None and threads_per_core_leaf.spec.PrimitiveType == "Integer"
+    assert threads_per_core_leaf.definition is None
 
+    bdm_nodes = properties_node.property_nodes_list.get("BlockDeviceMappings")
+    assert bdm_nodes is not None and len(bdm_nodes) == 2
+    first_bdm_node = bdm_nodes[0]
+    assert first_bdm_node.description is None
+    assert first_bdm_node.json_path == "$.BlockDeviceMappings[0]"
+    assert first_bdm_node.spec is not None
+    assert first_bdm_node.spec.Type is not None and first_bdm_node.spec.Type == "List"
+    assert first_bdm_node.spec.ItemType is not None and first_bdm_node.spec.ItemType == "BlockDeviceMapping"
+    ebs_node = first_bdm_node.property_nodes.get("Ebs")
+    assert ebs_node is not None
+    assert ebs_node.description is not None and ebs_node.description == "ebs"
+    assert ebs_node.json_path == "$.BlockDeviceMappings[0].Ebs"
+    assert ebs_node.spec is not None
+    assert ebs_node.spec.Type is not None and ebs_node.spec.Type == "Ebs"
+    encrypted_leaf = ebs_node.property_leaves.get("Encrypted")
+    assert encrypted_leaf is not None
+    assert encrypted_leaf.description is None
+    assert encrypted_leaf.json_path == "$.BlockDeviceMappings[0].Ebs.Encrypted"
+    assert encrypted_leaf.spec is not None
+    assert encrypted_leaf.spec.PrimitiveType is not None and encrypted_leaf.spec.PrimitiveType == "Boolean"
+    assert encrypted_leaf.definition is not None and encrypted_leaf.definition == True
+    second_bdm_node = bdm_nodes[1]
+    assert second_bdm_node.description is None
+    assert second_bdm_node.json_path == "$.BlockDeviceMappings[1]"
+    assert second_bdm_node.spec is not None
+    assert second_bdm_node.spec.Type is not None and second_bdm_node.spec.Type == "List"
+    assert second_bdm_node.spec.ItemType is not None and second_bdm_node.spec.ItemType == "BlockDeviceMapping"
+    nodevice_node = second_bdm_node.property_nodes.get("NoDevice")
+    assert nodevice_node is not None
+    assert nodevice_node.description is None
+    assert nodevice_node.json_path == "$.BlockDeviceMappings[1].NoDevice"
+    assert nodevice_node.spec is not None
+    assert nodevice_node.spec.Type is not None and nodevice_node.spec.Type == "NoDevice"
+    assert len(nodevice_node.property_leaves) == 0
+    assert len(nodevice_node.property_nodes) == 0
+    assert len(nodevice_node.property_nodes_list) == 0
+    assert len(nodevice_node.property_nodes_map) == 0
+    device_name_leaf = second_bdm_node.property_leaves.get("DeviceName")
+    assert device_name_leaf is not None
+    assert device_name_leaf.description is None
+    assert device_name_leaf.json_path == "$.BlockDeviceMappings[1].DeviceName"
+    assert device_name_leaf.spec is not None
+    assert device_name_leaf.spec.PrimitiveType is not None and device_name_leaf.spec.PrimitiveType == "String"
+    assert device_name_leaf.definition is None
 
-# def test_CfnTemplateResourceDefinition_get_description_for_property():
-#     prop_type = "CpuOptions"
-#     prop_name = "CoreCount"
-#     description = "some-description"
-#     definition = CfnTemplateResourceDefinition(
-#         Type="AWS::EC2::Instance",
-#         Metadata=CfnTemplateResourceMetadataDefinition(
-#             CfnDocgen=CfnTemplateResourceMetadataCfnDocgenDefinition(
-#                 Properties={
-#                     prop_type: {
-#                         prop_name: description
-#                     }
-#                 }
-                
-#             )
-#         ),
-#         Properties={}
-#     )
-#     json_path = f"$.{prop_type}.{prop_name}"
-#     d= definition.get_description_for_property(json_path)
-#     assert d is not None and d == description
+    sg_ids_leaf = properties_node.property_leaves.get("SecurityGroupIds")
+    assert sg_ids_leaf is not None
+    assert sg_ids_leaf.description is not None and sg_ids_leaf.description == "securitygroupids"
+    assert sg_ids_leaf.json_path == "$.SecurityGroupIds"
+    assert sg_ids_leaf.spec is not None
+    assert sg_ids_leaf.spec.Type is not None and sg_ids_leaf.spec.Type == "List"
+    assert sg_ids_leaf.spec.PrimitiveItemType is not None and sg_ids_leaf.spec.PrimitiveItemType == "String"
+    assert isinstance(sg_ids_leaf.definition, list)
+    assert all([r == e for r, e in zip(sg_ids_leaf.definition, ["SECURITYGROUPID1", "SECURITYGROUPID2"])])
 
-
-# def test_CfnTemplateResourceDefinition_get_definition_for_property():
-#     prop_type = "CpuOptions"
-#     prop_name = "CoreCount"
-#     definition = CfnTemplateResourceDefinition(
-#         Type="AWS::EC2::Instance",
-#         Metadata=None, 
-#         Properties={
-#             prop_type: {
-#                 prop_name: 10
-#             }
-#         }
-#     )
-#     json_path = f"$.{prop_type}.{prop_name}"
-#     d= definition.get_definition_for_property(json_path)
-#     assert d is not None and d == 10
-
-
-# def test_CfnTemplateParameter_get_parameter_group():
-#     parameter_name = "test-param"
-#     parameter_group = "Group1"
-#     parameter_definition = CfnTemplateParameterDefinition(
-#         Type="String"
-#     )
-#     metadata = CfnTemplateMetadataDefinition(**{
-#         "AWS::CloudFormation::Interface": CfnTemplateMetadataInterface(
-#             ParameterGroups=[
-#                 CfnTemplateMetadataParameterGroup(
-#                     Label=CfnTemplateMetadataParameterGroupLabel(default=parameter_group),
-#                     Parameters=[parameter_name],
-#                 ),
-#             ],
-#             ParameterLabels={}
-#         ),
-#         "CfnDocgen": None,
-#     }) # type: ignore
-
-#     p = CfnTemplateParameterLeaf(
-#         name=parameter_name, definition=parameter_definition,
-#         metadata=metadata,
-#     )
+    tags_nodes = properties_node.property_nodes_list.get("Tags")
+    assert tags_nodes is not None and len(tags_nodes) == 2, properties_node.property_nodes_list
+    first_tag_node = tags_nodes[0]
+    assert first_tag_node.description is None
+    assert first_tag_node.json_path == "$.Tags[0]"
+    assert first_tag_node.spec is not None
+    assert first_tag_node.spec.Type is not None and first_tag_node.spec.Type == "List"
+    assert first_tag_node.spec.ItemType is not None and first_tag_node.spec.ItemType == "Tag"
+    first_key_leaf = first_tag_node.property_leaves.get("Key")
+    assert first_key_leaf is not None
+    assert first_key_leaf.description is None
+    assert first_key_leaf.json_path == "$.Tags[0].Key"
+    assert first_key_leaf.spec is not None
+    assert first_key_leaf.spec.PrimitiveType is not None and first_key_leaf.spec.PrimitiveType == "String"
+    assert first_key_leaf.definition is not None and first_key_leaf.definition == "KEY1"
+    first_value_leaf = first_tag_node.property_leaves.get("Value")
+    assert first_value_leaf is not None
+    assert first_value_leaf.description is None
+    assert first_value_leaf.json_path == "$.Tags[0].Value"
+    assert first_value_leaf.spec is not None
+    assert first_value_leaf.spec.PrimitiveType is not None and first_value_leaf.spec.PrimitiveType == "String"
+    assert first_value_leaf.definition is not None and first_value_leaf.definition == "VALUE1"
+    second_tag_node = tags_nodes[1]
+    assert second_tag_node.description is None
+    assert second_tag_node.json_path == "$.Tags[1]"
+    assert second_tag_node.spec is not None
+    assert second_tag_node.spec.Type is not None and first_tag_node.spec.Type == "List"
+    assert second_tag_node.spec.ItemType is not None and first_tag_node.spec.ItemType == "Tag"
+    second_key_leaf = second_tag_node.property_leaves.get("Key")
+    assert second_key_leaf is not None
+    assert second_key_leaf.description is not None and second_key_leaf.description == "key"
+    assert second_key_leaf.json_path == "$.Tags[1].Key"
+    assert second_key_leaf.spec is not None
+    assert second_key_leaf.spec.PrimitiveType is not None and second_key_leaf.spec.PrimitiveType == "String"
+    assert second_key_leaf.definition is not None and second_key_leaf.definition == "KEY2"
+    second_value_leaf = second_tag_node.property_leaves.get("Value")
+    assert second_value_leaf is not None
+    assert second_value_leaf.description is None
+    assert second_value_leaf.json_path == "$.Tags[1].Value"
+    assert second_value_leaf.spec is not None
+    assert second_value_leaf.spec.PrimitiveType is not None and first_value_leaf.spec.PrimitiveType == "String"
+    assert second_value_leaf.definition is not None and second_value_leaf.definition == "VALUE2"
     
-#     assert p.group is not None and p.group == parameter_group
+
+    key_name_node = properties_node.property_leaves.get("KeyName")
+    assert key_name_node is not None
+    assert key_name_node.description is None
+    assert key_name_node.json_path == "$.KeyName"
+    assert key_name_node.spec is not None
+    assert key_name_node.spec.PrimitiveType is not None and key_name_node.spec.PrimitiveType == "String"
+    assert key_name_node.definition is None
 
 
-# def test_CfnTemplateParameter_get_parameter_group_not_found():
-#     param_name = "test-param"
-#     param_def = CfnTemplateParameterDefinition(
-#         Type="String"
-#     )
-#     p = CfnTemplateParameterLeaf(
-#         name=param_name, definition=param_def, metadata=None
-#     )
 
-#     assert p.group is None
+@pytest.mark.parametrize("resource_type", [
+    (r) for r in all_resource_types()
+])
+def test_CfnTemplateResourcesNode_all_resource_types(resource_type:str, spec_repository:CfnSpecificationRepository):
+    definitions:Mapping[str, CfnTemplateResourceDefinition] = {
+        resource_type: CfnTemplateResourceDefinition(
+            Type=resource_type,
+            Properties={}
+        )
+    }
 
-# def test_CfnTemplateMapping_get_description():
-#     name = "Map1"
-#     map_def = {
-#         "Nam1": {
-#             "Key1": "Val1",
-#             "Key2": "Val2"
-#         },
-#         "Name2": {
-#             "Key1": "Val1",
-#             "Key2": "Val2"
-#         }
-#     }
-#     description = "some description"
-#     metadata = CfnTemplateMetadataDefinition(
-#         CfnDocgen=CfnTemplateMetadataCfnDocgenDefinition(
-#         Mappings={
-#             name: description
-#         }
-#         )
-#     )
-#     m = CfnTemplateMapping(name, map_def, metadata)
+    resources_node = CfnTemplateResourcesNode(
+        definitions=definitions,
+        spec_repository=spec_repository,
+    )
 
-#     assert description == m.description
+    resource_node = resources_node.resource_nodes.get(resource_type)
+    assert resource_node is not None
+    assert resource_node.spec is not None
+    properties_node = resource_node.properties_node
+    assert (
+        len(properties_node.property_leaves) > 0
+        or len(properties_node.property_nodes) > 0
+        or len(properties_node.property_nodes_list) > 0
+        or len(properties_node.property_nodes_map)> 0
+        # resource types without any properties
+        or resource_type == "AWS::CloudFormation::WaitConditionHandle"
+        or resource_type == "AWS::DevOpsGuru::LogAnomalyDetectionIntegration"
+    )
 
 
-# def test_CfnTemplateMapping_get_description_not_found():
-#     name = "Map1"
-#     map_def = {
-#         "Nam1": {
-#             "Key1": "Val1",
-#             "Key2": "Val2"
-#         },
-#         "Name2": {
-#             "Key1": "Val1",
-#             "Key2": "Val2"
-#         }
-#     }
-#     description = "some description"
-#     metadata = CfnTemplateMetadataDefinition(
-#         CfnDocgen=CfnTemplateMetadataCfnDocgenDefinition(
-#         Mappings={
-#             "NotExistMap": description
-#         }
-#         )
-#     )
-#     m = CfnTemplateMapping(name, map_def, metadata)
-#     assert m.description is None
+def test_CfnTemplateResourcesNode_avoid_recursion_error(spec_repository:CfnSpecificationRepository):
+    definitions:Mapping[str, CfnTemplateResourceDefinition] = {
+        "WithDefinition": CfnTemplateResourceDefinition(
+            Type="AWS::WAFv2::RuleGroup",
+            Properties={
+                "Rules": [
+                    {
+                        "Statement": {
+                            "AndStatement": {
+                                "Statements": [
+                                    {
+                                        "RateBasedStatement": {
+                                            "Limit": 500
+                                        },
+                                    },
+                                    {
+                                        "ByteMatchStatement": {
+                                            "FieldToMatch": {
+                                                "Method": {"Name": "GET"}
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+        ),
+        "WithoutDefinition": CfnTemplateResourceDefinition(
+            Type="AWS::WAFv2::RuleGroup",
+            Properties={},
+        )
+    }
 
-# def test_CfnTemplateCondition_get_description():
-#     name = "Cond1"
-#     cond = {
-#         "Fn::Equals": [
-#             "hoge", "fuga"
-#         ]
-#     }
-#     description = "some description"
+    resources_node = CfnTemplateResourcesNode(
+        definitions=definitions,
+        spec_repository=spec_repository,
+    )
+    with_definition_node = resources_node.resource_nodes.get("WithDefinition")
+    assert with_definition_node is not None
+    rules = with_definition_node.properties_node.property_nodes_list.get("Rules")
+    assert rules is not None and len(rules) == 1
+    statement1 = rules[0].property_nodes.get("Statement")
+    assert statement1 is not None
+    and_statement = statement1.property_nodes.get("AndStatement")
+    assert and_statement is not None
+    statements = and_statement.property_nodes_list.get("Statements")
+    assert statements is not None and len(statements) == 2
+    byte_statement = statements[1].property_nodes.get("ByteMatchStatement")
+    assert byte_statement is not None
+    field_to_match = byte_statement.property_nodes.get("FieldToMatch")
+    assert field_to_match is not None
+    method = field_to_match.property_leaves.get("Method")
+    assert method is not None and method.definition is not None and cast(Mapping[str, Any], method.definition)["Name"] == "GET"
 
-#     metadata = CfnTemplateMetadataDefinition(
-#         CfnDocgen=CfnTemplateMetadataCfnDocgenDefinition(
-#                 Conditions={
-#                     name: description
-#                 }
-#         )
-#     )
-#     c = CfnTemplateCondition(
-#         name, cond, metadata
-#     )
-
-#     assert description == c.description
-
-# def test_CfnTemplateCondition_get_description_not_found():
-#     name = "Cond1"
-#     cond = {
-#         "Fn::Equals": [
-#             "hoge", "fuga"
-#         ]
-#     }
-#     metadata = CfnTemplateMetadataDefinition(
-#         CfnDocgen=CfnTemplateMetadataCfnDocgenDefinition(
-#                 Conditions={
-#                     "NotEixstCond": "some-descirption"
-#                 }
-#         )
-#     )
-#     c = CfnTemplateCondition(
-#         name, cond, metadata
-#     )
-#     assert c.description is None
-
-# def test_CfnTemplateRule_get_description():
-#     name = "rule1"
-#     rule = CfnTemplateRuleDefinition(
-#         RuleCondition=None,
-#         Assertions=[
-#             CfnTemplateRuleAssertDefinition(
-#                 Assert={"hoge": "fuga"},
-#                 AssertDescription="hogefuga"
-#             )
-#         ]
-#     )
-#     description = "some-descritpion"
-
-#     metadata = CfnTemplateMetadataDefinition(
-#         CfnDocgen=CfnTemplateMetadataCfnDocgenDefinition(
-#         Rules={name: description}
-#         )
-#     )
-
-#     r = CfnTemplateRule(
-#         name, rule, metadata
-#     )
-
-#     assert description == r.description
-
-
-# def test_CfnTemplateRule_get_description_not_found():
-#     name = "rule1"
-#     rule = CfnTemplateRuleDefinition(
-#         RuleCondition=None,
-#         Assertions=[
-#             CfnTemplateRuleAssertDefinition(
-#                 Assert={"hoge": "fuga"},
-#                 AssertDescription="hogefuga"
-#             )
-#         ]
-#     )
-#     description = "some-descritpion"
-#     metadata = CfnTemplateMetadataDefinition(
-#         CfnDocgen=CfnTemplateMetadataCfnDocgenDefinition(
-#         Rules={"NotExistRule": description}
-#         )
-#     )
-
-#     r = CfnTemplateRule(
-#         name, rule, metadata
-#     )
-
-#     assert r.description is None
-
-
-# @pytest.fixture
-# def spec_repository():
-#     return CfnSpecificationRepository(
-#         loader=RemoteFileLoader(AppConfig().DEFAULT_SPECIFICATION_URL),
-#         cache=LocalFileCache(AppConfig())
-#     )
-
-# def test_CfnTemplateTree():
-
-
-# # def test_CfnTemplateResourceChildProperty_PrimitiveType(spec_repository:CfnSpecificationRepository):
-# #     resource_type = "AWS::EC2::Instance"
-# #     property_name = "CoreCount"
-# #     property_type = "AWS::EC2::Instance.CpuOptions"
-# #     description = "some-description"
-# #     specs = spec_repository.get_specs_for_resource(resource_type)
-# #     parent_path = f"$.{prop_type}"
-# #     definition = 10
-
-# #     p = CfnTemplateResourceChildProperty(
-# #         prop_name=prop_name,
-# #         prop_type=prop_type,
-# #         resource_definition=CfnTemplateResourceDefinition(
-# #             Metadata=CfnTemplateResourceMetadataDefinition(
-# #                 CfnDocgen=CfnTemplateResourceMetadataCfnDocgenDefinition(
-# #                     Properties={
-# #                         prop_type: {
-# #                             prop_name: description
-# #                         }
-# #                     }
-# #                 )
-# #             ),
-# #             Type=resource_type,
-# #             Properties={
-# #                 prop_type: {
-# #                     prop_name: definition
-# #                 }
-# #             }
-# #         ),
-# #         specs=specs,
-# #         parent_path=parent_path,
-# #         index=None,
-# #         depth=1
-# #     )
-
-# #     assert p.json_path == f"{parent_path}.{prop_name}"
-# #     assert p.description == description
-# #     assert p.definition is not None and p.definition == definition
-# #     assert (
-# #         p.primitive_spec is not None and p.primitive_spec.PrimitiveType == "Integer"
-# #     )
-# #     assert len(p.properties) == 0
-
-
-# # def test_CfnTemplateResourceChildProperty_PrimitiveItemType(spec_repository:CfnSpecificationRepository):
-# #     description = "some-description"
-# #     prop_name = "GroupSet"
-# #     prop_type = "NetworkInterface"
-# #     resource_type = "AWS::EC2::Instance"
-# #     specs = spec_repository.get_specs_for_resource(resource_type)
-# #     parent_path = f"$.{prop_type}"
-# #     definition = [
-# #         "group1", "group2"
-# #     ]
-
-# #     p = CfnTemplateResourceChildProperty(
-# #         prop_name=prop_name,
-# #         prop_type=prop_type,
-# #         resource_definition=CfnTemplateResourceDefinition(
-# #             Metadata=CfnTemplateResourceMetadataDefinition(
-# #                 CfnDocgen=CfnTemplateResourceMetadataCfnDocgenDefinition(
-# #                     Properties={
-# #                         prop_type: {
-# #                             prop_name: description
-# #                         }
-# #                     }
-# #                 )
-# #             ),
-# #             Type=resource_type,
-# #             Properties={
-# #                 prop_type: {
-# #                     prop_name: definition
-# #                 }
-# #             }
-# #         ),
-# #         specs=specs,
-# #         parent_path=parent_path,
-# #         index=None,
-# #         depth=1
-# #     )
-
-# #     assert p.json_path == f"{parent_path}.{prop_name}"
-# #     assert p.description == description
-# #     assert (
-# #         p.definition is not None
-# #         and all([pd == ed for pd, ed in zip(cast(list, p.definition), definition)])) # type:ignore
-# #     assert (
-# #         p.primitive_spec is not None 
-# #         and p.primitive_spec.PrimitiveItemType == "String"
-# #         and p.primitive_spec.Type == "List"
-# #     )
-# #     assert len(p.properties) == 0
-
-
-# # def test_CfnTemplateResourceChildProperty_Type(spec_repository:CfnSpecificationRepository):
-# #     description = "some-description"
-# #     prop_name = "Ebs"
-# #     prop_type = "Ebs"
-# #     resource_type = "AWS::EC2::Instance"
-# #     specs = spec_repository.get_specs_for_resource(resource_type)
-# #     parent_path = "$.BlockDeviceMappings"
-# #     definition = {
-# #         "Encrypted" : True,
-# #     }
-
-# #     p = CfnTemplateResourceChildProperty(
-# #         prop_name=prop_name,
-# #         prop_type=prop_type,
-# #         resource_definition=CfnTemplateResourceDefinition(
-# #             Metadata=CfnTemplateResourceMetadataDefinition(
-# #                 CfnDocgen=CfnTemplateResourceMetadataCfnDocgenDefinition(
-# #                     Properties={
-# #                         "BlockDeviceMappings": [
-# #                             {
-# #                                 prop_name: description
-# #                             }
-
-# #                         ]
-# #                     }
-# #                 )
-# #             ),
-# #             Type=resource_type,
-# #             Properties={
-# #                 "BlockDeviceMappings": [
-# #                     {
-# #                         prop_name: definition
-# #                     }
-# #                 ]
-# #             }
-# #         ),
-# #         specs=specs,
-# #         parent_path=parent_path,
-# #         index=0,
-# #         depth=1
-# #     )
-
-# #     assert p.json_path == f"{parent_path}[0].{prop_name}"
-# #     assert p.description == description
-# #     assert p.definition is not None
-# #     assert p.property_spec is not None 
-# #     assert p.type == "Ebs"
-# #     assert len(p.properties) == 7
-# #     encrypted_prop = [prop for prop in p.properties if prop.name == "Encrypted"]
-# #     assert len(encrypted_prop) == 1 and encrypted_prop[0].definition == True
-
-
-# # def test_CfnTemplateResourceChildProperty_ItemType(spec_repository:CfnSpecificationRepository):
-# #     description = "some-description"
-# #     prop_name = "AssociationParameters"
-# #     prop_type = "SsmAssociation"
-# #     resource_type = "AWS::EC2::Instance"
-# #     specs = spec_repository.get_specs_for_resource(resource_type)
-# #     parent_path = "$.SsmAssociations[0]"
-# #     definition = [
-# #         {
-# #             "Key": "Key1",
-# #             "Value": ["Value1.1", "Value1.2"]
-# #         },
-# #         {
-# #             "Key": "Key2",
-# #             "Value": ["Value2.1", "Value2.2"]
-# #         }
-# #     ]
-
-# #     p = CfnTemplateResourceChildProperty(
-# #         prop_name=prop_name,
-# #         prop_type=prop_type,
-# #         resource_definition=CfnTemplateResourceDefinition(
-# #             Metadata=CfnTemplateResourceMetadataDefinition(
-# #                 CfnDocgen=CfnTemplateResourceMetadataCfnDocgenDefinition(
-# #                     Properties={
-# #                         "SsmAssociations": [
-# #                             {
-# #                                 "AssociationParameters": description
-# #                             }
-# #                         ]
-# #                     }
-# #                 )
-# #             ),
-# #             Type=resource_type,
-# #             Properties={
-# #                 "SsmAssociations": [
-# #                     {
-# #                         "AssociationParameters": definition
-# #                     }
-# #                 ]
-# #             }
-# #         ),
-# #         specs=specs,
-# #         parent_path=parent_path,
-# #         index=0,
-# #         depth=1
-# #     )
-
-# #     assert p.json_path == f"{parent_path}[0].{prop_name}"
-# #     assert p.description == description
-# #     assert p.definition is not None
-# #     assert p.property_spec is not None 
-# #     assert p.type == "AssociationParameter"
-# #     assert len(p.properties) == 2
+    without_definition_node = resources_node.resource_nodes.get("WithoutDefinition")
+    assert without_definition_node is not None
+    rules_node = without_definition_node.properties_node.property_nodes_list["Rules"]
+    assert len(rules_node) == 0
 

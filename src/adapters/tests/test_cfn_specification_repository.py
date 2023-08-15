@@ -14,7 +14,8 @@ def cfn_specification_url():
 def repository():
     return CfnSpecificationRepository(
         loader=RemoteFileLoader("https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json"),
-        cache=LocalFileCache(AppConfig()),
+        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+        recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )
 
 def test_CfnSpecificationRepository_get_resource_spec(repository:CfnSpecificationRepository):
@@ -98,3 +99,8 @@ def test_CfnSpecificationRepository_get_specs_for_resources(repository:CfnSpecif
     assert specs.PropertySpecs.get(CfnSpecificationPropertyTypeName(f"{resource_type.fullname}.BlockDeviceMapping").fullname)
     assert specs.PropertySpecs.get(CfnSpecificationPropertyTypeName(f"{resource_type.fullname}.Ebs").fullname)
 
+@pytest.mark.parametrize("resource_type,expected", [
+    ("AWS::WAFv2::RuleGroup", True), ("AWS::EC2::Instance", False)
+])
+def test_CfnSpecificationRepository_is_recursive(resource_type:str, expected:bool, repository:CfnSpecificationRepository):
+    assert repository.is_recursive(CfnSpecificationResourceTypeName(resource_type)) == expected

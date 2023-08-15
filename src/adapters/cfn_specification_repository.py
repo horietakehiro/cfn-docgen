@@ -1,6 +1,6 @@
 
 import json
-from typing import Mapping
+from typing import List, Mapping
 
 from domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName, CfnSpecificationPropertyType, CfnSpecificationResourceType
 from src.domain.model.cfn_specification import CfnSpecification
@@ -10,7 +10,7 @@ from src.domain.ports.cfn_specification_repository import ICfnSpecificationRepos
 
 
 class CfnSpecificationRepository(ICfnSpecificationRepository):
-    def __init__(self, loader: IFileLoader, cache: IFileCache) -> None:
+    def __init__(self, loader: IFileLoader, cache: IFileCache, recursive_resource_types:List[str]) -> None:
         cached = cache.get(loader.filepath)
         if cached is None:
             json_str = loader.load()
@@ -18,6 +18,8 @@ class CfnSpecificationRepository(ICfnSpecificationRepository):
             cache.put(loader.filepath, json_str)
         else:
             self.spec = CfnSpecification(**json.loads(cached))
+
+        self.recursive_resource_types = recursive_resource_types
 
     def get_resource_spec(self, resource_type: CfnSpecificationResourceTypeName) -> CfnSpecificationResourceType:
         try:
@@ -46,3 +48,6 @@ class CfnSpecificationRepository(ICfnSpecificationRepository):
             ResourceSpec=resource_spec,
             PropertySpecs=property_specs,
         )
+
+    def is_recursive(self, resource_type: CfnSpecificationResourceTypeName) -> bool:
+        return super().is_recursive(resource_type)
