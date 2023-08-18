@@ -77,13 +77,11 @@ This value is used as a part of each resources' name
 
 |Type|Default|AllowedValues|AllowedPattern|NoEcho|MinValue|MaxValue|MinLength|MaxLength|ConstraintDescription|
 |-|-|-|-|-|-|-|-|-|-|
-|String|dev|<ul><li>dev</li><li>prod</li>|-|false|-|-|-|-|-|-|
+|String|dev|<ul><li>dev</li><li>prod</li></ul>|-|false|-|-|-|-|-|-|
 
 ---
 
 ## Mappings
-
----
 
 ### CidrBlockMap
 
@@ -101,8 +99,6 @@ CidrBlocks for each environment
 ---
 
 ## Conditions
-
----
 
 ### EnvCondition
 

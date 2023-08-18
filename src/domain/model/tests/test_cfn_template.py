@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 from typing import Any, Mapping, Optional, cast
 
 import pytest
@@ -7,14 +8,27 @@ from adapters.internal.cache import LocalFileCache
 from adapters.internal.file_loader import  RemoteFileLoader
 from config import AppConfig
 from domain.model.cfn_template import (
+    CfnTemplateConditionsNode,
+    CfnTemplateDefinition,
+    CfnTemplateMappingsNode,
+    CfnTemplateMetadataCfnDocgenDefinition,
+    CfnTemplateMetadataDefinition,
+    CfnTemplateMetadataInterface,
     CfnTemplateMetadataParameterGroup,
     CfnTemplateMetadataParameterGroupLabel,
+    CfnTemplateOutputDefinition,
+    CfnTemplateOutputsNode,
     CfnTemplateParameterDefinition,
     CfnTemplateParametersNode,
     CfnTemplateResourceDefinition,
     CfnTemplateResourceMetadataCfnDocgenDefinition,
     CfnTemplateResourceMetadataDefinition,
-    CfnTemplateResourcesNode
+    CfnTemplateResourcesNode,
+    CfnTemplateRuleAssertDefinition,
+    CfnTemplateRuleDefinition,
+    CfnTemplateRulesNode,
+    CfnTemplateSource,
+    CfnTemplateTree
 )
 
 def test_CfnTemplateMetadataDefinition_get_resource_description():
@@ -116,8 +130,144 @@ def test_CfnTemplateParametersNode():
     assert independent_parameter_leaf is not None and independent_parameter_leaf.definition.Type == "AWS::EC2::AvailabilityZone::Name"
 
 def test_CfnTemplateMappingsNode():
-    raise NotImplementedError
+    mappings_definition:Mapping[str, Mapping[str, Mapping[str, Any]]] = {
+        "map1": {
+            "name11": {
+                "key111": "value111",
+                "key112": "value112"
+            },
+            "name12": {
+                "key121": "value121",
+                "key122": "value122"
+            }
+        },
+        "map2": {
+            "name21": {
+                "key211": "value211",
+                "key212": "value212"
+            },
+            "name22": {
+                "key221": "value221",
+                "key222": "value222"
+            }
+        }
 
+    }
+    descriptions:Mapping[str, str] = {
+        "map1": "description1",
+        "map3": "description3"
+    }
+    node = CfnTemplateMappingsNode(
+        definitions=mappings_definition,
+        descriptions=descriptions
+    )
+
+    leaf1 = node.mapping_leaves["map1"]
+    assert leaf1.definition["name11"]["key111"] == "value111"
+    assert leaf1.definition["name12"]["key122"] == "value122"
+    assert leaf1.description is not None and leaf1.description == "description1"
+
+    leaf2 = node.mapping_leaves["map2"]
+    assert leaf2.definition["name21"]["key211"] == "value211"
+    assert leaf2.definition["name22"]["key222"] == "value222"
+    assert leaf2.description is None
+
+    with pytest.raises(KeyError):
+        node.mapping_leaves["map3"]
+    
+
+def test_CfnTemplateRulesNode():
+    rule_definitions:Mapping[str, CfnTemplateRuleDefinition] = {
+        "rule1": CfnTemplateRuleDefinition(
+            RuleCondition=None,
+            Assertions=[
+                CfnTemplateRuleAssertDefinition(
+                    AssertDescription="assertdescription",
+                    Assert={None: None}
+                )
+            ]
+        ),
+        "rule2": CfnTemplateRuleDefinition(
+            RuleCondition={"rule": "condition"},
+            Assertions=[
+                CfnTemplateRuleAssertDefinition(
+                    Assert={None: None},
+                    AssertDescription="assertdescription"
+                )
+            ]
+        )
+    }
+    descriptions = {
+        "rule1": "description1",
+        "rule3": "description3"
+    }
+    node = CfnTemplateRulesNode(
+        definitions=rule_definitions,
+        descriptions=descriptions
+    )
+
+    leaf1 = node.rule_leaves["rule1"]
+    assert leaf1.definition.RuleCondition is None
+    assert leaf1.definition.Assertions[0].AssertDescription == "assertdescription"
+    assert leaf1.description is not None and leaf1.description == "description1"
+
+    leaf2 = node.rule_leaves["rule2"]
+    assert leaf2.definition.RuleCondition is not None and leaf2.definition.RuleCondition["rule"] == "condition"
+    assert leaf2.description is None
+
+    with pytest.raises(KeyError):
+        node.rule_leaves["rule3"]
+    
+
+def test_CfnTemplateConditionsNode():
+    definitions:Mapping[str, Mapping[str, Any]] = {
+        "cond1": {
+            "key1": "value1"
+        },
+        "cond2": {
+            "key2": "value2"
+        }
+    }
+    description = {
+        "cond1": "description1",
+        "cond3": "descirption3"
+    }
+    node = CfnTemplateConditionsNode(
+        definitions=definitions,
+        descriptions=description,
+    )
+
+    leaf1 = node.condition_leaves["cond1"]
+    assert leaf1.definition["key1"] == "value1"
+    assert leaf1.descirption is not None and leaf1.descirption == "description1"
+
+    leaf2 = node.condition_leaves["cond2"]
+    assert leaf2.definition["key2"] == "value2"
+    assert leaf2.descirption is None
+
+    with pytest.raises(KeyError):
+        node.condition_leaves["cond3"]
+
+def test_CfnTemplateOutputsNode():
+    definitions:Mapping[str, CfnTemplateOutputDefinition] = {
+        "out1": CfnTemplateOutputDefinition(
+            Description="description1",
+            Value="value1"
+        ),
+        "out2": CfnTemplateOutputDefinition(
+            Description=None,
+            Value="value2"
+        ),
+    }
+
+    node = CfnTemplateOutputsNode(
+        definitions=definitions,
+    )
+
+    leaf1 = node.output_leaves.get("out1")
+    assert leaf1 is not None
+    leaf2 = node.output_leaves.get("out2")
+    assert leaf2 is not None
 
 @pytest.fixture
 def spec_repository():
@@ -353,6 +503,7 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(spec_repository:CfnSpecificat
 
 
 
+@pytest.mark.skipif(os.environ.get("SKIP_LONG_TEST", False), reason="this test takes long time to run")
 @pytest.mark.parametrize("resource_type", [
     (r) for r in all_resource_types()
 ])
@@ -444,4 +595,147 @@ def test_CfnTemplateResourcesNode_avoid_recursion_error(spec_repository:CfnSpeci
     assert without_definition_node is not None
     rules_node = without_definition_node.properties_node.property_nodes_list["Rules"]
     assert len(rules_node) == 0
+
+
+def test_CfnTemplateTree(spec_repository:CfnSpecificationRepository):
+    definition = CfnTemplateDefinition(
+        AWSTemplateFormatVersion="2012-10",
+        Description="template-description",
+        Metadata=CfnTemplateMetadataDefinition(**{
+            'AWS::CloudFormation::Interface': CfnTemplateMetadataInterface(
+                ParameterGroups=[
+                    CfnTemplateMetadataParameterGroup(
+                        Label=CfnTemplateMetadataParameterGroupLabel(
+                            default="group1"
+                        ),
+                        Parameters=["param1"]
+                    )
+                ]
+            ),
+            "CfnDocgen": CfnTemplateMetadataCfnDocgenDefinition(
+                Description="cfn-docgen-template-description",
+                Mappings={
+                    "map1": "map1-description"
+                },
+                Rules={
+                    "rule1": "rule1-description"
+                },
+                Conditions={
+                    "cond1": "cond1-description"
+                },
+            )
+        }), # type: ignore
+        Parameters={
+            "param1": CfnTemplateParameterDefinition(
+                Type="String"
+            ),
+            "param2": CfnTemplateParameterDefinition(
+                Type="Number"
+            )
+        },
+        Mappings={
+            "map1": {
+                "name1": {
+                    "key1": "value1"
+                }
+            }
+        },
+        Rules={
+            "rule1": CfnTemplateRuleDefinition(
+                Assertions=[
+                    CfnTemplateRuleAssertDefinition(
+                        Assert={
+                            "assert1": "value1"
+                        },
+                        AssertDescription="assert1-description"
+                    )
+                ]
+            )
+        },
+        Conditions={
+            "cond1": {
+                "key1": "value1"
+            }
+        },
+        Resources={
+            "resource1": CfnTemplateResourceDefinition(
+                Metadata=CfnTemplateResourceMetadataDefinition(
+                    CfnDocgen=CfnTemplateResourceMetadataCfnDocgenDefinition(
+                        Description="resource1-description",
+                        Properties={
+                            "BlockDeviceMappings": [
+                                {
+                                    "Ebs": {
+                                        "Encrypted": "encrypted-description"
+                                    }
+                                }
+                            ]
+                        },
+                    )
+                ),
+                Type="AWS::EC2::Instance",
+                Properties={
+                    "BlockDeviceMappings": [
+                        {
+                            "Ebs": {
+                                "Encrypted": True
+                            }
+                        }
+                    ],
+                    "ImageId": {"Ref": "param1"}
+                }
+            )
+        },
+        Outputs={
+            "out1": CfnTemplateOutputDefinition(
+                Value={"Ref": "resource1"}
+            )
+        }
+    )
+
+    tree = CfnTemplateTree(
+        template_source=CfnTemplateSource("/tmp/sample-template.yaml"),
+        definition=definition,
+        spec_repository=spec_repository,
+    )
+    
+    assert tree.description == "template-description"
+    assert tree.cfn_docgen_description == "cfn-docgen-template-description"
+
+
+    param1_leaf = tree.parameters_node.group_nodes["group1"].leaves["param1"]
+    assert param1_leaf.definition.Type == "String"
+    param2_leaf = tree.parameters_node.group_nodes[CfnTemplateParametersNode.group_name_for_independent_parameters].leaves["param2"]
+    assert param2_leaf.definition.Type == "Number"
+
+    map1_leaf = tree.mappings_node.mapping_leaves["map1"]
+    assert map1_leaf.description == "map1-description"
+
+    rule1_leaf = tree.rules_node.rule_leaves["rule1"]
+    assert rule1_leaf.description == "rule1-description"
+
+    cond1_leaf = tree.conditions_node.condition_leaves["cond1"]
+    assert cond1_leaf.descirption == "cond1-description"
+
+    resource1_node = tree.resources_node.resource_nodes["resource1"]
+    assert resource1_node.description == "resource1-description"
+    image_id_leaf = resource1_node.properties_node.property_leaves["ImageId"]
+    assert image_id_leaf.description is None
+    assert image_id_leaf.definition is not None and cast(Mapping[str, str], image_id_leaf.definition)["Ref"] == "param1"
+    bdm_node = resource1_node.properties_node.property_nodes_list["BlockDeviceMappings"][0]
+    ebs_node = bdm_node.property_nodes["Ebs"]
+    encrypted_leaf = ebs_node.property_leaves["Encrypted"]
+    assert encrypted_leaf.definition == True
+    assert encrypted_leaf.description is not None and encrypted_leaf.description == "encrypted-description"
+
+    out1_leaf = tree.outputs_node.output_leaves["out1"]
+    assert out1_leaf.definition.Value["Ref"] == "resource1"
+
+@pytest.mark.parametrize("filepath", [
+    ("../template.yaml"), ("/tmp/template.yaml"), ("template.yaml")
+])
+def test_CfnTemplateSource_localfilepath_basename(filepath:str):
+    source = CfnTemplateSource(filepath)
+    assert source.basename == "template.yaml"
+    
 
