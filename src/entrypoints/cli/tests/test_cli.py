@@ -1,36 +1,17 @@
+from typing import Any
 import pytest
 import os
 import shutil
-import difflib
+import boto3
 from click.testing import CliRunner
 
 from src.entrypoints.cli.main import main
 from src.entrypoints.cli.model.cli_model import CliArguement
 
+TEST_BUCKET_NAME=os.environ["TEST_BUCKET_NAME"]
 
-@pytest.fixture
-def input_file():
-    return os.path.join(
-        os.path.dirname(__file__),
-        "..", "..", "..", "..", "docs", "sample-template.yaml"
-    )
+def setup_function(function:Any): # type:ignore
 
-@pytest.fixture
-def output_dir():
-    return os.path.join(
-        os.path.dirname(__file__), "data",
-    )
-
-@pytest.fixture
-def example_markdown_file():
-    return os.path.join(
-        os.path.dirname(__file__),
-        "..", "..", "..", "..", "docs", "sample-template.md"
-    )
-
-def setup_function(function): # type:ignore
-
-    # flush test output directory
     d = os.path.join(
         os.path.dirname(__file__), "data",
     )
@@ -40,32 +21,88 @@ def setup_function(function): # type:ignore
         pass
     os.makedirs(d, exist_ok=True)        
 
-def test_cli_success(input_file:str, output_dir:str, example_markdown_file:str):
-    output_file = os.path.join(output_dir, "sample-template.md")
-    
+INPUT_FILE=os.path.join(
+    os.path.dirname(__file__),
+    "..", "..", "..", "..", "docs", "sample-template.yaml"
+)
+EXPECTED_FILE=os.path.join(
+    os.path.dirname(__file__),
+    "..", "..", "..", "..", "docs", "sample-template.md"
+)
+
+
+TEST_INPUT_KEY="unit-test/sample-template.yaml"
+TEST_OUTPUT_KEY="unit-test/sample-template.md"
+
+s3 = boto3.client("s3") # type: ignore
+def setup_module(module:Any):
+    for key in [TEST_INPUT_KEY, TEST_OUTPUT_KEY]:
+        try:
+            s3.delete_object(
+                Bucket=TEST_BUCKET_NAME,
+                Key=key
+            )
+        except Exception:
+            pass
+    s3.upload_file(
+        Bucket=TEST_BUCKET_NAME,
+        Key=TEST_INPUT_KEY,
+        Filename=INPUT_FILE,
+    )
+
+@pytest.mark.parametrize("source,dest,expected", [
+    (
+        INPUT_FILE,
+        os.path.join(
+            os.path.dirname(__file__),
+            "data", "sample-template.md"
+        ),
+        EXPECTED_FILE,
+    ),
+])
+def test_cli_local_file(source:str, dest:str, expected:str):
     args = CliArguement(
         subcommand="docgen",
         format="markdown",
-        input_file=input_file,
-        output_file=output_file,
+        source=source,
+        dest=dest,
     )
-
     runner = CliRunner()
     result = runner.invoke(main, args=args.as_list())
-    
     assert result.exit_code == 0
-    assert output_file in result.output
 
-    with open(output_file, "r", encoding="UTF-8") as fp:
-        output_lines = fp.readlines()
-    with open(example_markdown_file, "r", encoding="UTF-8") as fp:
-        example_lines = fp.readlines()
+    with open(dest, "r", encoding="UTF-8") as fp:
+        output = fp.read()
+    with open(expected, "r", encoding="UTF-8") as fp:
+        example = fp.read()
     
-    assert "\n".join(output_lines) == "\n".join(example_lines), difflib.unified_diff(
-        output_lines, example_lines,
-        fromfile=output_file, tofile=example_markdown_file,
+    assert output == example
+
+
+@pytest.mark.parametrize("source,dest,expected", [
+    (
+        f"s3://{TEST_BUCKET_NAME}/{TEST_INPUT_KEY}",
+        f"s3://{TEST_BUCKET_NAME}/{TEST_OUTPUT_KEY}",
+        EXPECTED_FILE,
     )
+])
+def test_cli_s3_key(source:str, dest:str, expected:str):
+    args = CliArguement(
+        subcommand="docgen",
+        format="markdown",
+        source=source,
+        dest=dest,
+    )
+    runner = CliRunner()
+    result = runner.invoke(main, args=args.as_list())
+    assert result.exit_code == 0
 
-
+    with open(expected, "rb") as fp:
+        example = fp.read()
+    res = s3.get_object(
+        Bucket=TEST_BUCKET_NAME, Key=TEST_OUTPUT_KEY,
+    )
+    
+    assert res["Body"].read() == example
 
 

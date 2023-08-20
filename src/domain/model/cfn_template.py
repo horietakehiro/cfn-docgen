@@ -785,14 +785,19 @@ class CfnTemplateOutputsNode:
             for name, definition in definitions.items()
         }
 
-SupportedSourceType = Literal["LocalFilePath"]
+SupportedSourceType = Literal["LocalFilePath", "S3BucketKey", "HttpUrl"]
 class CfnTemplateSource:
     type: SupportedSourceType
     source: str
 
     def __init__(self, source:str) -> None:
         self.source = source
-        self.type = "LocalFilePath"
+        if source.startswith("s3://"):
+            self.type = "S3BucketKey"
+        elif source.startswith("http://") or source.startswith("https://"):
+            self.type = "HttpUrl"
+        else:
+            self.type = "LocalFilePath"
     
     @property
     def basename(self) -> str:

@@ -7,7 +7,8 @@ from typing import Any, List, Literal, Mapping, cast
 from domain.model.cfn_specification import CfnSpecificationProperty
 
 from domain.model.cfn_template import CfnTemplateParameterDefinition, CfnTemplateResourcePropertiesNode, CfnTemplateResourcePropertyNode, CfnTemplateTree
-from domain.model.config import SupportedFormat
+
+SupportedFormat = Literal["markdown"]
 
 def document_generator_factory(fmt:SupportedFormat) -> ICfnDocumentGenerator:
     match fmt:
@@ -18,11 +19,16 @@ def document_generator_factory(fmt:SupportedFormat) -> ICfnDocumentGenerator:
             raise NotImplementedError
 
 class CfnDocumentDestination:
-    type: Literal["LocalFilePath"]
+    type: Literal["LocalFilePath", "S3BucketKey", "HttpUrl"]
     dest: str
 
     def __init__(self, dest:str) -> None:
-        self.type = "LocalFilePath"
+        if dest.startswith("s3://"):
+            self.type = "S3BucketKey"
+        elif dest.startswith("http://") or dest.startswith("https://"):
+            self.type = "HttpUrl"
+        else:
+            self.type = "LocalFilePath"
         self.dest = dest
 
 @dataclass

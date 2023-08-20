@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from typing import Callable
-from domain.model.cfn_document_generator import CfnDocumentDestination, ICfnDocumentGenerator
+from domain.model.cfn_document_generator import CfnDocumentDestination, ICfnDocumentGenerator, SupportedFormat
 from domain.model.cfn_template import CfnTemplateSource, CfnTemplateTree
 from domain.ports.cfn_document_storage import ICfnDocumentStorage
 from domain.ports.cfn_specification_repository import ICfnSpecificationRepository
-from src.domain.model.config import SupportedFormat
 from src.domain.ports.cfn_template_provider import ICfnTemplateProvider
 
 @dataclass

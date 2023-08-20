@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  TestBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: Private
+      BucketName: !Sub cfn-docgen-test-bucket-${AWS::AccountId}-${AWS::Region}
+
+Outputs:
+  BucketName:
+    Value: !Ref TestBucket
