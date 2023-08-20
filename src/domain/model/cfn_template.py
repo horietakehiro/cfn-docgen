@@ -418,6 +418,7 @@ class CfnTemplateResourcePropertyNode:
         self.description = description
         self.json_path = json_path
         self.spec = resource_property_spec
+        self.has_leaves = definitions is not None
 
 
         for property_name, property_spec in properties_spec.items():
@@ -722,6 +723,7 @@ class CfnTemplateResourceNode:
         cfn_docgen = metadata.CfnDocgen if metadata is not None else None
 
         self.description:Optional[str] = cfn_docgen.get_resource_description() if cfn_docgen is not None else None
+        self.condition = definition.Condition
         self.creation_policy = definition.CreationPolicy
         self.update_policy =  definition.UpdatePolicy
         self.deletion_policy = definition.DeletionPolicy
@@ -783,8 +785,9 @@ class CfnTemplateOutputsNode:
             for name, definition in definitions.items()
         }
 
+SupportedSourceType = Literal["LocalFilePath"]
 class CfnTemplateSource:
-    type: Literal["LocalFilePath"]
+    type: SupportedSourceType
     source: str
 
     def __init__(self, source:str) -> None:
@@ -794,6 +797,7 @@ class CfnTemplateSource:
     @property
     def basename(self) -> str:
         return os.path.basename(self.source)
+
 
 class CfnTemplateTree:
     """treet CfnTemplate as tree"""

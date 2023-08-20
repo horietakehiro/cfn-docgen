@@ -272,14 +272,16 @@ def test_CfnTemplateOutputsNode():
 @pytest.fixture
 def spec_repository():
     return CfnSpecificationRepository(
-        loader=RemoteFileLoader(AppConfig.DEFAULT_SPECIFICATION_URL),
+        source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+        loader=RemoteFileLoader(),
         cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )
 
 def all_resource_types():
     spec_repository = CfnSpecificationRepository(
-        loader=RemoteFileLoader(AppConfig.DEFAULT_SPECIFICATION_URL),
+        source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+        loader=RemoteFileLoader(),
         cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )
@@ -503,7 +505,7 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(spec_repository:CfnSpecificat
 
 
 
-@pytest.mark.skipif(os.environ.get("SKIP_LONG_TEST", False), reason="this test takes long time to run")
+@pytest.mark.skipif(condition=os.environ.get("SKIP_LONG_TEST", False), reason="this test takes long time to run")
 @pytest.mark.parametrize("resource_type", [
     (r) for r in all_resource_types()
 ])

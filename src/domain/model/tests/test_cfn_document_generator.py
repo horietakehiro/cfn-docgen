@@ -5,15 +5,16 @@ from adapters.cfn_specification_repository import CfnSpecificationRepository
 from adapters.internal.cache import LocalFileCache
 from adapters.internal.file_loader import RemoteFileLoader
 from config import AppConfig
-from domain.model.cfn_document_generator import MarkdownDocumentGenerator
+from domain.model.cfn_document_generator import CfnMarkdownDocumentGenerator, PropertyField
 
-from domain.model.cfn_template import CfnTemplateConditionsNode, CfnTemplateDefinition, CfnTemplateMappingsNode, CfnTemplateMetadataCfnDocgenDefinition, CfnTemplateMetadataDefinition, CfnTemplateMetadataInterface, CfnTemplateMetadataParameterGroup, CfnTemplateMetadataParameterGroupLabel, CfnTemplateOutputDefinition, CfnTemplateParameterDefinition, CfnTemplateParametersNode, CfnTemplateResourceDefinition, CfnTemplateResourceMetadataCfnDocgenDefinition, CfnTemplateResourceMetadataDefinition, CfnTemplateRuleAssertDefinition, CfnTemplateRuleDefinition, CfnTemplateRulesNode, CfnTemplateSource, CfnTemplateTree
+from domain.model.cfn_template import CfnTemplateConditionsNode, CfnTemplateDefinition, CfnTemplateMappingsNode, CfnTemplateMetadataCfnDocgenDefinition, CfnTemplateMetadataDefinition, CfnTemplateMetadataInterface, CfnTemplateMetadataParameterGroup, CfnTemplateMetadataParameterGroupLabel, CfnTemplateOutputDefinition, CfnTemplateOutputExportDefinition, CfnTemplateOutputsNode, CfnTemplateParameterDefinition, CfnTemplateParametersNode, CfnTemplateResourceDefinition, CfnTemplateResourceMetadataCfnDocgenDefinition, CfnTemplateResourceMetadataDefinition, CfnTemplateResourcesNode, CfnTemplateRuleAssertDefinition, CfnTemplateRuleDefinition, CfnTemplateRulesNode, CfnTemplateSource, CfnTemplateTree
 
 
 @pytest.fixture
 def cfn_template_tree():
     spec_repository = CfnSpecificationRepository(
-        loader=RemoteFileLoader(AppConfig.DEFAULT_SPECIFICATION_URL),
+        source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+        loader=RemoteFileLoader(),
         cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )
@@ -129,14 +130,14 @@ def cfn_template_tree():
     ("Resource (AWS::EC2::Instance)", "resource-awsec2instance"),
 ])
 def test_MarkdownDocumentGenerator_toc_escape(original:str, expected:str):
-    generator = MarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator()
     escape = generator._toc_escape(original) # type: ignore
     assert escape == expected 
 
 
 def test_MarkdownDocumentGenerator_table_of_contents(cfn_template_tree:CfnTemplateTree):
 
-    generator = MarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator()
     expected_toc = "\n".join([
         "- [template.yaml](#templateyaml)",
         "  - [Description](#description)",
@@ -170,7 +171,7 @@ def test_MarkdownDocumentGenerator_overview(
     e_version:str, e_description:str, e_transform:str,
     cfn_template_tree:CfnTemplateTree,
 ):
-    generator = MarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator()
     expected_overview = "\n".join([
         "# template.yaml",
         "",
@@ -187,23 +188,38 @@ def test_MarkdownDocumentGenerator_overview(
     assert overview == expected_overview
 
 @pytest.mark.parametrize("cfn_docgen_description,e_cfn_docgen_description",[
-    ("cfn-docgen-description", "cfn-docgen-description"),
-    (None, ""),
-    ("- d1\n- d2", "- d1\n- d2")
+    (
+        "cfn-docgen-description",
+        "\n".join([
+            "## Description",
+            "",
+            "cfn-docgen-description",
+        ]),
+    ),
+    (
+        None,
+        "\n".join([
+            "## Description",
+            "",
+        ]),
+    ),
+    (
+        "- d1\n- d2",
+        "\n".join([
+            "## Description",
+            "",
+            "- d1\n- d2",
+        ]),
+    )
 ])
 def test_MarkdownDocumentGenerator_description(
         cfn_docgen_description:Optional[str], e_cfn_docgen_description:str,
         cfn_template_tree:CfnTemplateTree,
 ):
-    generator = MarkdownDocumentGenerator()
-    expected_description = "\n".join([
-        "## Description",
-        "",
-        e_cfn_docgen_description,
-    ])
+    generator = CfnMarkdownDocumentGenerator()
     cfn_template_tree.cfn_docgen_description = cfn_docgen_description
     description = generator.description(cfn_template_tree)
-    assert description == expected_description
+    assert description == e_cfn_docgen_description
 
 @pytest.mark.parametrize("paramters_node,e_parameters",[
     (
@@ -358,7 +374,7 @@ def test_MarkdownDocumentGenerator_parameters(
         paramters_node:CfnTemplateParametersNode, e_parameters:str,
         cfn_template_tree:CfnTemplateTree,
 ):
-    generator = MarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator()
     cfn_template_tree.parameters_node = paramters_node
 
     parameters = generator.parameters(cfn_template_tree)
@@ -419,7 +435,7 @@ def test_MarkdownDocumentGenerator_mappings(
         mappings_node:CfnTemplateMappingsNode, e_mappings:str,
         cfn_template_tree:CfnTemplateTree,
 ):
-    generator = MarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator()
     cfn_template_tree.mappings_node = mappings_node
     
     mappings = generator.mappings(cfn_template_tree)
@@ -451,7 +467,7 @@ def test_MarkdownDocumentGenerator_mappings(
             "",
             "cond1-description",
             "",
-            "|Conditions|",
+            "|Condition|",
             "|-|",
             '|{<br/>&nbsp;&nbsp;"Fn::Equals":&nbsp;[<br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Ref":&nbsp;"AWS::Region"<br/>&nbsp;&nbsp;&nbsp;&nbsp;},<br/>&nbsp;&nbsp;&nbsp;&nbsp;"ap-northeast-1"<br/>&nbsp;&nbsp;]<br/>}|',
             "",
@@ -459,7 +475,7 @@ def test_MarkdownDocumentGenerator_mappings(
             "",
             "",
             "",
-            "|Conditions|",
+            "|Condition|",
             "|-|",
             '|{<br/>&nbsp;&nbsp;"Fn::Equals":&nbsp;[<br/>&nbsp;&nbsp;&nbsp;&nbsp;1,<br/>&nbsp;&nbsp;&nbsp;&nbsp;1<br/>&nbsp;&nbsp;]<br/>}|',
         ])
@@ -478,7 +494,7 @@ def test_MarkdownDocumentGenerator_conditions(
         conditions_node:CfnTemplateConditionsNode, e_conditions:str,
         cfn_template_tree:CfnTemplateTree,
 ):
-    generator = MarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator()
     cfn_template_tree.conditions_node = conditions_node
     
     conditions = generator.conditions(cfn_template_tree)
@@ -511,9 +527,13 @@ def test_MarkdownDocumentGenerator_conditions(
         "string",
         "string"
     ),
+    (
+        True,
+        "true"
+    )
 ])
 def test_MarkdownDocumentGenerator_dump_json(j:Any,expected:str):
-    generator = MarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator()
 
     dumped = generator._dump_json(j) # type: ignore
     print(dumped)
@@ -615,23 +635,457 @@ def test_MarkdownDocumentGenerator_rules(
     rules_node:CfnTemplateRulesNode, e_rules:str, 
     cfn_template_tree:CfnTemplateTree
 ):
-    generator = MarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator()
     cfn_template_tree.rules_node = rules_node
 
     rules = generator.rules(cfn_template_tree)
     assert rules == e_rules
 
 
+@pytest.mark.parametrize("resources_node,e_resources", [
+    (
+        CfnTemplateResourcesNode(
+            definitions={
+                "Instance": CfnTemplateResourceDefinition(
+                    Type="AWS::EC2::Instance",
+                    DependsOn=[
+                        "Vpc", "Subnet",
+                    ],
+                    Condition="Cond",
+                    CreationPolicy={"Creation": "Policy"},
+                    UpdatePolicy={"Update": "Policy"},
+                    UpdateReplacePolicy="Snapshot",
+                    DeletionPolicy="Retain",
+                    Metadata=CfnTemplateResourceMetadataDefinition(
+                        CfnDocgen=CfnTemplateResourceMetadataCfnDocgenDefinition(
+                            Description="instance-description",
+                            Properties={
+                                "ImageId": "imageid",
+                                "CpuOptions": "cpuoptions",
+                                "BlockDeviceMappings": [
+                                    {
+                                        "Ebs": {
+                                            "Encrypted": "encrypted"
+                                        }
+                                    }
+                                ]
+                            }
+                        )
+                    ),
+                    Properties={
+                        "ImageId": "IMAGEID",
+                        "CpuOptions": {
+                            "CoreCount": 0,
+                        },
+                        "BlockDeviceMappings": [
+                            {
+                                "Ebs": {
+                                    "Encrypted": True,
+                                    "VolumeType": "VOLUMETYPE",
+                                }
+                            },
+                            {
+                                "NoDevice": {}
+                            }
+                        ],
+                        "SecurityGroupIds": [
+                            "SECURITYGROUPID1",
+                            "SECURITYGROUPID2",
+                        ],
+                        "SsmAssociations": [
+                            {
+                                "AssociationParameters": [
+                                    {
+                                        "Key": "KEY1",
+                                        "Value": ["VALUE11", "VALUE12"]
+                                    },
+                                    {
+                                        "Key": "KEY2",
+                                        "Value": ["VALUE21", "VALUE22"]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ),
+                "Table": CfnTemplateResourceDefinition(
+                    Type="AWS::DynamoDB::Table",
+                    Metadata=None,
+                    Properties={
+                        "TableName": "TABLENAME"
+                    },
+                )
+            },
+            spec_repository=CfnSpecificationRepository(
+                source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+                loader=RemoteFileLoader(),
+                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+                recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+            )
+        ),
+        "\n".join([
+            "## Resources",
+            "",
+            "### [Table (AWS::DynamoDB::Table)](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-table.html)",
+            "",
+            "",
+            "",
+            "|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|",
+            "|-|-|-|-|-|-|",
+            "|-|-|-|-|Delete|Delete|",
+            "",
+            "|Property|Value|Description|Type|Required|UpdateType|",
+            "|-|-|-|-|-|-|",
+            "|TableName|TABLENAME|-|String|false|Immutable|",
+            "",
+            "### [Instance (AWS::EC2::Instance)](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html)",
+            "",
+            "instance-description",
+            "",
+            "|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|",
+            "|-|-|-|-|-|-|",
+            '|[<br/>&nbsp;&nbsp;"Vpc",<br/>&nbsp;&nbsp;"Subnet"<br/>]|Cond|{<br/>&nbsp;&nbsp;"Creation":&nbsp;"Policy"<br/>}|{<br/>&nbsp;&nbsp;"Update":&nbsp;"Policy"<br/>}|Snapshot|Retain|',
+            "",
+            "|Property|Value|Description|Type|Required|UpdateType|",
+            "|-|-|-|-|-|-|",
+            "|BlockDeviceMappings[0]|-|-|List of BlockDeviceMapping|false|Conditional|",
+            "|&nbsp;&nbsp;Ebs|-|-|Ebs|false|Mutable|",
+            "|&nbsp;&nbsp;&nbsp;&nbsp;Encrypted|true|encrypted|Boolean|false|Mutable|",
+            "|&nbsp;&nbsp;&nbsp;&nbsp;VolumeType|VOLUMETYPE|-|String|false|Mutable|",
+            "|BlockDeviceMappings[1]|-|-|List of BlockDeviceMapping|false|Conditional|",
+            "|&nbsp;&nbsp;NoDevice|-|-|NoDevice|false|Mutable|",
+            "|CpuOptions|-|cpuoptions|CpuOptions|false|Immutable|",
+            "|&nbsp;&nbsp;CoreCount|0|-|Integer|false|Mutable|",
+            "|ImageId|IMAGEID|imageid|String|false|Immutable|",
+            '|SecurityGroupIds|[<br/>&nbsp;&nbsp;"SECURITYGROUPID1",<br/>&nbsp;&nbsp;"SECURITYGROUPID2"<br/>]|-|List of String|false|Conditional|',
+            '|SsmAssociations[0]|-|-|List of SsmAssociation|false|Mutable|',
+            '|&nbsp;&nbsp;AssociationParameters[0]|-|-|List of AssociationParameter|false|Mutable|',
+            '|&nbsp;&nbsp;&nbsp;&nbsp;Key|KEY1|-|String|true|Mutable|',
+            '|&nbsp;&nbsp;&nbsp;&nbsp;Value|[<br/>&nbsp;&nbsp;"VALUE11",<br/>&nbsp;&nbsp;"VALUE12"<br/>]|-|List of String|true|Mutable|',
+            '|&nbsp;&nbsp;AssociationParameters[1]|-|-|List of AssociationParameter|false|Mutable|',
+            '|&nbsp;&nbsp;&nbsp;&nbsp;Key|KEY2|-|String|true|Mutable|',
+            '|&nbsp;&nbsp;&nbsp;&nbsp;Value|[<br/>&nbsp;&nbsp;"VALUE21",<br/>&nbsp;&nbsp;"VALUE22"<br/>]|-|List of String|true|Mutable|',
+        ])
+    ),
+    (
+        CfnTemplateResourcesNode(
+            definitions={},
+            spec_repository=CfnSpecificationRepository(
+                source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+                loader=RemoteFileLoader(),
+                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+                recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+            )
+        ),
+        "\n".join([
+            "## Resources",
+        ])
+    )
+])
+def test_MarkdownDocumentGenerator_resources(
+        resources_node:CfnTemplateResourcesNode, e_resources:str,
+        cfn_template_tree:CfnTemplateTree,
+):
+    generator = CfnMarkdownDocumentGenerator()
+    cfn_template_tree.resources_node = resources_node
 
-# ## Rules
+    resources = generator.resources(cfn_template_tree)
+    assert resources == e_resources
 
-# ### RegionRule
+def test_MarkdownDocumentGenerator_flatten_properties():
+    cfn_template_tree = CfnTemplateResourcesNode(
+        definitions={
+            "Instance": CfnTemplateResourceDefinition(
+                Type="AWS::EC2::Instance",
+                DependsOn=[
+                    "Vpc", "Subnet",
+                ],
+                Condition="Cond",
+                CreationPolicy={"Creation": "Policy"},
+                UpdatePolicy={"Update": "Policy"},
+                UpdateReplacePolicy="Snapshot",
+                DeletionPolicy="Retain",
+                Properties={
+                    "ImageId": "IMAGEID",
+                    "CpuOptions": {
+                        "CoreCount": 0,
+                    },
+                    "BlockDeviceMappings": [
+                        {
+                            "Ebs": {
+                                "Encrypted": True,
+                                "VolumeType": "VOLUMETYPE",
+                            }
+                        },
+                        {
+                            "NoDevice": {}
+                        }
+                    ],
+                    "SecurityGroupIds": [
+                        "SECURITYGROUPID1",
+                        "SECURITYGROUPID2",
+                    ],
+                    "SsmAssociations": [
+                        {
+                            "AssociationParameters": [
+                                {
+                                    "Key": "KEY1",
+                                    "Value": ["VALUE11", "VALUE12"]
+                                },
+                                {
+                                    "Key": "KEY2",
+                                    "Value": ["VALUE21", "VALUE22"]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            )
+        },
+        spec_repository=CfnSpecificationRepository(
+            source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+            loader=RemoteFileLoader(),
+            cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+            recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+        )
+    )
+    expected:List[PropertyField] = [
+        PropertyField(
+            Property="BlockDeviceMappings[0]", Type="List of BlockDeviceMapping",
+            Value="-", Description="-", Required="false", UpdateType="Conditional",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;Ebs", Type="Ebs",
+            Value="-", Description="-", Required="false", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;&nbsp;&nbsp;Encrypted", Type="Boolean",
+            Value="true", Description="-", Required="false", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;&nbsp;&nbsp;VolumeType", Type="String",
+            Value="VOLUMETYPE", Description="-", Required="false", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="BlockDeviceMappings[1]", Type="List of BlockDeviceMapping",
+            Value="-", Description="-", Required="false", UpdateType="Conditional",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;NoDevice", Type="NoDevice",
+            Value="-", Description="-", Required="false", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="CpuOptions", Type="CpuOptions",
+            Value="-", Description="-", Required="false", UpdateType="Immutable",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;CoreCount", Type="Integer",
+            Value="0", Description="-", Required="false", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="ImageId", Type="String",
+            Value="IMAGEID", Description="-", Required="false", UpdateType="Immutable",
+        ),
+        PropertyField(
+            Property="SecurityGroupIds", Type="List of String",
+            Value='[<br/>&nbsp;&nbsp;"SECURITYGROUPID1",<br/>&nbsp;&nbsp;"SECURITYGROUPID2"<br/>]', Description="-", Required="false", UpdateType="Conditional",
+        ),
+        PropertyField(
+            Property="SsmAssociations[0]", Type="List of SsmAssociation",
+            Value="-", Description="-", Required="false", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;AssociationParameters[0]", Type="List of AssociationParameter",
+            Value="-", Description="-", Required="false", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;&nbsp;&nbsp;Key", Type="String",
+            Value="KEY1", Description="-", Required="true", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;&nbsp;&nbsp;Value", Type="List of String",
+            Value='[<br/>&nbsp;&nbsp;"VALUE11",<br/>&nbsp;&nbsp;"VALUE12"<br/>]', Description="-", Required="true", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;AssociationParameters[1]", Type="List of AssociationParameter",
+            Value="-", Description="-", Required="false", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;&nbsp;&nbsp;Key", Type="String",
+            Value="KEY2", Description="-", Required="true", UpdateType="Mutable",
+        ),
+        PropertyField(
+            Property="&nbsp;&nbsp;&nbsp;&nbsp;Value", Type="List of String",
+            Value='[<br/>&nbsp;&nbsp;"VALUE21",<br/>&nbsp;&nbsp;"VALUE22"<br/>]', Description="-", Required="true", UpdateType="Mutable",
+        ),
+    ]
 
-# This template is available only in ap-northeast-1
+    generator = CfnMarkdownDocumentGenerator()
 
-# |RuleCondition|
-# |-|
-# |-|
+    properties = generator._flatten_properties_node(cfn_template_tree.resource_nodes["Instance"].properties_node) # type: ignore
+    assert len(properties) == len(expected)
+    for p, e in zip(properties, expected):
+        print(p)
+        assert p.Property == e.Property
+        assert p.Type == e.Type
+        assert p.Value == e.Value
+        assert p.Description == e.Description
+        assert p.Required == e.Required
+        assert p.UpdateType == e.UpdateType, p
 
-# |Assert|AssertDescription|
-# |-|-|
+
+@pytest.mark.parametrize("jsonpath,expected", [
+    ("$.BlockDeviceMappings", "BlockDeviceMappings"),
+    ("$.BlockDeviceMappings[0]", "BlockDeviceMappings[0]"),
+    ("$.BlockDeviceMappings[0].Ebs", "&nbsp;&nbsp;Ebs"),
+    ("$.BlockDeviceMappings[0].Ebs.Encrypted", "&nbsp;&nbsp;&nbsp;&nbsp;Encrypted"),
+    ("$.SsmAssociations[0].AssociationParameters[0]", "&nbsp;&nbsp;AssociationParameters[0]"),
+    ("$.SsmAssociations[0].AssociationParameters[0].Key", "&nbsp;&nbsp;&nbsp;&nbsp;Key"),
+])
+def test_MarkdownDocumentGenerator_simplify_jsonpath(jsonpath:str, expected:str):
+    generator = CfnMarkdownDocumentGenerator()
+    path = generator._simplify_jsonpath(jsonpath) # type: ignore
+    assert path == expected
+
+
+@pytest.mark.parametrize("outputs_node,e_outputs", [
+    (
+        CfnTemplateOutputsNode(
+            definitions={
+                "out1": CfnTemplateOutputDefinition(
+                    Description="out1-description",
+                    Value={"Ref": "VALUE"},
+                    Export=CfnTemplateOutputExportDefinition(
+                        Name={"Ref": "NAME"}
+                    ),
+                    Condition="cond1"
+                ),
+                "out2": CfnTemplateOutputDefinition(
+                    Value="VALUE"
+                )
+            }
+        ),
+        "\n".join([
+            "## Outputs",
+            "",
+            "### out1",
+            "",
+            "out1-description",
+            "",
+            "|Value|ExportName|Condition|",
+            "|-|-|-|",
+            '|{<br/>&nbsp;&nbsp;"Ref":&nbsp;"VALUE"<br/>}|{<br/>&nbsp;&nbsp;"Ref":&nbsp;"NAME"<br/>}|cond1|',
+            "",
+            "### out2",
+            "",
+            "",
+            "",
+            "|Value|ExportName|Condition|",
+            "|-|-|-|",
+            "|VALUE|-|-|",
+        ])
+    ),
+    (
+        CfnTemplateOutputsNode(
+            definitions={}
+        ),
+        "\n".join([
+            "## Outputs",
+        ])
+    )
+])
+def test_MarkdownDocumentGenerator_outputs(
+    outputs_node:CfnTemplateOutputsNode, e_outputs:str,
+    cfn_template_tree:CfnTemplateTree,
+):
+    cfn_template_tree.outputs_node = outputs_node
+    generator = CfnMarkdownDocumentGenerator()
+    outputs = generator.outputs(cfn_template_tree)
+    print(outputs)
+    assert outputs == e_outputs
+
+@pytest.mark.parametrize("tree,e_template", [
+    (
+        CfnTemplateTree(
+            template_source=CfnTemplateSource("template.yaml"),
+            definition=CfnTemplateDefinition(
+                Resources={"resource1": CfnTemplateResourceDefinition(
+                    Type="AWS::EC2::Instance",
+                    Properties={},
+                )}
+            ),
+            spec_repository=CfnSpecificationRepository(
+                loader=RemoteFileLoader(),
+                source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+                recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+            )
+        ),
+        "\n".join([
+            "- [template.yaml](#templateyaml)",
+            "  - [Description](#description)",
+            "  - [Parameters](#parameters)",
+            "  - [Mappings](#mappings)",
+            "  - [Conditions](#conditions)",
+            "  - [Rules](#rules)",
+            "  - [Resources](#resources)",
+            "    - [resource1 (AWS::EC2::Instance)](#resource1-awsec2instance)",
+            "  - [Outputs](#outputs)",
+            "",
+            "---",
+            "",
+            "# template.yaml",
+            "",
+            "| | |",
+            "|-|-|",
+            "|AWSTemplateFormatVersion|-|",
+            "|Description|-|",
+            "|Transform|-|",
+            "",
+            "---",
+            "",
+            "## Description",
+            "",
+            "",
+            "---",
+            "",
+            "## Parameters",
+            "",
+            "---",
+            "",
+            "## Mappings",
+            "",
+            "---",
+            "",
+            "## Conditions",
+            "",
+            "---",
+            "",
+            "## Rules",
+            "",
+            "---",
+            "",
+            "## Resources",
+            "",
+            "### [resource1 (AWS::EC2::Instance)](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html)",
+            "",
+            "",
+            "",
+            "|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|",
+            "|-|-|-|-|-|-|",
+            "|-|-|-|-|Delete|Delete|",
+            "",
+            "|Property|Value|Description|Type|Required|UpdateType|",
+            "|-|-|-|-|-|-|",
+            "",
+            "---",
+            "",
+            "## Outputs",
+        ])
+    )
+])
+def test_MarkdownDocumentGenerator_generate(tree:CfnTemplateTree, e_template:str):
+    generator = CfnMarkdownDocumentGenerator()
+    template = generator.generate(tree)
+    assert template == e_template
+

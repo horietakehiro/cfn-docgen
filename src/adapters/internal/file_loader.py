@@ -1,38 +1,45 @@
 import requests
-from cfn_flip import to_json # type: ignore
+from domain.model.cfn_document_generator import CfnDocumentDestination
+from domain.model.cfn_template import CfnTemplateSource # type: ignore
 
-from src.domain.ports.file_loader import DumpedJsonString, IFileLoader
+from domain.ports.internal.file_loader import IFileLoader
 
-def get_file_loader(filepath:str) -> IFileLoader:
-    """return proper file loader instance for the given filepath"""
-    if filepath.startswith("https://"):
-        return RemoteFileLoader(filepath)
-    
-    return LocalFileLoader(filepath)
+def document_loader_factory(document_dest:CfnDocumentDestination) -> IFileLoader:
+    match document_dest.type:
+        case "LocalFilePath":
+            return LocalFileLoader()
+        case _: # type: ignore
+            raise NotImplementedError()
+
+def file_loader_factory(template_source:CfnTemplateSource) -> IFileLoader:
+    match template_source.type:
+        case "LocalFilePath":
+            return LocalFileLoader()
+        
+        case _: # type: ignore
+            raise NotImplementedError()
 
 
 class LocalFileLoader(IFileLoader):
-    """load cfn template file in local filepath"""
-    def __init__(self, filepath: str) -> None:
-        self.filepath = filepath
+    def __init__(self) -> None:
+        super().__init__()
 
-    def load(self) -> DumpedJsonString:
-        """load cfn template file and return as json-convertible string"""
-        with open(self.filepath, "r", encoding="UTF-8") as fp:
+    def download(self, source: str) -> bytes:
+        with open(source, "rb") as fp:
             raw = fp.read()
-        if raw.startswith("{") and raw.endswith("}"):
-            return raw
-        return to_json(raw)
+        return raw
+    
+    def upload(self, body: bytes, dest: str) -> None:
+        with open(dest, "wb") as fp:
+            fp.write(body)
 
 class RemoteFileLoader(IFileLoader):
-    """load cfn specification file from remote server"""
-    def __init__(self, filepath: str) -> None:
-        assert (
-            filepath.startswith("https://")
-        ), "filepath must be a form of https url (e.g. https://example.com/file.json)"
-        self.filepath = filepath
+    def __init__(self) -> None:
+        super().__init__()
 
-    def load(self) -> DumpedJsonString:
-        """download remote file and return as json-convertible string"""
-        res = requests.get(self.filepath, timeout=10)
-        return res.content.decode(encoding="utf-8")
+    def download(self, source: str) -> bytes:
+        res = requests.get(source, timeout=10)
+        return res.content
+
+    def upload(self, body: bytes, dest: str) -> None:
+        raise NotImplementedError

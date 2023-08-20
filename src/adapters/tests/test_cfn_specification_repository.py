@@ -13,7 +13,8 @@ def cfn_specification_url():
 @pytest.fixture
 def repository():
     return CfnSpecificationRepository(
-        loader=RemoteFileLoader("https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json"),
+        source_url="https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json",
+        loader=RemoteFileLoader(),
         cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )

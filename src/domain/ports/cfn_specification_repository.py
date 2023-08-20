@@ -1,14 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import List, Mapping
 from domain.ports.cache import IFileCache
-from domain.ports.file_loader import IFileLoader
+from domain.ports.internal.file_loader import IFileLoader
 
 from src.domain.model.cfn_specification import CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName, CfnSpecificationPropertyType, CfnSpecificationResourceType, CfnSpecificationForResource
 
 
 class ICfnSpecificationRepository(ABC):
 
-    def __init__(self, loader:IFileLoader, cache:IFileCache, recursive_resource_types:List[str]) -> None:
+    def __init__(
+        self,
+        source_url:str,
+        loader:IFileLoader, 
+        cache:IFileCache, 
+        recursive_resource_types:List[str]
+    ) -> None:
         self.recursive_resource_types = recursive_resource_types
         super().__init__()
 

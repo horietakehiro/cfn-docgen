@@ -1,22 +1,88 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 import json
 import re
-from typing import Any, List, cast
+from typing import Any, List, Literal, Mapping, cast
+from domain.model.cfn_specification import CfnSpecificationProperty
 
-from domain.model.cfn_template import CfnTemplateParameterDefinition, CfnTemplateTree
+from domain.model.cfn_template import CfnTemplateParameterDefinition, CfnTemplateResourcePropertiesNode, CfnTemplateResourcePropertyNode, CfnTemplateTree
+from domain.model.config import SupportedFormat
 
+def document_generator_factory(fmt:SupportedFormat) -> ICfnDocumentGenerator:
+    match fmt:
+        case "markdown":
+            return CfnMarkdownDocumentGenerator()
+        
+        case _: # type: ignore
+            raise NotImplementedError
 
-class IDocumentGenerator(ABC):
+class CfnDocumentDestination:
+    type: Literal["LocalFilePath"]
+    dest: str
+
+    def __init__(self, dest:str) -> None:
+        self.type = "LocalFilePath"
+        self.dest = dest
+
+@dataclass
+class PropertyField:
+    Property: str
+    Value: str
+    Description: str
+    Required: str
+    UpdateType: str
+    Type: str
+    def as_table_row(self) -> str:
+        return "|{Property}|{Value}|{Description}|{Type}|{Required}|{UpdateType}|".format(
+            **self.__dict__
+        )
+
+class ICfnDocumentGenerator(ABC):
 
     @abstractmethod
-    def generate(self, tree:CfnTemplateTree) -> bytes:
+    def generate(self, cfn_template_tree:CfnTemplateTree) -> str:
         pass
 
-class MarkdownDocumentGenerator(IDocumentGenerator):
+class CfnMarkdownDocumentGenerator(ICfnDocumentGenerator):
     lfc = "\n"
 
-    def generate(self, tree: CfnTemplateTree) -> bytes:
-        return b""
+    def generate(self, cfn_template_tree: CfnTemplateTree) -> str:
+        return self.lfc.join([
+            self.table_of_contents(cfn_template_tree),
+            "",
+            "---",
+            "",
+            self.overview(cfn_template_tree),
+            "",
+            "---",
+            "",
+            self.description(cfn_template_tree),
+            "",
+            "---",
+            "",
+            self.parameters(cfn_template_tree),
+            "",
+            "---",
+            "",
+            self.mappings(cfn_template_tree),
+            "",
+            "---",
+            "",
+            self.conditions(cfn_template_tree),
+            "",
+            "---",
+            "",
+            self.rules(cfn_template_tree),
+            "",
+            "---",
+            "",
+            self.resources(cfn_template_tree),
+            "",
+            "---",
+            "",
+            self.outputs(cfn_template_tree),
+        ])
 
     def _toc_escape(self, s:str) -> str:
         """
@@ -81,8 +147,8 @@ class MarkdownDocumentGenerator(IDocumentGenerator):
 
         return self.lfc.join(toc)
         
-    def title(self, tree:CfnTemplateTree) -> str:
-        return f"# {tree.template_source.basename}"
+    # def title(self, tree:CfnTemplateTree) -> str:
+    #     return f"# {tree.template_source.basename}"
 
     def _unordered_list(self, l:Any) -> str:
         if not isinstance(l, list):
@@ -132,6 +198,9 @@ class MarkdownDocumentGenerator(IDocumentGenerator):
         description.append("## Description")
         description.append("")
         description.append(cfn_docgen_description)
+
+        if description[-1] == "":
+            description = description[:-1]
 
         return self.lfc.join(description)
     
@@ -222,6 +291,8 @@ class MarkdownDocumentGenerator(IDocumentGenerator):
     
     def _dump_json(self, j:Any) -> str:
         if not isinstance(j, dict) and not isinstance(j, list):
+            if isinstance(j, bool):
+                return str(j).lower()
             return str(j) # type: ignore
         dumped = json.dumps(j, indent=2, )
         dumped = dumped.replace("\n", "<br/>").replace(" ", "&nbsp;")
@@ -239,7 +310,7 @@ class MarkdownDocumentGenerator(IDocumentGenerator):
             conditions.append("")
             conditions.append(cond_leaf.descirption if cond_leaf.descirption is not None else "")
             conditions.append("")
-            conditions.append("|Conditions|")
+            conditions.append("|Condition|")
             conditions.append("|-|")
             conditions.append(f"|{self._dump_json(cond_leaf.definition)}|")
             conditions.append("")
@@ -281,3 +352,216 @@ class MarkdownDocumentGenerator(IDocumentGenerator):
             rules = rules[:-1]
 
         return self.lfc.join(rules)
+
+    def _prop_type_rep(self, p:CfnSpecificationProperty) -> str:
+        if p.PrimitiveType is not None:
+            return p.PrimitiveType
+        if p.PrimitiveItemType is not None and p.Type is not None:
+            return f"{p.Type} of {p.PrimitiveItemType}"
+        if p.ItemType is not None and p.Type is not None:
+            return f"{p.Type} of {p.ItemType}"
+        if p.Type is not None:
+            return p.Type
+        
+        return "-"
+
+    def _simplify_jsonpath(self, json_path:str) -> str:
+        *rest, tail = json_path.split(".")
+        if len(rest) == 1: # ["$"]
+            return tail
+        
+        spaces = "&nbsp;" * 2 * (len(rest)-1)
+        # index = re.search(r"\[\d\]$", rest[-1])
+        # if index is not None:
+        #     return f"{spaces}{index.group()}.{tail}"
+        
+        return f"{spaces}{tail}"
+
+    def _flatten_property_node(self, property_node:CfnTemplateResourcePropertyNode) -> Mapping[str, PropertyField]:
+        property_fields:Mapping[str, PropertyField] = {}
+
+        for leaf in property_node.property_leaves.values():
+            if leaf.definition is None:
+                continue
+            property_fields[leaf.json_path] = PropertyField(
+                Property=self._simplify_jsonpath(leaf.json_path),
+                Value=self._dump_json(leaf.definition),
+                Description=leaf.description if leaf.description is not None else "-",
+                Required=str(leaf.spec.Required).lower() if leaf.spec.Required is not None else "-",
+                UpdateType=leaf.spec.UpdateType if leaf.spec.UpdateType is not None else "-",
+                Type=self._prop_type_rep(leaf.spec)
+            )
+        for node in property_node.property_nodes.values():
+            if not node.has_leaves:
+                continue
+            property_fields[node.json_path] = PropertyField(
+                Property=self._simplify_jsonpath(node.json_path),
+                Value="-",
+                Description=node.description if node.description is not None else "-",
+                Required=str(node.spec.Required).lower() if node.spec is not None and node.spec.Required is not None else "-",
+                UpdateType=node.spec.UpdateType if node.spec is not None and node.spec.UpdateType is not None else "-",
+                Type=self._prop_type_rep(node.spec) if node.spec is not None else "-"
+            )
+            property_fields.update(self._flatten_property_node(node))
+        for nodes in property_node.property_nodes_list.values():
+            for node in nodes:
+                if not node.has_leaves:
+                    continue
+                property_fields[node.json_path] = PropertyField(
+                    Property=self._simplify_jsonpath(node.json_path),
+                    Value="-",
+                    Description=node.description if node.description is not None else "-",
+                    Required=str(node.spec.Required).lower() if node.spec is not None and node.spec.Required is not None else "-",
+                    UpdateType=node.spec.UpdateType if node.spec is not None and node.spec.UpdateType is not None else "-",
+                    Type=self._prop_type_rep(node.spec) if node.spec is not None else "-"
+                )
+                property_fields.update(self._flatten_property_node(node))
+        for nodes in property_node.property_nodes_map.values():
+            for node in nodes.values():
+                if not node.has_leaves:
+                    continue
+                property_fields[node.json_path] = PropertyField(
+                    Property=self._simplify_jsonpath(node.json_path),
+                    Value="-",
+                    Description=node.description if node.description is not None else "-",
+                    Required=str(node.spec.Required).lower() if node.spec is not None and node.spec.Required is not None else "-",
+                    UpdateType=node.spec.UpdateType if node.spec is not None and node.spec.UpdateType is not None else "-",
+                    Type=self._prop_type_rep(node.spec) if node.spec is not None else "-"
+                )
+                property_fields.update(self._flatten_property_node(node))
+
+        return property_fields
+
+    def _flatten_properties_node(self, properties_node:CfnTemplateResourcePropertiesNode) -> List[PropertyField]:
+        property_fields:Mapping[str, PropertyField] = {}
+
+        # leaves
+        for leaf in properties_node.property_leaves.values():
+            if leaf.definition is None:
+                continue
+            property_fields[leaf.json_path] = PropertyField(
+                Property=self._simplify_jsonpath(leaf.json_path),
+                Value=self._dump_json(leaf.definition),
+                Description=leaf.description if leaf.description is not None else "-",
+                Required=str(leaf.spec.Required).lower() if leaf.spec.Required is not None else "-",
+                UpdateType=leaf.spec.UpdateType if leaf.spec.UpdateType is not None else "-",
+                Type=self._prop_type_rep(leaf.spec)
+            )
+        for node in properties_node.property_nodes.values():
+            if not node.has_leaves:
+                continue
+            property_fields[node.json_path] = PropertyField(
+                Property=self._simplify_jsonpath(node.json_path),
+                Value="-",
+                Description=node.description if node.description is not None else "-",
+                Required=str(node.spec.Required).lower() if node.spec is not None and node.spec.Required is not None else "-",
+                UpdateType=node.spec.UpdateType if node.spec is not None and node.spec.UpdateType is not None else "-",
+                Type=self._prop_type_rep(node.spec) if node.spec is not None else "-"
+            )
+            property_fields.update(self._flatten_property_node(node))
+        for nodes in properties_node.property_nodes_list.values():
+            for node in nodes:
+                if not node.has_leaves:
+                    continue
+                property_fields[node.json_path] = PropertyField(
+                    Property=self._simplify_jsonpath(node.json_path),
+                    Value="-",
+                    Description=node.description if node.description is not None else "-",
+                    Required=str(node.spec.Required).lower() if node.spec is not None and node.spec.Required is not None else "-",
+                    UpdateType=node.spec.UpdateType if node.spec is not None and node.spec.UpdateType is not None else "-",
+                    Type=self._prop_type_rep(node.spec) if node.spec is not None else "-"
+                )
+                property_fields.update(self._flatten_property_node(node))
+        for nodes in properties_node.property_nodes_map.values():
+            for node in nodes.values():
+                if not node.has_leaves:
+                    continue
+                property_fields[node.json_path] = PropertyField(
+                    Property=self._simplify_jsonpath(node.json_path),
+                    Value="-",
+                    Description=node.description if node.description is not None else "-",
+                    Required=str(node.spec.Required).lower() if node.spec is not None and node.spec.Required is not None else "-",
+                    UpdateType=node.spec.UpdateType if node.spec is not None and node.spec.UpdateType is not None else "-",
+                    Type=self._prop_type_rep(node.spec) if node.spec is not None else "-"
+                )
+                property_fields.update(self._flatten_property_node(node))
+
+        property_fields_tuple = sorted(
+            [(k, v) for k, v in property_fields.items()],
+            key=lambda t: t[0]
+        )
+        property_fields_list = [t[1] for t in property_fields_tuple]
+        return property_fields_list
+
+    def resources(self, tree:CfnTemplateTree) -> str:
+        resources:List[str] = []
+
+
+        resources.append("## Resources")
+        resources.append("")
+        for resource_name, resource_node in sorted(
+            tree.resources_node.resource_nodes.items(), key=lambda r: (r[1].type, r[0])
+        ):
+            
+            resources.append("### [{Name} ({Type})]({Url})".format(
+                Name=resource_name,
+                Type=resource_node.type,
+                Url=resource_node.spec.Documentation,
+            ))
+            resources.append("")
+            resources.append(
+                resource_node.description if resource_node.description is not None else ""
+            )
+            resources.append("")
+            resources.append("|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|")
+            resources.append("|-|-|-|-|-|-|")
+            resources.append("|{DependsOn}|{Condition}|{CreationPolicy}|{UpdatePolicy}|{UpdateReplacePolicy}|{DeletionPolicy}|".format(
+                DependsOn=self._dump_json(resource_node.depends_on) if len(resource_node.depends_on) > 0 else "-",
+                Condition=resource_node.condition if resource_node.condition is not None else "-",
+                CreationPolicy=self._dump_json(resource_node.creation_policy) if resource_node.creation_policy is not None else "-",
+                UpdatePolicy=self._dump_json(resource_node.update_policy) if resource_node.update_policy is not None else "-",
+                UpdateReplacePolicy=resource_node.update_replace_policy,
+                DeletionPolicy=resource_node.deletion_policy,
+            ))
+            resources.append("")
+
+            resources.append("|Property|Value|Description|Type|Required|UpdateType|")
+            resources.append("|-|-|-|-|-|-|")
+            property_fields = self._flatten_properties_node(resource_node.properties_node)
+            for property_field in property_fields:
+                resources.append(property_field.as_table_row())
+            resources.append("")
+
+        if resources[-1] == "":
+            resources = resources[:-1]
+
+        return self.lfc.join(resources)
+    
+    def outputs(self, tree:CfnTemplateTree) -> str:
+        outputs:List[str] = []
+
+        outputs.append("## Outputs")
+        outputs.append("")
+        for output_name, output_leaf in sorted(
+            tree.outputs_node.output_leaves.items(), key=lambda o: o[0],
+        ):
+            outputs.append(f"### {output_name}")
+            outputs.append("")
+            outputs.append(
+                output_leaf.definition.Description if output_leaf.definition.Description is not None else ""
+            )
+            outputs.append("")
+            outputs.append("|Value|ExportName|Condition|")
+            outputs.append("|-|-|-|")
+            outputs.append("|{Value}|{ExportName}|{Condition}|".format(
+                Value=self._dump_json(output_leaf.definition.Value),
+                ExportName=self._dump_json(output_leaf.definition.Export.Name) if output_leaf.definition.Export is not None else  "-",
+                Condition=output_leaf.definition.Condition if output_leaf.definition.Condition is not None else "-",
+            ))
+            outputs.append("")
+        
+        if outputs[-1] == "":
+            outputs = outputs[:-1]
+
+        return self.lfc.join(outputs)
+    

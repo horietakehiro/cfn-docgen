@@ -5,17 +5,24 @@ from typing import List, Mapping
 from domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName, CfnSpecificationPropertyType, CfnSpecificationResourceType
 from src.domain.model.cfn_specification import CfnSpecification
 from src.domain.ports.cache import IFileCache
-from src.domain.ports.file_loader import IFileLoader
+from domain.ports.internal.file_loader import IFileLoader
 from src.domain.ports.cfn_specification_repository import ICfnSpecificationRepository
 
 
 class CfnSpecificationRepository(ICfnSpecificationRepository):
-    def __init__(self, loader: IFileLoader, cache: IFileCache, recursive_resource_types:List[str]) -> None:
-        cached = cache.get(loader.filepath)
+    def __init__(
+        self, 
+        source_url:str,
+        loader: IFileLoader, 
+        cache: IFileCache, 
+        recursive_resource_types:List[str]
+    ) -> None:
+        cached = cache.get(source_url)
         if cached is None:
-            json_str = loader.load()
+            json_bytes = loader.download(source_url)
+            json_str = json_bytes.decode()
             self.spec = CfnSpecification(**json.loads(json_str))
-            cache.put(loader.filepath, json_str)
+            cache.put(source_url, json_str)
         else:
             self.spec = CfnSpecification(**json.loads(cached))
 

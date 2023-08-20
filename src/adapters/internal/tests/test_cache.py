@@ -1,19 +1,14 @@
 
 import os
-import shutil
-from typing import Any
 from adapters.internal.cache import LocalFileCache
 
 from config import AppConfig
 
-def setup_function(function:Any):
-    cache_root_dir = os.path.join(AppConfig.APP_ROOT_DIR, "cache")
-    shutil.rmtree(cache_root_dir, ignore_errors=True)
 
 def test_LocalFileCache_put():
     path1 = "/foo/bar.json"
     body1 = "foobar"
-    cache = LocalFileCache(AppConfig())
+    cache = LocalFileCache(AppConfig.CACHE_ROOT_DIR)
 
     cache.put(path1, body1)
     cache_filepath = os.path.join(
@@ -27,7 +22,7 @@ def test_LocalFileCache_put():
 def test_LocalFileCache_get():
     path1 = "/foo/bar.json"
     body1 = "foobar"
-    cache = LocalFileCache(AppConfig())
+    cache = LocalFileCache(AppConfig.CACHE_ROOT_DIR)
     
     cache.put(path1, body1)
 

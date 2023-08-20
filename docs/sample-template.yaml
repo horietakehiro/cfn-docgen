@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: This template creates 1 VPC, and 2 public subnets in it.
+Description: This template creates 1 VPC and 2 public subnets in it.
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -21,6 +21,7 @@ Metadata:
       **注意点**
       - このテンプレートファイルは**東京リージョン**上でのみの使用に制限しています
       - このテンプレートファイルを使用する前に、[東京リージョン上に作成可能なVPCの最大数の設定](https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas/L-F678F1CE)を確認することを推奨します(デフォルトは5VPC)**
+
     Mappings:
       CidrBlockMap: CidrBlocks for each environment
     Conditions:
@@ -75,8 +76,8 @@ Resources:
   VPC:
     Metadata:
       CfnDocgen:
-        ResourceComment: アプリケーションサーバを稼働させるために使用するVPC
-        PropComment:
+        Description: アプリケーションサーバを稼働させるために使用するVPC
+        Properties:
           EnableDnsHostnames: アプリケーションサーバのホスト名でパブリックIPを名前解決できるように有効化する
     Type: AWS::EC2::VPC
     Properties: 
@@ -140,7 +141,7 @@ Resources:
       - IgwAttachment
     Metadata:
       CfnDocgen:
-        ResourceComment: パブリックサブネットからIGWへのルートを設定するためのルートテーブル
+        Description: パブリックサブネットからIGWへのルートを設定するためのルートテーブル
     Type: AWS::EC2::RouteTable
     Properties: 
       Tags: 
