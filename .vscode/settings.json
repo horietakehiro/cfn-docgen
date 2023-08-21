@@ -16,4 +16,5 @@
         "PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}/tests/features"
     },
     "python.analysis.autoImportCompletions": true,
+    "python.analysis.stubPath": "${workspaceFolder}/tests/typings"
 }
