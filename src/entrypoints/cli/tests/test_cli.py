@@ -123,9 +123,9 @@ def test_cli_local_file_source_local_file_dest():
     result = runner.invoke(main, args=args.as_list())
     assert result.exit_code == 0
 
-    with open(OUTPUT_MD_FILE1, "r", encoding="UTF-8") as fp:
+    with open(OUTPUT_MD_FILE1, "rb") as fp:
         output = fp.read()
-    with open(EXPECTED_MASTER_FILE, "r", encoding="UTF-8") as fp:
+    with open(EXPECTED_MASTER_FILE, "rb") as fp:
         example = fp.read()
     
     assert output == example
@@ -173,20 +173,16 @@ def test_cli_s3_prefix_source_s3_prefix_dest():
     args = CliArguement(
         subcommand="docgen",
         format="markdown",
-        source=INPUT_ROOT_PREFIX,
-        dest=OUTPUT_ROOT_PREFIX,
+        source=f"s3://{TEST_BUCKET_NAME}/{INPUT_ROOT_PREFIX}",
+        dest=f"s3://{TEST_BUCKET_NAME}/{OUTPUT_ROOT_PREFIX}",
     )
-
     runner = CliRunner()
     result = runner.invoke(main, args=args.as_list())
     assert result.exit_code == 0
 
-    with open(EXPECTED_MASTER_FILE, "r") as fp:
+    with open(EXPECTED_MASTER_FILE, "rb") as fp:
         expected = fp.read()
     
     for output_key in [OUTPUT_MD_KEY1, OUTPUT_MD_KEY2]:
         res = s3_client.get_object(Bucket=TEST_BUCKET_NAME, Key=output_key)
         assert res["Body"].read() == expected
-
-
-    
