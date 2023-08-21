@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from typing import List
 
 class IFileLoader(ABC):
 
@@ -12,4 +13,8 @@ class IFileLoader(ABC):
 
     @abstractmethod
     def upload(self, body:bytes, dest:str) -> None:
+        pass
+
+    @abstractmethod
+    def list(self, source:str) -> List[str]:
         pass

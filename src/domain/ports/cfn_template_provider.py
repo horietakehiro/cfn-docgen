@@ -12,7 +12,3 @@ class ICfnTemplateProvider(ABC):
     @abstractmethod
     def load_template(self, template_source:CfnTemplateSource) -> CfnTemplateDefinition:
         """load cfn template file(either json or yaml format) as dict"""
-
-    # @abstractmethod
-    # def save_document(self, document:str, document_destination:CfnDocumentDestination):
-    #     """save generated document to the destination"""

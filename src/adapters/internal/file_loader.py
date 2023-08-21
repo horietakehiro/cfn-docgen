@@ -1,3 +1,6 @@
+import glob
+import os
+from typing import List, Optional
 from urllib.parse import urlparse
 import requests
 import boto3
@@ -39,8 +42,17 @@ class LocalFileLoader(IFileLoader):
         return raw
     
     def upload(self, body: bytes, dest: str) -> None:
+        # meke suer directory is exist
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
         with open(dest, "wb") as fp:
             fp.write(body)
+
+    def list(self, source: str) -> List[str]:
+        if os.path.isfile(source):
+            return [source]
+        else:
+            files_and_dir = glob.glob(os.path.join(source, "**"), recursive=True)
+            return sorted([f for f in files_and_dir if os.path.isfile(f)])
 
 class RemoteFileLoader(IFileLoader):
     def __init__(self) -> None:
@@ -51,6 +63,9 @@ class RemoteFileLoader(IFileLoader):
         return res.content
 
     def upload(self, body: bytes, dest: str) -> None:
+        raise NotImplementedError
+    
+    def list(self, source: str) -> List[str]:
         raise NotImplementedError
     
 class S3FileLoader(IFileLoader):
@@ -80,3 +95,56 @@ class S3FileLoader(IFileLoader):
             Key=key,
             Body=body,
         )
+
+    def list(self, source: str) -> List[str]:
+        sources:List[str] = []
+
+        source_url = urlparse(source)
+        bucket = source_url.netloc
+        prefix_or_key = source_url.path
+        if prefix_or_key.startswith("/"):
+            prefix_or_key = prefix_or_key[1:]
+
+        # if source is a object key, return it
+        try:
+            res = self.client.head_object(
+                Bucket=bucket,
+                Key=prefix_or_key
+            )
+            return [source]
+        except Exception as ex:
+            if "404" in str(ex):
+                pass
+            else:
+                raise ex
+
+        # if source is a prefix, return all keys
+        prefix = prefix_or_key
+        if not prefix.endswith("/"):
+            prefix += "/"
+        res = self.client.list_objects_v2(
+            Bucket=bucket, Prefix=prefix
+        )
+        contents = res.get("Contents", None)
+        if contents is None: # type: ignore
+            return sources
+        for content in contents:
+            sources.append(
+                os.path.join(f"s3://{bucket}",  content["Key"]) # type: ignore
+            )
+        next_token:Optional[str] = res.get("NextContinuationToken", None)
+        while next_token is not None: # type: ignore
+            res = self.client.list_objects_v2(
+                Bucket=bucket, Prefix=prefix,
+                ContinuationToken=next_token,
+            )
+            contents = res.get("Contents", None)
+            if contents is None: # type: ignore
+                return sources
+            for content in contents:
+                sources.append(
+                    os.path.join(f"s3://{bucket}", content["Key"]) # type: ignore
+                )
+            next_token:str|None = res.get("NextContinuationToken", None)
+
+        return sources
