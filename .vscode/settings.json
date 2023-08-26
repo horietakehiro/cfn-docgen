@@ -2,19 +2,24 @@
     "python.analysis.typeCheckingMode": "strict",
     "python.terminal.activateEnvInCurrentTerminal": true,
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
-    "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
-    "python.linting.pylintArgs": [
-        "--load-plugins=pylint_behave"
-    ],
+    // "python.linting.pylintEnabled": true,
+    // "python.linting.enabled": true,
+    // "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
+    // "python.linting.pylintArgs": [
+    //     "--load-plugins=pylint_behave"
+    // ],
     "python.analysis.extraPaths": [
+        // "${workspaceFolder}",
         "${workspaceFolder}/src",
         "${workspaceFolder}/tests/features",
     ],
     "terminal.integrated.env.linux": {
-        "PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}/tests/features"
+        "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/src:${workspaceFolder}/tests/features"
     },
     "python.analysis.autoImportCompletions": true,
-    "python.analysis.stubPath": "${workspaceFolder}/tests/typings"
+    "python.analysis.stubPath": "${workspaceFolder}/tests/typings",
+    "pylint.path": ["${workspaceFolder}/.venv/bin/pylint"],
+    "pylint.args": [
+        "--load-plugins=pylint_behave"
+    ],
 }

@@ -6,7 +6,7 @@ import difflib
 
 from behave import given, then, when  # pylint: disable=no-name-in-module
 
-from src.setup import VERSION
+from setup import VERSION
 from tests.features.environment import CommandLineToolContext
 
 

@@ -1,0 +1,6 @@
+boto3>=1.28.30
+cfn-flip>=1.3.0
+click>=8.1.6
+jsonpath-ng>=1.5.3
+requests>=2.31.0
+pydantic>=2.1.1
