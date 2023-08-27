@@ -1,9 +1,13 @@
 import os
 from setuptools import find_packages, setup
-with open(os.path.join("README.md"), "r", encoding="utf-8") as fh:
-    long_description = fh.read()
-with open(os.path.join("requirements.txt"), "r", encoding="utf-8") as fh:
-    requirements = fh.read()
+with open(os.path.join(
+    os.path.dirname(__file__), "README.md"), "r", encoding="utf-8",
+) as fp:
+    long_description = fp.read()
+with open(os.path.join(
+    os.path.dirname(__file__), "requirements.txt"), "r", encoding="utf-8"
+) as fp:
+    requirements = fp.read()
 
 VERSION="0.9.0"
 setup(
