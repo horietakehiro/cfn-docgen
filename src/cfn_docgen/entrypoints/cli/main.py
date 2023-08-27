@@ -16,9 +16,9 @@ def main():
     pass
 
 @main.command()
-@click.option("--format", "fmt", required=True, type=click.Choice(["markdown"]), help="format of output file")
-@click.option("--source", "source", required=True, type=str, help="input cfn template source. (can be file or directory with form of local path or S3 url)")
-@click.option("--dest", "dest", required=True, type=str, help="output document destination. (can be file or directory with form of local path or S3 url)")
+@click.option("-f", "--format", "fmt", required=True, type=click.Choice(["markdown"]), help="format of output file")
+@click.option("-s", "--source", "source", required=True, type=str, help="input cfn template source. (can be file or directory with form of local path or S3 url)")
+@click.option("-d", "--dest", "dest", required=True, type=str, help="output document destination. (can be file or directory with form of local path or S3 url)")
 def docgen(fmt:SupportedFormat, source:str, dest:str):
 
     units_of_work = CfnDocgenCLIUnitsOfWork(

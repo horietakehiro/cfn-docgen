@@ -115,7 +115,7 @@ Resources:
     Properties:
       Architectures:
       - x86_64
-      CodeUri: s3://cfn-docgen-artifact-bucket-382098889955-ap-northeast-1/serverless/de5b973aa7a9183fcba54374e0497d7f
+      CodeUri: s3://cfn-docgen-artifact-bucket-382098889955-ap-northeast-1/serverless/5e137f061d66699e7f625fe37f67d566
       Description: cfn docgen executor with s3
       Environment:
         Variables:

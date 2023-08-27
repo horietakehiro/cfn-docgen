@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from behave import given, then, when
 import boto3  # pylint: disable=no-name-in-module
 
-from tests.features.environment import INPUT_MASTER_FILE, CommandLineToolContext, ServerlessContext
+from tests.features.environment import INPUT_MASTER_FILE, ServerlessContext
 
 @given("cfn-docgen serverless application is deployed")
 def step_impl(context:ServerlessContext):
@@ -18,7 +18,7 @@ def step_impl(context:ServerlessContext):
 
 
 @when("CloudFormation template file is uploaded to S3 bucket")
-def step_impl(context:CommandLineToolContext):
+def step_impl(context:ServerlessContext):
     s3 = boto3.client("s3") # type: ignore
     source_url = urlparse(context.source)
     bucket = source_url.netloc
@@ -34,7 +34,7 @@ def step_impl(context:CommandLineToolContext):
         )
 
 @then("markdown document files are created and uploaded to S3 bucket")
-def step_impl(context:CommandLineToolContext):
+def step_impl(context:ServerlessContext):
     retry_count = 5
     current = 0
     s3 = boto3.client("s3") # type: ignore

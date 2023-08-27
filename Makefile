@@ -12,7 +12,7 @@ build:
 	pip install -r requirements.txt
 	python setup.py sdist bdist_wheel 
 
-test-bdd:
+test-bdd: develop build-docker-image
 	source .env
 	sam package \
 		--template-file deployments/serverless.yaml \
@@ -25,6 +25,7 @@ test-bdd:
         --capabilities CAPABILITY_IAM \
 		--no-fail-on-empty-changeset \
 		--parameter-overrides ParameterKey=SourceBucketNamePrefix,ParameterValue=cfn-docgen-bdd
+	
 	behave tests/features/
 
 test-ut:
@@ -40,6 +41,11 @@ deploy-serverless:
 		--template-file deployments/serverless.yaml.packaged \
         --stack-name cfn-docgen-serverless \
         --capabilities CAPABILITY_IAM
+
+build-docker-image: develop
+	docker build -t horietakehiro/cfn-docgen:`python -c "from cfn_docgen import VERSION; print(VERSION)"` ./ -f ./deployments/Dockerfile
+deploy-docker-image: build-docker-image
+	docker push horietakehiro/cfn-docgen:`python -c "from cfn_docgen import VERSION; print(VERSION)"`
 
 deploy-test-resources:
 	sam deploy \

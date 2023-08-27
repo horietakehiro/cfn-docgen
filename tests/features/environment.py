@@ -5,6 +5,8 @@ from behave.fixture import use_fixture_by_tag # type: ignore
 import os
 import shutil
 import boto3
+import docker # type: ignore
+from docker import DockerClient # type: ignore
 
 INPUT_MASTER_FILE=os.path.join(
     os.path.dirname(__file__),
@@ -16,13 +18,14 @@ EXPECTED_MASTER_FILE=os.path.join(
 )
 
 # local directories and files
-INPUT_ROOT_DIR=os.path.join(os.path.dirname(__file__), "data", "input")
+ROOT_DIR=os.path.join(os.path.dirname(__file__), "data")
+INPUT_ROOT_DIR=os.path.join(ROOT_DIR, "input")
 INPUT_DIR1 = os.path.join(INPUT_ROOT_DIR, "dir1")
 INPUT_FILE1 = os.path.join(INPUT_DIR1, "sample-template.yaml")
 INPUT_DIR2 = os.path.join(INPUT_DIR1, "dir2")
 INPUT_FILE2 = os.path.join(INPUT_DIR2, "sample-template.yaml")
 
-OUTPUT_ROOT_DIR=os.path.join(os.path.dirname(__file__), "data", "output")
+OUTPUT_ROOT_DIR=os.path.join(ROOT_DIR, "data", "output")
 OUTPUT_DIR1 = os.path.join(OUTPUT_ROOT_DIR, "dir1")
 OUTPUT_MD_FILE1 = os.path.join(OUTPUT_DIR1, "sample-template.md")
 OUTPUT_DIR2 = os.path.join(OUTPUT_DIR1, "dir2")
@@ -110,6 +113,22 @@ class ServerlessContext:
     expected:List[str]
     master:str
 
+@dataclass
+class PackageContext:
+    format: str
+    source: str
+    dest: str
+    expected: List[str]
+    master: str
+
+@dataclass
+class DockerContext:
+    format: str
+    source: str
+    dest: str
+    expected: List[str]
+    master: str
+    docker_client:DockerClient
 
 @fixture # type: ignore
 def command_line_tool(
@@ -155,6 +174,43 @@ def serverless(
     yield context
 
 
+@fixture # type: ignore
+def package(
+    context:PackageContext, 
+    fmt:str, source:str, dest:str, expected:List[str], master:str,
+    *args, **kwargs # type: ignore
+):
+    setup_local_dirs_and_files()
+
+    context.format = fmt
+    context.source = source
+    context.dest = dest
+    context.expected = expected
+    context.master = master
+
+    yield context
+
+
+
+@fixture # type: ignore
+def docker_fixture(
+    context:DockerContext, 
+    fmt:str, source:str, dest:str, expected:List[str], master:str,
+    *args, **kwargs # type: ignore
+):
+    setup_local_dirs_and_files()
+
+    context.format = fmt
+    context.source = source
+    context.dest = dest.replace(ROOT_DIR, "")
+    context.expected = expected
+    context.master = master
+    context.docker_client = docker.from_env() # type: ignore
+
+    yield context
+
+
+
 fixture_registry = { # type: ignore
     "fixture.command_line_tool.markdown.local_single_file_local_single_dest": (
         command_line_tool, 
@@ -180,7 +236,19 @@ fixture_registry = { # type: ignore
         serverless,
         ["markdown", INPUT_KEY1, OUTPUT_MD_KEY1, [OUTPUT_MD_KEY1], EXPECTED_MASTER_FILE],
         {},
-    )
+    ),
+    "fixture.package.markdown.local_single_file_local_single_dest": (
+        package, 
+        ["markdown", INPUT_FILE1, OUTPUT_MD_FILE1, [OUTPUT_MD_FILE1], EXPECTED_MASTER_FILE],
+        {},
+    ),
+    "fixture.docker.markdown.local_single_file_local_single_dest": (
+        docker_fixture, 
+        ["markdown", "/tmp/sample-template.yaml", "/out/sample-template.md", ["/tmp/sample-template.md"], EXPECTED_MASTER_FILE],
+        {},
+    ),
+
+    
 } # type: ignore
 
 def before_tag(context:Any, tag:str): # type: ignore

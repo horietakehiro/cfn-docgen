@@ -1,6 +1,13 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Mapping
-from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination, ICfnDocumentGenerator, SupportedFormat
+from cfn_docgen.adapters.cfn_document_storage import document_storage_facotory
+from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
+from cfn_docgen.adapters.cfn_template_provider import template_provider_factory
+from cfn_docgen.adapters.internal.cache import LocalFileCache
+from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader
+from cfn_docgen.config import AppConfig
+from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination, ICfnDocumentGenerator, SupportedFormat, document_generator_factory
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource, CfnTemplateTree
 from cfn_docgen.domain.ports.cfn_document_storage import ICfnDocumentStorage
 from cfn_docgen.domain.ports.cfn_specification_repository import ICfnSpecificationRepository
@@ -63,3 +70,17 @@ class CfnDocgenService(object):
             document_dest=command_input.document_dest.dest,
         )
 
+
+    @classmethod
+    def with_default(cls) -> CfnDocgenService:
+        return CfnDocgenService(
+            cfn_template_provider_facotry=template_provider_factory,
+            cfn_document_generator_factory=document_generator_factory,
+            cfn_document_storage_factory=document_storage_facotory,
+            cfn_specification_repository=CfnSpecificationRepository(
+                source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+                loader=RemoteFileLoader(),
+                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+                recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+            )
+        )
