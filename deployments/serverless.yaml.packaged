@@ -1,0 +1,195 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: cfn-docgen-serverless
+    Description: cfn-docgen automaticaly generate docs for templates that are stored
+      in a specified s3 bucket
+    Author: horietakehiro
+    SpdxLicenseId: MIT
+    LicenseUrl: s3://cfn-docgen-artifact-bucket-382098889955-ap-northeast-1/serverless/4b965df22f057bb04fab249db6d916cb
+    ReadmeUrl: s3://cfn-docgen-artifact-bucket-382098889955-ap-northeast-1/serverless/e839a6d268ecce41dc900e89bbd8c0d2
+    Labels:
+    - cloudformation
+    HomePageUrl: https://github.com/horietakehiro/cfn-docgen
+    SemanticVersion: __VERSION__
+    SourceCodeUrl: https://github.com/horietakehiro/cfn-docgen
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Bucket Params
+      Parameters:
+      - SourceBucketNamePrefix
+      - DestBucketName
+      - DestBucketKeyPrefix
+Parameters:
+  SourceBucketNamePrefix:
+    Description: '[Optional]Then prefix name of s3 bucket where cfn templates are
+      stored in'
+    Type: String
+    Default: cfn-docgen
+  DestBucketName:
+    Description: '"[Optional]The name of s3 bucket where generated document files
+      are stored.
+
+      If not specified, documents are stored at `${{SourceBucketNamePrefix}}-${{AWS::AccountId}}-${{AWS::Region}}`
+
+      '
+    Type: String
+    Default: ''
+  DestBucketKeyPrefix:
+    Description: '"[Optional]The key prefix of s3 bucket where generated document
+      files are stored.
+
+      '
+    Type: String
+    Default: documents/
+Conditions:
+  DestBucketNullCond:
+    Fn::Equals:
+    - Ref: DestBucketName
+    - ''
+Resources:
+  FunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        Fn::If:
+        - DestBucketNullCond
+        - - PolicyName: S3Access
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource:
+                - Fn::Sub: arn:aws:s3:::${SourceBucketNamePrefix}-${AWS::AccountId}-${AWS::Region}
+                - Fn::Sub: arn:aws:s3:::${SourceBucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*
+        - - PolicyName: S3Access
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource:
+                - Fn::Sub: arn:aws:s3:::${SourceBucketNamePrefix}-${AWS::AccountId}-${AWS::Region}
+                - Fn::Sub: arn:aws:s3:::${SourceBucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*
+                - Fn::Sub: arn:aws:s3:::${DestBucketName}
+                - Fn::Sub: arn:aws:s3:::${DestBucketName}/*
+      Path: /
+    Metadata:
+      SamResourceId: FunctionRole
+  SourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName:
+        Fn::Sub: ${SourceBucketNamePrefix}-${AWS::AccountId}-${AWS::Region}
+    Metadata:
+      SamResourceId: SourceBucket
+  Layer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      CompatibleArchitectures:
+      - x86_64
+      CompatibleRuntimes:
+      - python3.10
+      - python3.11
+      ContentUri: s3://cfn-docgen-artifact-bucket-382098889955-ap-northeast-1/serverless/cce8474ee8d5dad745de686dabfa7303
+      Description: cfn-docgen layer
+      LayerName: cfn-docgen
+      RetentionPolicy: Delete
+    Metadata:
+      SamResourceId: Layer
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      Architectures:
+      - x86_64
+      CodeUri: s3://cfn-docgen-artifact-bucket-382098889955-ap-northeast-1/serverless/de5b973aa7a9183fcba54374e0497d7f
+      Description: cfn docgen executor with s3
+      Environment:
+        Variables:
+          HOME: /tmp/
+          DEST_BUCKET_NAME:
+            Fn::If:
+            - DestBucketNullCond
+            - Fn::Sub: ${SourceBucketNamePrefix}-${AWS::AccountId}-${AWS::Region}
+            - Ref: DestBucketName
+          DEST_BUCKET_PREFIX:
+            Ref: DestBucketKeyPrefix
+      Events:
+        JsonUploadEvent:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: SourceBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                - Name: prefix
+                  Value: templates/
+                - Name: suffix
+                  Value: .json
+        YamlUploadEvent:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: SourceBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                - Name: prefix
+                  Value: templates/
+                - Name: suffix
+                  Value: .yaml
+        YmlUploadEvent:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: SourceBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                - Name: prefix
+                  Value: templates/
+                - Name: suffix
+                  Value: .yml
+      FunctionName: cfn-docgen-serverless
+      Handler: cfn_docgen/entrypoints/serverless/lambda_function.lambda_handler
+      Layers:
+      - Ref: Layer
+      MemorySize: 1024
+      PackageType: Zip
+      Runtime: python3.10
+      Timeout: 600
+      Role:
+        Fn::GetAtt:
+        - FunctionRole
+        - Arn
+    Metadata:
+      SamResourceId: Function
+Outputs:
+  SourceS3Bucket:
+    Description: Source S3 bucket path that cfn templates should be stored in.
+    Value:
+      Fn::Sub: s3:/${SourceBucket}/templates
+  DestS3Bucket:
+    Description: Dest S3 bucket path that documents will be stored in.
+    Value:
+      Fn::If:
+      - DestBucketNullCond
+      - Fn::Sub: s3:/${SourceBucket}/${DestBucketKeyPrefix}
+      - Fn::Sub: s3:/${DestBucketName}/${DestBucketKeyPrefix}

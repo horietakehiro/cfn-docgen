@@ -1,5 +1,6 @@
 import os
 from setuptools import find_packages, setup
+from cfn_docgen import VERSION
 with open(os.path.join(
     os.path.dirname(__file__), "README.md"), "r", encoding="utf-8",
 ) as fp:
@@ -9,7 +10,6 @@ with open(os.path.join(
 ) as fp:
     requirements = fp.read()
 
-VERSION="0.9.0"
 setup(
     name = 'cfn-docgen',
     version = VERSION,

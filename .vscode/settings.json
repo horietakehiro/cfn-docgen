@@ -10,6 +10,7 @@
     "terminal.integrated.env.linux": {
         "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/src:${workspaceFolder}/tests/features"
     },
+    "python.envFile": "${workspaceFolder}/.env",
     "python.analysis.autoImportCompletions": true,
     "python.analysis.stubPath": "${workspaceFolder}/tests/typings",
     "pylint.path": ["${workspaceFolder}/.venv/bin/pylint"],

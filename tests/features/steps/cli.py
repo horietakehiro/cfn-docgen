@@ -2,10 +2,13 @@
 # pylint: disable=missing-function-docstring
 import os
 import subprocess
+from urllib.parse import urlparse
 
-from behave import given, then, when  # pylint: disable=no-name-in-module
+from behave import given, then, when
+import boto3  # pylint: disable=no-name-in-module
 
-from setup import VERSION
+from cfn_docgen import VERSION
+# VERSION="1"
 from tests.features.environment import CommandLineToolContext
 
 @given("cfn-docgen command line tool is locally installed")
@@ -13,28 +16,66 @@ def step_impl(context:CommandLineToolContext):
     installed_version = subprocess.check_output(["cfn-docgen", "--version"], ).decode()
     assert f"version {VERSION}" in installed_version, f"Source code version is {VERSION} but installed version is {installed_version}"
 
-@given("CloudFormation template file is locally saved")
+@given("CloudFormation template files are locally saved")
 def step_impl(context:CommandLineToolContext):
     assert os.path.exists(context.source), f"{context.source} does not exist"
 
+@given("CloudFormation template files are saved at S3 bucket")
+def step_impl(context:CommandLineToolContext):
+    s3 = boto3.client("s3") # type: ignore
+    source_url = urlparse(context.source)
+    bucket = source_url.netloc
+    prefix_or_key = source_url.path
+    if prefix_or_key.startswith("/"):
+        prefix_or_key = prefix_or_key[1:]
+
+    res = s3.list_objects_v2(
+        Bucket=bucket,
+        Prefix=prefix_or_key
+    )
+    assert len(res["Contents"]) > 0
+
 @when("cfn-docgen is invoked, with specifying source and dest, and format as markdown")
 def step_impl(context:CommandLineToolContext):
-    _ = subprocess.check_output([
-        "cfn-docgen", "docgen",
-        "--format", context.format, 
-        "--source", context.source,
-        "--dest", context.dest,
-    ])
+    resutl = subprocess.run(
+        [
+            "cfn-docgen", "docgen",
+            "--format", context.format, 
+            "--source", context.source,
+            "--dest", context.dest,
+        ],
+        check=True,
+        capture_output=True,
+    )
+    assert resutl.returncode == 0, f"command failed with {resutl.returncode}, {resutl.stdout}, {resutl.stderr}"
 
-@then("a single markdown document file is locally created")
+
+@then("markdown document files are locally created")
 def step_impl(context:CommandLineToolContext):
-    assert os.path.exists(context.dest), f"{context.dest} does not exist"
+    for e in context.expected:
+        assert os.path.exists(e), f"{e} does not exists"
+
+@then("markdown document files are created at S3 bucket")
+def step_impl(context:CommandLineToolContext):
+    s3 = boto3.client("s3") # type: ignore
+    for e in context.expected:
+        s3_url = urlparse(e)
+        bucket = s3_url.netloc
+        prefix_or_key = s3_url.path
+        if prefix_or_key.startswith("/"):
+            prefix_or_key = prefix_or_key[1:]
+        res = s3.list_objects_v2(
+            Bucket=bucket,
+            Prefix=prefix_or_key
+        )
+        assert len(res["Contents"]) == 1
 
 @then("all of the definitions of CloudFormation template are written as a form of markdown in it.")
 def step_imlp(context:CommandLineToolContext):
-    with open(context.expected, "r", encoding="UTF8") as fp:
-        expected = fp.read()
-    with open(context.dest, "r", encoding="UTF-8") as fp:
-        output = fp.read()
+    with open(context.master, "r", encoding="UTF-8") as fp:
+        master = fp.read()
+    for e in context.expected:
+        with open(e, "r", encoding="UTF8") as fp:
+            expected = fp.read()
 
-    assert output == expected
+        assert expected == master

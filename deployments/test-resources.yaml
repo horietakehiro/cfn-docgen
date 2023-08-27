@@ -5,7 +5,32 @@ Resources:
     Properties: 
       AccessControl: Private
       BucketName: !Sub cfn-docgen-test-bucket-${AWS::AccountId}-${AWS::Region}
-
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: !Sub cfn-docgen-artifact-bucket-${AWS::AccountId}-${AWS::Region}
+  PublishBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${ArtifactBucket}/*
+            Principal:
+              Service: serverlessrepo.amazonaws.com
+            Condition:
+              StringEquals:
+                "aws:SourceAccount":
+                  - !Ref AWS::AccountId
 Outputs:
-  BucketName:
+  TestBucketName:
     Value: !Ref TestBucket
+  ArtifactBucketName:
+    Value: !Ref ArtifactBucket
+    Export:
+      Name: cfn-docgen-artifact-bucket-name

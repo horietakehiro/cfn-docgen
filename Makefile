@@ -13,11 +13,33 @@ build:
 	python setup.py sdist bdist_wheel 
 
 test-bdd:
-	export TEST_BUCKET_NAME=cfn-docgen-test-bucket-382098889955-ap-northeast-1 && \
-	cd tests && behave
+	source .env
+	sam package \
+		--template-file deployments/serverless.yaml \
+		--output-template-file deployments/serverless.yaml.packaged \
+		--s3-bucket cfn-docgen-artifact-bucket-382098889955-ap-northeast-1 \
+		--s3-prefix serverless
+	sam deploy \
+		--template-file deployments/serverless.yaml.packaged \
+        --stack-name cfn-docgen-serverless-bdd \
+        --capabilities CAPABILITY_IAM \
+		--no-fail-on-empty-changeset \
+		--parameter-overrides ParameterKey=SourceBucketNamePrefix,ParameterValue=cfn-docgen-bdd
+	behave tests/features/
 
-deploy-cicd:
-	
+test-ut:
+	pytest -vv src
+
+deploy-serverless:
+	sam package \
+		--template-file deployments/serverless.yaml \
+		--output-template-file deployments/serverless.yaml.packaged \
+		--s3-bucket cfn-docgen-artifact-bucket-382098889955-ap-northeast-1 \
+		--s3-prefix serverless
+	sam deploy \
+		--template-file deployments/serverless.yaml.packaged \
+        --stack-name cfn-docgen-serverless \
+        --capabilities CAPABILITY_IAM
 
 deploy-test-resources:
 	sam deploy \

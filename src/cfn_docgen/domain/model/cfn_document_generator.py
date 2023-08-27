@@ -10,6 +10,7 @@ from cfn_docgen.domain.model.cfn_template import CfnTemplateParameterDefinition,
 
 SupportedFormat = Literal["markdown"]
 
+
 def document_generator_factory(fmt:SupportedFormat) -> ICfnDocumentGenerator:
     match fmt:
         case "markdown":

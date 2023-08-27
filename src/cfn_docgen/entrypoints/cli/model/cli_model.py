@@ -1,17 +1,16 @@
 from dataclasses import dataclass
 import os
-from typing import Callable, Literal, List, Mapping
+from typing import Callable, Literal, List
 
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
 from cfn_docgen.domain.ports.internal.file_loader import IFileLoader
 
-from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenServiceCommandInput, SupportedFormat
+from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenServiceCommandInput, SupportedFormat, ext_by_format
+
 
 Subcommand = Literal["docgen"]
-ext_by_format:Mapping[SupportedFormat, str] = {
-    "markdown": "md",
-}
+
 
 @dataclass
 class CliArguement:

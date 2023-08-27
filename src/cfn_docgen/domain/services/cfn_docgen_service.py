@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Mapping
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination, ICfnDocumentGenerator, SupportedFormat
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource, CfnTemplateTree
 from cfn_docgen.domain.ports.cfn_document_storage import ICfnDocumentStorage
@@ -14,6 +14,10 @@ class CfnDocgenServiceCommandInput:
 @dataclass
 class CfnDocgenServiceCommandOutput:
     document_dest: str
+
+ext_by_format:Mapping[SupportedFormat, str] = {
+    "markdown": "md",
+}
 
 
 class CfnDocgenService(object):
