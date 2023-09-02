@@ -1,14 +1,20 @@
 
+import logging
 import os
+
+import pytest
 from cfn_docgen.adapters.internal.cache import LocalFileCache
 
-from cfn_docgen.config import AppConfig
+from cfn_docgen.config import AppConfig, AppContext
 
+@pytest.fixture
+def context():
+    return AppContext(log_level=logging.DEBUG)
 
-def test_LocalFileCache_put():
+def test_LocalFileCache_put(context:AppContext):
     path1 = "/foo/bar.json"
     body1 = "foobar"
-    cache = LocalFileCache(AppConfig.CACHE_ROOT_DIR)
+    cache = LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context)
 
     cache.put(path1, body1)
     cache_filepath = os.path.join(
@@ -19,10 +25,10 @@ def test_LocalFileCache_put():
         assert body1 == fp.read()
 
 
-def test_LocalFileCache_get():
+def test_LocalFileCache_get(context:AppContext):
     path1 = "/foo/bar.json"
     body1 = "foobar"
-    cache = LocalFileCache(AppConfig.CACHE_ROOT_DIR)
+    cache = LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context)
     
     cache.put(path1, body1)
 

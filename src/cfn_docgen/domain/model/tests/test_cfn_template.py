@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 import os
 from typing import Any, Mapping, Optional, cast
 
@@ -6,7 +7,7 @@ import pytest
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.internal.cache import LocalFileCache
 from cfn_docgen.adapters.internal.file_loader import  RemoteFileLoader
-from cfn_docgen.config import AppConfig
+from cfn_docgen.config import AppConfig, AppContext
 from cfn_docgen.domain.model.cfn_template import (
     CfnTemplateConditionsNode,
     CfnTemplateDefinition,
@@ -30,6 +31,10 @@ from cfn_docgen.domain.model.cfn_template import (
     CfnTemplateSource,
     CfnTemplateTree
 )
+
+@pytest.fixture
+def context():
+    return AppContext(log_level=logging.DEBUG)
 
 def test_CfnTemplateMetadataDefinition_get_resource_description():
     description = "some-description"
@@ -85,7 +90,7 @@ def test_CfnTemplateResourceMetadataCfnDocgenDefinition_get_property_description
 
 
 
-def test_CfnTemplateParametersNode():
+def test_CfnTemplateParametersNode(context:AppContext):
     parameter_definitions:Mapping[str, CfnTemplateParameterDefinition] = {
         "param11": CfnTemplateParameterDefinition(Type="String"),
         "param12": CfnTemplateParameterDefinition(Type="Number"),
@@ -109,6 +114,7 @@ def test_CfnTemplateParametersNode():
     node = CfnTemplateParametersNode(
         definitions=parameter_definitions,
         parameter_groups=parameter_groups,
+        context=context,
     )
 
     group_node1 = node.group_nodes.get("group1", None)
@@ -129,7 +135,7 @@ def test_CfnTemplateParametersNode():
     assert parameter_leaf21 is not None and parameter_leaf21.definition.Type == "CommaDelimitedList"
     assert independent_parameter_leaf is not None and independent_parameter_leaf.definition.Type == "AWS::EC2::AvailabilityZone::Name"
 
-def test_CfnTemplateMappingsNode():
+def test_CfnTemplateMappingsNode(context:AppContext):
     mappings_definition:Mapping[str, Mapping[str, Mapping[str, Any]]] = {
         "map1": {
             "name11": {
@@ -159,7 +165,8 @@ def test_CfnTemplateMappingsNode():
     }
     node = CfnTemplateMappingsNode(
         definitions=mappings_definition,
-        descriptions=descriptions
+        descriptions=descriptions,
+        context=context,
     )
 
     leaf1 = node.mapping_leaves["map1"]
@@ -176,7 +183,7 @@ def test_CfnTemplateMappingsNode():
         node.mapping_leaves["map3"]
     
 
-def test_CfnTemplateRulesNode():
+def test_CfnTemplateRulesNode(context:AppContext):
     rule_definitions:Mapping[str, CfnTemplateRuleDefinition] = {
         "rule1": CfnTemplateRuleDefinition(
             RuleCondition=None,
@@ -203,7 +210,8 @@ def test_CfnTemplateRulesNode():
     }
     node = CfnTemplateRulesNode(
         definitions=rule_definitions,
-        descriptions=descriptions
+        descriptions=descriptions,
+        context=context,
     )
 
     leaf1 = node.rule_leaves["rule1"]
@@ -219,7 +227,7 @@ def test_CfnTemplateRulesNode():
         node.rule_leaves["rule3"]
     
 
-def test_CfnTemplateConditionsNode():
+def test_CfnTemplateConditionsNode(context:AppContext):
     definitions:Mapping[str, Mapping[str, Any]] = {
         "cond1": {
             "key1": "value1"
@@ -235,6 +243,7 @@ def test_CfnTemplateConditionsNode():
     node = CfnTemplateConditionsNode(
         definitions=definitions,
         descriptions=description,
+        context=context,
     )
 
     leaf1 = node.condition_leaves["cond1"]
@@ -248,7 +257,7 @@ def test_CfnTemplateConditionsNode():
     with pytest.raises(KeyError):
         node.condition_leaves["cond3"]
 
-def test_CfnTemplateOutputsNode():
+def test_CfnTemplateOutputsNode(context:AppContext):
     definitions:Mapping[str, CfnTemplateOutputDefinition] = {
         "out1": CfnTemplateOutputDefinition(
             Description="description1",
@@ -262,7 +271,9 @@ def test_CfnTemplateOutputsNode():
 
     node = CfnTemplateOutputsNode(
         definitions=definitions,
+        context=context,
     )
+
 
     leaf1 = node.output_leaves.get("out1")
     assert leaf1 is not None
@@ -270,24 +281,30 @@ def test_CfnTemplateOutputsNode():
     assert leaf2 is not None
 
 @pytest.fixture
-def spec_repository():
+def spec_repository(context:AppContext):
     return CfnSpecificationRepository(
+        context=context,
         source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-        loader=RemoteFileLoader(),
-        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+        loader=RemoteFileLoader(context=context),
+        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )
 
 def all_resource_types():
+    context = AppContext(log_level=logging.DEBUG)
     spec_repository = CfnSpecificationRepository(
+        context=context,
         source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-        loader=RemoteFileLoader(),
-        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+        loader=RemoteFileLoader(context=context),
+        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )
     return list(spec_repository.spec.ResourceTypes.keys())
 
-def test_CfnTemplateResourcesNode_aws_ec2_instance(spec_repository:CfnSpecificationRepository):
+def test_CfnTemplateResourcesNode_aws_ec2_instance(
+    spec_repository:CfnSpecificationRepository,
+    context:AppContext,
+):
     resource_description = "resource-descirption"
     property_descriptions = {
         "ImageId": "imageid",
@@ -354,6 +371,7 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(spec_repository:CfnSpecificat
     resources_node = CfnTemplateResourcesNode(
         definitions=definitions,
         spec_repository=spec_repository,
+        context=context,
     )
 
     instance_node = resources_node.resource_nodes.get("Instance")
@@ -509,7 +527,10 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(spec_repository:CfnSpecificat
 @pytest.mark.parametrize("resource_type", [
     (r) for r in all_resource_types()
 ])
-def test_CfnTemplateResourcesNode_all_resource_types(resource_type:str, spec_repository:CfnSpecificationRepository):
+def test_CfnTemplateResourcesNode_all_resource_types(
+    resource_type:str, spec_repository:CfnSpecificationRepository,
+    context:AppContext,
+):
     definitions:Mapping[str, CfnTemplateResourceDefinition] = {
         resource_type: CfnTemplateResourceDefinition(
             Type=resource_type,
@@ -520,6 +541,7 @@ def test_CfnTemplateResourcesNode_all_resource_types(resource_type:str, spec_rep
     resources_node = CfnTemplateResourcesNode(
         definitions=definitions,
         spec_repository=spec_repository,
+        context=context,
     )
 
     resource_node = resources_node.resource_nodes.get(resource_type)
@@ -537,7 +559,10 @@ def test_CfnTemplateResourcesNode_all_resource_types(resource_type:str, spec_rep
     )
 
 
-def test_CfnTemplateResourcesNode_avoid_recursion_error(spec_repository:CfnSpecificationRepository):
+def test_CfnTemplateResourcesNode_avoid_recursion_error(
+    spec_repository:CfnSpecificationRepository,
+    context:AppContext,
+):
     definitions:Mapping[str, CfnTemplateResourceDefinition] = {
         "WithDefinition": CfnTemplateResourceDefinition(
             Type="AWS::WAFv2::RuleGroup",
@@ -575,6 +600,7 @@ def test_CfnTemplateResourcesNode_avoid_recursion_error(spec_repository:CfnSpeci
     resources_node = CfnTemplateResourcesNode(
         definitions=definitions,
         spec_repository=spec_repository,
+        context=context,
     )
     with_definition_node = resources_node.resource_nodes.get("WithDefinition")
     assert with_definition_node is not None
@@ -599,7 +625,10 @@ def test_CfnTemplateResourcesNode_avoid_recursion_error(spec_repository:CfnSpeci
     assert len(rules_node) == 0
 
 
-def test_CfnTemplateTree(spec_repository:CfnSpecificationRepository):
+def test_CfnTemplateTree(
+    spec_repository:CfnSpecificationRepository,
+    context:AppContext,
+):
     definition = CfnTemplateDefinition(
         AWSTemplateFormatVersion="2012-10",
         Description="template-description",
@@ -696,9 +725,10 @@ def test_CfnTemplateTree(spec_repository:CfnSpecificationRepository):
     )
 
     tree = CfnTemplateTree(
-        template_source=CfnTemplateSource("/tmp/sample-template.yaml"),
+        template_source=CfnTemplateSource("/tmp/sample-template.yaml", context=context),
         definition=definition,
         spec_repository=spec_repository,
+        context=context,
     )
     
     assert tree.description == "template-description"
@@ -736,8 +766,11 @@ def test_CfnTemplateTree(spec_repository:CfnSpecificationRepository):
 @pytest.mark.parametrize("filepath", [
     ("../template.yaml"), ("/tmp/template.yaml"), ("template.yaml")
 ])
-def test_CfnTemplateSource_localfilepath_basename(filepath:str):
-    source = CfnTemplateSource(filepath)
+def test_CfnTemplateSource_localfilepath_basename(
+    filepath:str,
+    context:AppContext,
+):
+    source = CfnTemplateSource(filepath, context=context)
     assert source.basename == "template.yaml"
     
 

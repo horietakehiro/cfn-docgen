@@ -3,6 +3,7 @@ from typing import List
 
 from pydantic import BaseModel
 from dataclasses import dataclass
+from cfn_docgen.config import AppContext
 
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
@@ -33,14 +34,17 @@ class CfnDocgenServerlessUnitsOfWork:
     def __init__(
         self,
         args:ServerlessArguement,
+        context:AppContext,
     ) -> None:
         self.units_of_work = self.build_units_of_work(
             args=args,
+            context=context,
         )
 
     def build_units_of_work(
         self, 
         args:ServerlessArguement, 
+        context:AppContext,
     ) -> List[CfnDocgenServiceCommandInput]:
         units_of_work:List[CfnDocgenServiceCommandInput] = []
         

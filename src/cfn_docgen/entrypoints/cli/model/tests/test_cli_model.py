@@ -1,9 +1,11 @@
+import logging
 import os
 import shutil
 from typing import List
 import boto3
 import pytest
 from cfn_docgen.adapters.internal.file_loader import file_loader_factory
+from cfn_docgen.config import AppContext
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenServiceCommandInput
@@ -113,6 +115,12 @@ def function_s3_bucket_and_keys():
             }
         )
 
+@pytest.fixture
+def context():
+    return AppContext(
+        log_level=logging.DEBUG,
+    )
+
 @pytest.mark.parametrize("case,args,expected", [
     (
         "local source file and local dest file",
@@ -124,8 +132,8 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             )
         ]
@@ -140,8 +148,8 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             )
         ]
@@ -156,8 +164,8 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             )
         ]
@@ -172,8 +180,8 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             )
         ]
@@ -188,13 +196,13 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE2),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE2),
+                template_source=CfnTemplateSource(INPUT_FILE2, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE2, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
         ]
@@ -209,13 +217,13 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE2),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY2),
+                template_source=CfnTemplateSource(INPUT_FILE2, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY2, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
         ]
@@ -230,8 +238,8 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
         ]
@@ -246,8 +254,8 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
         ]
@@ -262,8 +270,8 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
         ]
@@ -278,8 +286,8 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
         ]
@@ -294,13 +302,13 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY2),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE2),
+                template_source=CfnTemplateSource(INPUT_KEY2, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE2, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
         ]
@@ -315,13 +323,13 @@ def function_s3_bucket_and_keys():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY2),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY2),
+                template_source=CfnTemplateSource(INPUT_KEY2, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY2, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
                 fmt="markdown",
             ),
         ]
@@ -332,11 +340,13 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_valid_pattern(
     case:str, # type: ignore
     args:CliArguement,
     expected:List[CfnDocgenServiceCommandInput],
+    context:AppContext,
 ):
     
     units_of_work = CfnDocgenCLIUnitsOfWork(
         args=args,
         file_loader_factory=file_loader_factory,
+        context=context
     )
 
     assert len(units_of_work.units_of_work) == len(expected)
@@ -385,12 +395,57 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_valid_pattern(
 def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_invalid_pattern(
     case:str,
     args:CliArguement,
+    context:AppContext,
+    caplog:pytest.LogCaptureFixture,
 ):
+    caplog.set_level(logging.ERROR)
+    
     with pytest.raises(
         AssertionError,
-        match=f"invalid arguement pattern: source {args.source} is a directory, while dest {args.dest} is a single file"
+        match="no valid template sources and document dests are provided"
     ):
         CfnDocgenCLIUnitsOfWork(
             args=args,
             file_loader_factory=file_loader_factory,
+            context=context
         )
+    
+    error_msg = f"invalid arguement pattern: source {args.source} is a directory, while dest {args.dest} is a single file"
+    assert context.log_messages.error[0] == error_msg
+    assert caplog.records[0].message == error_msg
+
+
+@pytest.mark.parametrize("case,args", [
+    (
+        "not exist template source",
+        CliArguement(
+            subcommand="docgen",
+            format="markdown",
+            source="not-exist-source",
+            dest=OUTPUT_MD_FILE1,
+        ),
+    ),
+])
+def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_not_exist_source(
+    case:str,
+    args:CliArguement,
+    context:AppContext,
+    caplog:pytest.LogCaptureFixture,
+):
+    caplog.set_level(logging.ERROR)
+    
+    with pytest.raises(
+        AssertionError,
+        match="no valid template sources and document dests are provided"
+    ):
+        CfnDocgenCLIUnitsOfWork(
+            args=args,
+            file_loader_factory=file_loader_factory,
+            context=context
+        )
+    
+    error_msg =  f"failed to list template sources at [{args.source}]"
+    assert context.log_messages.error[0] == error_msg
+    assert caplog.records[0].message == error_msg and caplog.records[0].funcName == "build_units_of_work"
+
+

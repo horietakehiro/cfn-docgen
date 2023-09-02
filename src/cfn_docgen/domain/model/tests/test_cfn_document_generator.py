@@ -1,21 +1,26 @@
+import logging
 from typing import Any, List, Optional, Union
 import pytest
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.internal.cache import LocalFileCache
 from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader
-from cfn_docgen.config import AppConfig
+from cfn_docgen.config import AppConfig, AppContext
 from cfn_docgen.domain.model.cfn_document_generator import CfnMarkdownDocumentGenerator, PropertyField
 
 from cfn_docgen.domain.model.cfn_template import CfnTemplateConditionsNode, CfnTemplateDefinition, CfnTemplateMappingsNode, CfnTemplateMetadataCfnDocgenDefinition, CfnTemplateMetadataDefinition, CfnTemplateMetadataInterface, CfnTemplateMetadataParameterGroup, CfnTemplateMetadataParameterGroupLabel, CfnTemplateOutputDefinition, CfnTemplateOutputExportDefinition, CfnTemplateOutputsNode, CfnTemplateParameterDefinition, CfnTemplateParametersNode, CfnTemplateResourceDefinition, CfnTemplateResourceMetadataCfnDocgenDefinition, CfnTemplateResourceMetadataDefinition, CfnTemplateResourcesNode, CfnTemplateRuleAssertDefinition, CfnTemplateRuleDefinition, CfnTemplateRulesNode, CfnTemplateSource, CfnTemplateTree
 
+@pytest.fixture
+def context():
+    return AppContext(log_level=logging.DEBUG)
 
 @pytest.fixture
-def cfn_template_tree():
+def cfn_template_tree(context:AppContext):
     spec_repository = CfnSpecificationRepository(
         source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-        loader=RemoteFileLoader(),
-        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+        loader=RemoteFileLoader(context=context),
+        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+        context=context,
     )
 
     definition = CfnTemplateDefinition(
@@ -118,9 +123,10 @@ def cfn_template_tree():
     )
 
     return CfnTemplateTree(
-        template_source=CfnTemplateSource("/tmp/template.yaml"),
+        template_source=CfnTemplateSource("/tmp/template.yaml", context=AppContext(log_level=logging.DEBUG)),
         definition=definition,
         spec_repository=spec_repository,
+        context=context
     )
 
 @pytest.mark.parametrize("original,expected", [
@@ -128,15 +134,21 @@ def cfn_template_tree():
     ("Map_1", "map_1"),
     ("Resource (AWS::EC2::Instance)", "resource-awsec2instance"),
 ])
-def test_MarkdownDocumentGenerator_toc_escape(original:str, expected:str):
-    generator = CfnMarkdownDocumentGenerator()
+def test_MarkdownDocumentGenerator_toc_escape(
+    original:str, expected:str,
+    context:AppContext,
+):
+    generator = CfnMarkdownDocumentGenerator(context=context)
     escape = generator._toc_escape(original) # type: ignore
     assert escape == expected 
 
 
-def test_MarkdownDocumentGenerator_table_of_contents(cfn_template_tree:CfnTemplateTree):
+def test_MarkdownDocumentGenerator_table_of_contents(
+    cfn_template_tree:CfnTemplateTree,
+    context:AppContext,
+):
 
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context)
     expected_toc = "\n".join([
         "- [template.yaml](#templateyaml)",
         "  - [Description](#description)",
@@ -169,8 +181,9 @@ def test_MarkdownDocumentGenerator_overview(
     version:Optional[str], description:Optional[str], transform:Union[str, List[str]],
     e_version:str, e_description:str, e_transform:str,
     cfn_template_tree:CfnTemplateTree,
+    context:AppContext,
 ):
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context)
     expected_overview = "\n".join([
         "# template.yaml",
         "",
@@ -214,8 +227,9 @@ def test_MarkdownDocumentGenerator_overview(
 def test_MarkdownDocumentGenerator_description(
         cfn_docgen_description:Optional[str], e_cfn_docgen_description:str,
         cfn_template_tree:CfnTemplateTree,
+        context:AppContext,
 ):
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context)
     cfn_template_tree.cfn_docgen_description = cfn_docgen_description
     description = generator.description(cfn_template_tree)
     assert description == e_cfn_docgen_description
@@ -224,6 +238,7 @@ def test_MarkdownDocumentGenerator_description(
     (
         # without parameter groups
         CfnTemplateParametersNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={
                 "param1": CfnTemplateParameterDefinition(
                     AllowedPattern="allowedpattern",
@@ -265,6 +280,7 @@ def test_MarkdownDocumentGenerator_description(
     (
         # with parameter groups
         CfnTemplateParametersNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={
                 "param1": CfnTemplateParameterDefinition(
                     AllowedPattern="allowedpattern",
@@ -313,6 +329,7 @@ def test_MarkdownDocumentGenerator_description(
     (
         # partially with parameter groups
         CfnTemplateParametersNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={
                 "param1": CfnTemplateParameterDefinition(
                     AllowedPattern="allowedpattern",
@@ -361,6 +378,7 @@ def test_MarkdownDocumentGenerator_description(
     (
         # no parameters
         CfnTemplateParametersNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={},
             parameter_groups=[]
         ),
@@ -370,10 +388,11 @@ def test_MarkdownDocumentGenerator_description(
     )
 ])
 def test_MarkdownDocumentGenerator_parameters(
-        paramters_node:CfnTemplateParametersNode, e_parameters:str,
-        cfn_template_tree:CfnTemplateTree,
+    paramters_node:CfnTemplateParametersNode, e_parameters:str,
+    cfn_template_tree:CfnTemplateTree,
+    context:AppContext,
 ):
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context)
     cfn_template_tree.parameters_node = paramters_node
 
     parameters = generator.parameters(cfn_template_tree)
@@ -382,6 +401,7 @@ def test_MarkdownDocumentGenerator_parameters(
 @pytest.mark.parametrize("mappings_node,e_mappings", [
     (
         CfnTemplateMappingsNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={
                 "map1": {
                     "name1": {
@@ -422,6 +442,7 @@ def test_MarkdownDocumentGenerator_parameters(
     ),
     (
         CfnTemplateMappingsNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={},
             descriptions={}
         ),
@@ -433,8 +454,9 @@ def test_MarkdownDocumentGenerator_parameters(
 def test_MarkdownDocumentGenerator_mappings(
         mappings_node:CfnTemplateMappingsNode, e_mappings:str,
         cfn_template_tree:CfnTemplateTree,
+        context:AppContext,
 ):
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context)
     cfn_template_tree.mappings_node = mappings_node
     
     mappings = generator.mappings(cfn_template_tree)
@@ -444,6 +466,7 @@ def test_MarkdownDocumentGenerator_mappings(
 @pytest.mark.parametrize("conditions_node,e_conditions", [
     (
         CfnTemplateConditionsNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={
                 "cond1": {
                     "Fn::Equals": [
@@ -481,6 +504,7 @@ def test_MarkdownDocumentGenerator_mappings(
     ),
     (
         CfnTemplateConditionsNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={},
             descriptions={}
         ),
@@ -492,8 +516,9 @@ def test_MarkdownDocumentGenerator_mappings(
 def test_MarkdownDocumentGenerator_conditions(
         conditions_node:CfnTemplateConditionsNode, e_conditions:str,
         cfn_template_tree:CfnTemplateTree,
+        context:AppContext,
 ):
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context)
     cfn_template_tree.conditions_node = conditions_node
     
     conditions = generator.conditions(cfn_template_tree)
@@ -531,8 +556,11 @@ def test_MarkdownDocumentGenerator_conditions(
         "true"
     )
 ])
-def test_MarkdownDocumentGenerator_dump_json(j:Any,expected:str):
-    generator = CfnMarkdownDocumentGenerator()
+def test_MarkdownDocumentGenerator_dump_json(
+    j:Any,expected:str,
+    context:AppContext,
+):
+    generator = CfnMarkdownDocumentGenerator(context=context)
 
     dumped = generator._dump_json(j) # type: ignore
     print(dumped)
@@ -542,6 +570,7 @@ def test_MarkdownDocumentGenerator_dump_json(j:Any,expected:str):
 @pytest.mark.parametrize("rules_node,e_rules",[
     (
         CfnTemplateRulesNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={
                 "rule1": CfnTemplateRuleDefinition(
                     RuleCondition={
@@ -622,6 +651,7 @@ def test_MarkdownDocumentGenerator_dump_json(j:Any,expected:str):
     ),
     (
         CfnTemplateRulesNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={},
             descriptions={},
         ),
@@ -632,9 +662,10 @@ def test_MarkdownDocumentGenerator_dump_json(j:Any,expected:str):
 ])
 def test_MarkdownDocumentGenerator_rules(
     rules_node:CfnTemplateRulesNode, e_rules:str, 
-    cfn_template_tree:CfnTemplateTree
+    cfn_template_tree:CfnTemplateTree,
+    context:AppContext,
 ):
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context)
     cfn_template_tree.rules_node = rules_node
 
     rules = generator.rules(cfn_template_tree)
@@ -644,6 +675,7 @@ def test_MarkdownDocumentGenerator_rules(
 @pytest.mark.parametrize("resources_node,e_resources", [
     (
         CfnTemplateResourcesNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={
                 "Instance": CfnTemplateResourceDefinition(
                     Type="AWS::EC2::Instance",
@@ -716,9 +748,10 @@ def test_MarkdownDocumentGenerator_rules(
                 )
             },
             spec_repository=CfnSpecificationRepository(
+                context=AppContext(log_level=logging.DEBUG),
                 source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-                loader=RemoteFileLoader(),
-                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+                loader=RemoteFileLoader(context=AppContext(log_level=logging.DEBUG)),
+                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(log_level=logging.DEBUG)),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
             )
         ),
@@ -768,11 +801,13 @@ def test_MarkdownDocumentGenerator_rules(
     ),
     (
         CfnTemplateResourcesNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={},
             spec_repository=CfnSpecificationRepository(
+                context=AppContext(log_level=logging.DEBUG),
                 source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-                loader=RemoteFileLoader(),
-                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+                loader=RemoteFileLoader(context=AppContext(log_level=logging.DEBUG)),
+                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(log_level=logging.DEBUG)),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
             )
         ),
@@ -784,15 +819,17 @@ def test_MarkdownDocumentGenerator_rules(
 def test_MarkdownDocumentGenerator_resources(
         resources_node:CfnTemplateResourcesNode, e_resources:str,
         cfn_template_tree:CfnTemplateTree,
+        context:AppContext,
 ):
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context)
     cfn_template_tree.resources_node = resources_node
 
     resources = generator.resources(cfn_template_tree)
     assert resources == e_resources
 
-def test_MarkdownDocumentGenerator_flatten_properties():
+def test_MarkdownDocumentGenerator_flatten_properties(context:AppContext):
     cfn_template_tree = CfnTemplateResourcesNode(
+        context=context,
         definitions={
             "Instance": CfnTemplateResourceDefinition(
                 Type="AWS::EC2::Instance",
@@ -842,9 +879,10 @@ def test_MarkdownDocumentGenerator_flatten_properties():
             )
         },
         spec_repository=CfnSpecificationRepository(
+            context=context,
             source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-            loader=RemoteFileLoader(),
-            cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+            loader=RemoteFileLoader(context=context),
+            cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context,),
             recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
         )
     )
@@ -919,7 +957,7 @@ def test_MarkdownDocumentGenerator_flatten_properties():
         ),
     ]
 
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context,)
 
     properties = generator._flatten_properties_node(cfn_template_tree.resource_nodes["Instance"].properties_node) # type: ignore
     assert len(properties) == len(expected)
@@ -941,8 +979,11 @@ def test_MarkdownDocumentGenerator_flatten_properties():
     ("$.SsmAssociations[0].AssociationParameters[0]", "&nbsp;&nbsp;AssociationParameters[0]"),
     ("$.SsmAssociations[0].AssociationParameters[0].Key", "&nbsp;&nbsp;&nbsp;&nbsp;Key"),
 ])
-def test_MarkdownDocumentGenerator_simplify_jsonpath(jsonpath:str, expected:str):
-    generator = CfnMarkdownDocumentGenerator()
+def test_MarkdownDocumentGenerator_simplify_jsonpath(
+    jsonpath:str, expected:str,
+    context:AppContext,
+):
+    generator = CfnMarkdownDocumentGenerator(context=context,)
     path = generator._simplify_jsonpath(jsonpath) # type: ignore
     assert path == expected
 
@@ -950,6 +991,7 @@ def test_MarkdownDocumentGenerator_simplify_jsonpath(jsonpath:str, expected:str)
 @pytest.mark.parametrize("outputs_node,e_outputs", [
     (
         CfnTemplateOutputsNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={
                 "out1": CfnTemplateOutputDefinition(
                     Description="out1-description",
@@ -986,6 +1028,7 @@ def test_MarkdownDocumentGenerator_simplify_jsonpath(jsonpath:str, expected:str)
     ),
     (
         CfnTemplateOutputsNode(
+            context=AppContext(log_level=logging.DEBUG),
             definitions={}
         ),
         "\n".join([
@@ -996,9 +1039,10 @@ def test_MarkdownDocumentGenerator_simplify_jsonpath(jsonpath:str, expected:str)
 def test_MarkdownDocumentGenerator_outputs(
     outputs_node:CfnTemplateOutputsNode, e_outputs:str,
     cfn_template_tree:CfnTemplateTree,
+    context:AppContext,
 ):
     cfn_template_tree.outputs_node = outputs_node
-    generator = CfnMarkdownDocumentGenerator()
+    generator = CfnMarkdownDocumentGenerator(context=context)
     outputs = generator.outputs(cfn_template_tree)
     print(outputs)
     assert outputs == e_outputs
@@ -1006,7 +1050,8 @@ def test_MarkdownDocumentGenerator_outputs(
 @pytest.mark.parametrize("tree,e_template", [
     (
         CfnTemplateTree(
-            template_source=CfnTemplateSource("template.yaml"),
+            context=AppContext(log_level=logging.DEBUG),
+            template_source=CfnTemplateSource("template.yaml", context=AppContext(log_level=logging.DEBUG)),
             definition=CfnTemplateDefinition(
                 Resources={"resource1": CfnTemplateResourceDefinition(
                     Type="AWS::EC2::Instance",
@@ -1014,9 +1059,10 @@ def test_MarkdownDocumentGenerator_outputs(
                 )}
             ),
             spec_repository=CfnSpecificationRepository(
-                loader=RemoteFileLoader(),
+                context=AppContext(log_level=logging.DEBUG),
+                loader=RemoteFileLoader(context=AppContext(log_level=logging.DEBUG)),
                 source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR),
+                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(log_level=logging.DEBUG)),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
             )
         ),
@@ -1083,8 +1129,11 @@ def test_MarkdownDocumentGenerator_outputs(
         ])
     )
 ])
-def test_MarkdownDocumentGenerator_generate(tree:CfnTemplateTree, e_template:str):
-    generator = CfnMarkdownDocumentGenerator()
+def test_MarkdownDocumentGenerator_generate(
+    tree:CfnTemplateTree, e_template:str,
+    context:AppContext,
+):
+    generator = CfnMarkdownDocumentGenerator(context=context)
     template = generator.generate(tree)
     assert template == e_template
 

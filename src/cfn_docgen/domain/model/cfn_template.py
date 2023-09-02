@@ -7,6 +7,7 @@ from jsonpath_ng import parse # type: ignore
 
 from typing import Any, List, Literal, Mapping, Optional, Union, cast
 from pydantic import BaseModel, Field, PositiveInt
+from cfn_docgen.config import AppContext
 from cfn_docgen.domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationProperty, CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName, CfnSpecificationPropertyType
 
 from cfn_docgen.domain.ports.cfn_specification_repository import ICfnSpecificationRepository
@@ -127,22 +128,6 @@ class CfnTemplateResourceMetadataCfnDocgenDefinition(BaseModel):
 class CfnTemplateResourceMetadataDefinition(BaseModel):
     CfnDocgen: Optional[CfnTemplateResourceMetadataCfnDocgenDefinition] = None
 
-# CfnTemplateResourcePropertyPrimitiveTypeDefinition:TypeAlias = Union[str,int,float, bool]
-# CfnTemplateResourcePropertyListTypeDefinition:TypeAlias = List[
-#     Union[
-#         'CfnTemplateResourcePropertyPrimitiveTypeDefinition', 
-#         'CfnTemplateResourcePropertyMapTypeDefinition',
-#         'CfnTemplateResourcePropertyListTypeDefinition',
-#     ]
-# ]
-
-# CfnTemplateResourcePropertyMapTypeDefinition:TypeAlias = Mapping[
-#     str, Union[
-#         'CfnTemplateResourcePropertyPrimitiveTypeDefinition',
-#         'CfnTemplateResourcePropertyListTypeDefinition',
-#         'CfnTemplateResourcePropertyMapTypeDefinition',
-#     ]
-# ]
 CfnTemplateResourcePropertyDefinition = Union[
     str,int,float, bool, List[Any], Mapping[Any, Any]
 ]
@@ -159,32 +144,6 @@ class CfnTemplateResourceDefinition(BaseModel):
     UpdatePolicy: Optional[Mapping[str, Any]] = None
     UpdateReplacePolicy: Literal["Delete", "Retain", "Snapshot"] = "Delete"
 
-
-    # def get_description_for_property(self, json_path:str) -> Optional[str]:
-    #     metadata = self.Metadata
-    #     if metadata is None:
-    #         return None
-    #     cfn_docgen = metadata.CfnDocgen
-    #     if cfn_docgen is None:
-    #         return None
-    #     properties = cfn_docgen.Properties
-    #     if properties is None:
-    #         return None
-
-    #     descriptions:List[str] = []
-    #     jsonpath_expr = parse(json_path) # type: ignore
-    #     descriptions = [f.value for f in jsonpath_expr.find(properties)] # type: ignore
-    #     if len(descriptions) != 1:
-    #         return None
-    #     return descriptions[0]
-
-    # def get_definition_for_property(self, json_path:str) -> Optional[CfnTemplateResourcePropertyDefinition]:
-    #     definitions:List[CfnTemplateResourcePropertyDefinition] = []
-    #     jsonpath_expr = parse(json_path) # type: ignore
-    #     definitions = [f.value for f in jsonpath_expr.find(self.Properties)] # type: ignore
-    #     if len(definitions) != 1:
-    #         return None
-    #     return definitions[0]
     
 class CfnTemplateOutputExportDefinition(BaseModel):
     Name: str | Mapping[str, Any]
@@ -210,9 +169,12 @@ class CfnTemplateDefinition(BaseModel):
     Outputs: Mapping[str, CfnTemplateOutputDefinition] = {}
 
     @classmethod
-    def from_string(cls, template:str) -> CfnTemplateDefinition:
-        j  = json.loads(template)
-        return CfnTemplateDefinition(**j)
+    def from_string(cls, template:str, context:AppContext) -> CfnTemplateDefinition:
+        try:
+            return CfnTemplateDefinition(**json.loads(template))
+        except Exception as ex:
+            context.log_error(f"failed to instanciate CfnTemplateDefinition from string. {str(ex)}")
+            raise ex
 
     def __get_cfn_docgen(self) -> Optional[CfnTemplateMetadataCfnDocgenDefinition]:
         metadata = self.Metadata
@@ -258,37 +220,53 @@ class CfnTemplateParametersNode:
     def __init__(
         self,
         definitions:Mapping[str, CfnTemplateParameterDefinition],
-        parameter_groups:List[CfnTemplateMetadataParameterGroup]
+        parameter_groups:List[CfnTemplateMetadataParameterGroup],
+        context:AppContext,
     ) -> None:
         
-        self.group_nodes:Mapping[str, CfnTemplateParameterGroupNode] = {
-            group.Label.default: CfnTemplateParameterGroupNode(
-                definitions={
-                    param_name: definition 
-                    for param_name, definition in definitions.items()
-                    if param_name in group.Parameters
-                }
-            )
-            for group in parameter_groups
-        }
+        self.group_nodes:Mapping[str, CfnTemplateParameterGroupNode] ={}
+        for group in parameter_groups:
+            try:
+                self.group_nodes[group.Label.default] = CfnTemplateParameterGroupNode(
+                    definitions={
+                        param_name: definition 
+                        for param_name, definition in definitions.items()
+                        if param_name in group.Parameters
+                    },
+                    context=context,
+                )
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateParameterGroupNode for parameter group [{group.Label.default}]")
+                continue
 
-        parameter_names_in_groups = list(itertools.chain.from_iterable(
-            [group.Parameters for group in parameter_groups]
-        ))
-        self.group_nodes[self.group_name_for_independent_parameters] = CfnTemplateParameterGroupNode(
-            definitions={
-                param_name: definition for param_name, definition in definitions.items()
-                if param_name not in parameter_names_in_groups
-            }
-        )
+        try:
+            parameter_names_in_groups = list(itertools.chain.from_iterable(
+                [group.Parameters for group in parameter_groups]
+            ))
+            self.group_nodes[self.group_name_for_independent_parameters] = CfnTemplateParameterGroupNode(
+                definitions={
+                    param_name: definition for param_name, definition in definitions.items()
+                    if param_name not in parameter_names_in_groups
+                },
+                context=context,
+            )
+        except Exception:
+            context.log_warning(f"failed to build CfnTemplateParameterGroupNode for parameter group [{self.group_name_for_independent_parameters}]")
 
 
 class CfnTemplateParameterGroupNode:
     def __init__(
         self,
         definitions:Mapping[str, CfnTemplateParameterDefinition],
+        context:AppContext,
     ) -> None:
-        self.leaves = {name: CfnTemplateParameterLeaf(definition) for name, definition in definitions.items()}
+        self.leaves:Mapping[str, CfnTemplateParameterLeaf] = {}
+        for name, definition in definitions.items():
+            try:
+                self.leaves[name] = CfnTemplateParameterLeaf(definition=definition)
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateParameterLeaf for parameter [{name}]")
+                continue
 
 class CfnTemplateParameterLeaf:
     def __init__(self, definition:CfnTemplateParameterDefinition) -> None:
@@ -309,14 +287,18 @@ class CfnTemplateMappingsNode:
         self,
         definitions:Mapping[str, Mapping[str, Mapping[str, Any]]],
         descriptions:Mapping[str, str],
+        context:AppContext,
     ) -> None:
-        self.mapping_leaves = {
-            name: CfnTemplateMappingLeaf(
-                definition=definition,
-                description=descriptions.get(name)
-            )
-            for name, definition in definitions.items()
-        }
+        self.mapping_leaves:Mapping[str, CfnTemplateMappingLeaf] = {}
+        for name, definition in definitions.items():
+            try:
+                self.mapping_leaves[name] = CfnTemplateMappingLeaf(
+                    definition=definition,
+                    description=descriptions.get(name)
+                )
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateMappingLeaf for mapping [{name}]")
+                continue
 
 class CfnTemplateConditionLeaf:
     def __init__(
@@ -332,14 +314,18 @@ class CfnTemplateConditionsNode:
         self,
         definitions: Mapping[str, Mapping[str, Any]],
         descriptions: Mapping[str, str],
+        context:AppContext,
     ) -> None:
-        self.condition_leaves = {
-            name: CfnTemplateConditionLeaf(
-                definition=definition,
-                description=descriptions.get(name)
-            )
-            for name, definition in definitions.items()
-        }
+        self.condition_leaves:Mapping[str, CfnTemplateConditionLeaf] = {}
+        for name, definition in definitions.items():
+            try:
+                self.condition_leaves[name] = CfnTemplateConditionLeaf(
+                    definition=definition,
+                    description=descriptions.get(name)
+                )
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateConditionLeaf for condition [{name}]")
+                continue
 
 class CfnTemplateRuleLeaf:
     def __init__(
@@ -356,16 +342,18 @@ class CfnTemplateRulesNode:
         self,
         definitions:Mapping[str, CfnTemplateRuleDefinition],
         descriptions:Mapping[str, str],
+        context:AppContext,
     ) -> None:
-        self.rule_leaves = {
-            name: CfnTemplateRuleLeaf(
-                definition=definition,
-                description=descriptions.get(name)
-            )
-            for name, definition in definitions.items()
-        }
-        
-        
+        self.rule_leaves:Mapping[str, CfnTemplateRuleLeaf] = {}
+        for name, definition in definitions.items():
+            try:
+                self.rule_leaves[name] = CfnTemplateRuleLeaf(
+                    definition=definition,
+                    description=descriptions.get(name),
+                )
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateRuleLeaf for rule [{name}]")
+                continue
 
 class CfnTemplateResourcePropertyLeaf:
     def __init__(
@@ -393,6 +381,7 @@ class CfnTemplateResourcePropertyNode:
         cfn_docgen_metadata:Optional[CfnTemplateResourceMetadataCfnDocgenDefinition],
         property_specs:Mapping[str, CfnSpecificationPropertyType],
         resource_info:ResourceInfo,
+        context:AppContext,
     ) -> None:
         self.property_nodes:Mapping[
             str, # e.g. CpuOptions in AWS::EC2::Instance
@@ -421,136 +410,151 @@ class CfnTemplateResourcePropertyNode:
 
 
         for property_name, property_spec in properties_spec.items():
-            if (
-                property_spec.PrimitiveType is not None 
-                or property_spec.PrimitiveItemType is not None
-            ):
-            # e.g. CoreCount in AWS::EC2::Instance.CpuOptions (string primitive type)
-            # or Value in AWS::EC2::Instance.AssociationParameter (list of string primitive item type)
-            # or Options in AWS::ECS::Service.LogConfiguration (map of string primitive item type)
+            try:
+                if (
+                    property_spec.PrimitiveType is not None 
+                    or property_spec.PrimitiveItemType is not None
+                ):
+                # e.g. CoreCount in AWS::EC2::Instance.CpuOptions (string primitive type)
+                # or Value in AWS::EC2::Instance.AssociationParameter (list of string primitive item type)
+                # or Options in AWS::ECS::Service.LogConfiguration (map of string primitive item type)
+                    definition:Any = None
+                    if definitions is not None and isinstance(definitions, dict):
+                        definition = cast(Mapping[str, CfnTemplateResourcePropertyDefinition], definitions).get(property_name, None)
+                    prop_json_path = f"{self.json_path}.{property_name}"
+                    description = cfn_docgen_metadata.get_property_description_by_json_path(
+                        json_path=prop_json_path,
+                    ) if cfn_docgen_metadata is not None else None
+                    if resource_info.is_recursive and definition is None:
+                        continue
+                    self.property_leaves[property_name] = CfnTemplateResourcePropertyLeaf(
+                        definition=definition,
+                        property_spec=property_spec,
+                        description=description,
+                        json_path=prop_json_path,
+                    )
+                    continue
+
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateResourcePropertyLeaf for property [{property_name}]")
+                continue
+
+            try:
+
+                if property_spec.ItemType is not None:
+                    if (
+                        property_spec.Type is not None
+                        and property_spec.Type.lower() == "list"
+                    ):
+                    # e.g. AssociationParameters in AWS::EC2::Instance.SsmAssociation
+                        _property_spec = property_specs.get(
+                            CfnSpecificationPropertyTypeName(f"{resource_info.type}.{property_spec.ItemType}", context).fullname
+                        )
+                        if _property_spec is None or _property_spec.Properties is None:
+                            continue
+                        definition_list:List[Any] = []
+                        if definitions is not None and isinstance(definitions, dict):
+                            definition_list = cast(Mapping[str, List[Any]], definitions).get(property_name, [None])
+                        if not isinstance(definition_list, list): # type: ignore
+                            raise ValueError
+                        property_nodes_list:List[CfnTemplateResourcePropertyNode] = []
+                        for i, definition in enumerate(definition_list):
+                            # prop_name is Key, Value, ...
+                            prop_json_path = f"{self.json_path}.{property_name}[{i}]"
+                            description = cfn_docgen_metadata.get_property_description_by_json_path(
+                                json_path=prop_json_path,
+                            ) if cfn_docgen_metadata is not None else None
+                            if resource_info.is_recursive and definition is None:
+                                continue
+                            property_nodes_list.append(CfnTemplateResourcePropertyNode(
+                                definitions=definition,
+                                resource_property_spec=property_spec,
+                                description=description,
+                                json_path=prop_json_path,
+                                properties_spec=_property_spec.Properties,
+                                property_specs=property_specs,
+                                cfn_docgen_metadata=cfn_docgen_metadata,
+                                resource_info=resource_info,
+                                context=context,
+                            ))
+                        self.property_nodes_list[property_name] = property_nodes_list.copy()
+                        continue
+
+                    if (
+                        property_spec.Type is not None
+                        and property_spec.Type.lower() == "map"
+                    ):
+                    # e.g. RequestBodyAssociatedResourceTypeConfig in AWS::WAFv2::WebACL.AssociationConfig
+                        
+                        _property_spec = property_specs.get(
+                            CfnSpecificationPropertyTypeName(f"{resource_info.type}.{property_spec.ItemType}", context).fullname
+                        )
+                        if _property_spec is None or _property_spec.Properties is None:
+                            continue
+                        definition_map:Mapping[str, Any] = {}
+                        if definitions is not None and isinstance(definitions, dict):
+                            definition_map = cast(Mapping[str, Mapping[str, Any]], definitions).get(property_name, {"key": None})
+                        if not isinstance(definition_map, dict): # type: ignore
+                            raise ValueError
+                        property_nodes_map:Mapping[str, CfnTemplateResourcePropertyNode] = {}
+                        for key, definition in definition_map.items():
+                            # prop_name is DefaultSizeInspectionLimit, ...
+                            prop_json_path = f"{self.json_path}.{property_name}.{key}"
+                            description = cfn_docgen_metadata.get_property_description_by_json_path(
+                                json_path=prop_json_path
+                            ) if cfn_docgen_metadata is not None else None
+                            if resource_info.is_recursive and definition is None:
+                                continue
+                            property_nodes_map[key] = CfnTemplateResourcePropertyNode(
+                                definitions=definition,
+                                resource_property_spec=property_spec,
+                                properties_spec=_property_spec.Properties,
+                                property_specs=property_specs,
+                                description=description,
+                                json_path=prop_json_path,
+                                cfn_docgen_metadata=cfn_docgen_metadata,
+                                resource_info=resource_info,
+                                context=context,
+                            )
+                        self.property_nodes_map[property_name] = property_nodes_map.copy()
+                        continue
+
+                # the rest is e.g. Ebs in AWS::EC2::Instance.BlockDeviceMapping
+                _property_spec = property_specs.get(
+                    CfnSpecificationPropertyTypeName(f"{resource_info.type}.{property_spec.Type}", context).fullname
+                )
+                if _property_spec is None and property_spec.Type == "Tag":
+                    _property_spec = property_specs.get(
+                        CfnSpecificationPropertyTypeName(property_spec.Type, context).fullname
+                    )
+                if _property_spec is None or _property_spec.Properties is None:
+                    continue
                 definition:Any = None
                 if definitions is not None and isinstance(definitions, dict):
-                    definition = cast(Mapping[str, CfnTemplateResourcePropertyDefinition], definitions).get(property_name, None)
+                    definition = cast(Mapping[str, Any], definitions).get(property_name, None)
                 prop_json_path = f"{self.json_path}.{property_name}"
                 description = cfn_docgen_metadata.get_property_description_by_json_path(
-                    json_path=prop_json_path,
+                    json_path=prop_json_path
                 ) if cfn_docgen_metadata is not None else None
                 if resource_info.is_recursive and definition is None:
                     continue
-                self.property_leaves[property_name] = CfnTemplateResourcePropertyLeaf(
-                    definition=definition,
-                    property_spec=property_spec,
-                    description=description,
+                self.property_nodes[property_name] = CfnTemplateResourcePropertyNode(
+                    definitions=definition,
+                    resource_property_spec=property_spec,
+                    properties_spec=_property_spec.Properties,
+                    property_specs=property_specs,
+                    cfn_docgen_metadata=cfn_docgen_metadata,
+                    resource_info=resource_info,
                     json_path=prop_json_path,
+                    description=description,
+                    context=context,
                 )
                 continue
 
-            if property_spec.ItemType is not None:
-                if (
-                    property_spec.Type is not None
-                    and property_spec.Type.lower() == "list"
-                ):
-                # e.g. AssociationParameters in AWS::EC2::Instance.SsmAssociation
-                    _property_spec = property_specs.get(
-                        CfnSpecificationPropertyTypeName(f"{resource_info.type}.{property_spec.ItemType}").fullname
-                    )
-                    if _property_spec is None or _property_spec.Properties is None:
-                        continue
-                    definition_list:List[Any] = []
-                    if definitions is not None and isinstance(definitions, dict):
-                        definition_list = cast(Mapping[str, List[Any]], definitions).get(property_name, [None])
-                    if not isinstance(definition_list, list): # type: ignore
-                        raise ValueError
-                    property_nodes_list:List[CfnTemplateResourcePropertyNode] = []
-                    for i, definition in enumerate(definition_list):
-                        # prop_name is Key, Value, ...
-                        prop_json_path = f"{self.json_path}.{property_name}[{i}]"
-                        description = cfn_docgen_metadata.get_property_description_by_json_path(
-                            json_path=prop_json_path,
-                        ) if cfn_docgen_metadata is not None else None
-                        if resource_info.is_recursive and definition is None:
-                            continue
-                        property_nodes_list.append(CfnTemplateResourcePropertyNode(
-                            definitions=definition,
-                            resource_property_spec=property_spec,
-                            description=description,
-                            json_path=prop_json_path,
-                            properties_spec=_property_spec.Properties,
-                            property_specs=property_specs,
-                            cfn_docgen_metadata=cfn_docgen_metadata,
-                            resource_info=resource_info,
-                        ))
-                    self.property_nodes_list[property_name] = property_nodes_list.copy()
-                    continue
-
-                if (
-                    property_spec.Type is not None
-                    and property_spec.Type.lower() == "map"
-                ):
-                # e.g. RequestBodyAssociatedResourceTypeConfig in AWS::WAFv2::WebACL.AssociationConfig
-                    
-                    _property_spec = property_specs.get(
-                        CfnSpecificationPropertyTypeName(f"{resource_info.type}.{property_spec.ItemType}").fullname
-                    )
-                    if _property_spec is None or _property_spec.Properties is None:
-                        continue
-                    definition_map:Mapping[str, Any] = {}
-                    if definitions is not None and isinstance(definitions, dict):
-                        definition_map = cast(Mapping[str, Mapping[str, Any]], definitions).get(property_name, {"key": None})
-                    if not isinstance(definition_map, dict): # type: ignore
-                        raise ValueError
-                    property_nodes_map:Mapping[str, CfnTemplateResourcePropertyNode] = {}
-                    for key, definition in definition_map.items():
-                        # prop_name is DefaultSizeInspectionLimit, ...
-                        prop_json_path = f"{self.json_path}.{property_name}.{key}"
-                        description = cfn_docgen_metadata.get_property_description_by_json_path(
-                            json_path=prop_json_path
-                        ) if cfn_docgen_metadata is not None else None
-                        if resource_info.is_recursive and definition is None:
-                            continue
-                        property_nodes_map[key] = CfnTemplateResourcePropertyNode(
-                            definitions=definition,
-                            resource_property_spec=property_spec,
-                            properties_spec=_property_spec.Properties,
-                            property_specs=property_specs,
-                            description=description,
-                            json_path=prop_json_path,
-                            cfn_docgen_metadata=cfn_docgen_metadata,
-                            resource_info=resource_info,
-                        )
-                    self.property_nodes_map[property_name] = property_nodes_map.copy()
-                    continue
-
-            # the rest is e.g. Ebs in AWS::EC2::Instance.BlockDeviceMapping
-            _property_spec = property_specs.get(
-                CfnSpecificationPropertyTypeName(f"{resource_info.type}.{property_spec.Type}").fullname
-            )
-            if _property_spec is None and property_spec.Type == "Tag":
-                _property_spec = property_specs.get(
-                    CfnSpecificationPropertyTypeName(property_spec.Type).fullname
-                )
-            if _property_spec is None or _property_spec.Properties is None:
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateResourcePropertyNode for property [{property_name}]")
                 continue
-            definition:Any = None
-            if definitions is not None and isinstance(definitions, dict):
-                definition = cast(Mapping[str, Any], definitions).get(property_name, None)
-            prop_json_path = f"{self.json_path}.{property_name}"
-            description = cfn_docgen_metadata.get_property_description_by_json_path(
-                json_path=prop_json_path
-            ) if cfn_docgen_metadata is not None else None
-            if resource_info.is_recursive and definition is None:
-                continue
-            self.property_nodes[property_name] = CfnTemplateResourcePropertyNode(
-                definitions=definition,
-                resource_property_spec=property_spec,
-                properties_spec=_property_spec.Properties,
-                property_specs=property_specs,
-                cfn_docgen_metadata=cfn_docgen_metadata,
-                resource_info=resource_info,
-                json_path=prop_json_path,
-                description=description,
-            )
-            continue
+
 
 class CfnTemplateResourcePropertiesNode:
     def __init__(
@@ -560,6 +564,7 @@ class CfnTemplateResourcePropertiesNode:
         property_specs:Mapping[str, CfnSpecificationPropertyType],
         cfn_docgen_metadata:Optional[CfnTemplateResourceMetadataCfnDocgenDefinition],
         resource_info:ResourceInfo,
+        context:AppContext,
 
     ) -> None:
         self.property_nodes:Mapping[
@@ -587,129 +592,143 @@ class CfnTemplateResourcePropertiesNode:
 
         for property_name, resource_property_spec in resource_property_specs.items():
         # property_name is like ImageId, BlockDeviceMappings, CpuOptions, ... in AWS::EC2::Instance
-            if (
-                resource_property_spec.PrimitiveType is not None 
-                or resource_property_spec.PrimitiveItemType is not None
-            ):
-            # e.g. ImageId in AWS::EC2::Instance (string primitive type)
-            # or SecurityGroupIds in AWS::EC2::Instance (list of string primitive item type)
-            # or Tags in AWS::MSK::Cluster (map of string primitive item type)
+
+            try:
+                if (
+                    resource_property_spec.PrimitiveType is not None 
+                    or resource_property_spec.PrimitiveItemType is not None
+                ):
+                # e.g. ImageId in AWS::EC2::Instance (string primitive type)
+                # or SecurityGroupIds in AWS::EC2::Instance (list of string primitive item type)
+                # or Tags in AWS::MSK::Cluster (map of string primitive item type)
+                    definition = definitions.get(property_name, None)
+                    prop_json_path = f"{self.json_path}.{property_name}"
+                    description = cfn_docgen_metadata.get_property_description_by_json_path(
+                        json_path=prop_json_path,
+                    ) if cfn_docgen_metadata is not None else None
+                    if resource_info.is_recursive and definition is None:
+                        continue
+                    self.property_leaves[property_name] = CfnTemplateResourcePropertyLeaf(
+                        definition=definition,
+                        property_spec=resource_property_spec,
+                        description=description,
+                        json_path=prop_json_path,
+                    )
+                    continue
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateResourcePropertyLeaf for property [{property_name}]")
+                continue
+
+            try:
+                if resource_property_spec.ItemType is not None:
+                    if (
+                        resource_property_spec.Type is not None
+                        and resource_property_spec.Type.lower() == "list"
+                    ):
+                    # e.g. BlockDeviceMappings in AWS::EC2::Instance
+                        property_spec = property_specs.get(
+                            CfnSpecificationPropertyTypeName(f"{resource_info.type}.{resource_property_spec.ItemType}", context).fullname
+                        )
+                        if property_spec is None and resource_property_spec.ItemType == "Tag":
+                            property_spec = property_specs.get(
+                                CfnSpecificationPropertyTypeName(resource_property_spec.ItemType, context).fullname
+                            )
+                        if property_spec is None or property_spec.Properties is None:
+                            continue
+                        definition_list = definitions.get(property_name, [None])
+                        if not isinstance(definition_list, list):
+                            raise ValueError
+                        property_nodes_list:List[CfnTemplateResourcePropertyNode] = []
+                        for i, definition in enumerate(definition_list):
+                            # prop_name is DeviceName, Ebs, ...
+                            prop_json_path = f"{self.json_path}.{property_name}[{i}]"
+                            description = cfn_docgen_metadata.get_property_description_by_json_path(
+                                json_path=prop_json_path,
+                            ) if cfn_docgen_metadata is not None else None
+                            if resource_info.is_recursive and definition is None:
+                                continue
+                            property_nodes_list.append(CfnTemplateResourcePropertyNode(
+                                definitions=definition,
+                                resource_property_spec=resource_property_spec,
+                                description=description,
+                                json_path=prop_json_path,
+                                properties_spec=property_spec.Properties,
+                                property_specs=property_specs,
+                                resource_info=resource_info,
+                                cfn_docgen_metadata=cfn_docgen_metadata,
+                                context=context,
+                            ))
+                        self.property_nodes_list[property_name] = property_nodes_list.copy()
+                        continue
+
+                    if (
+                        resource_property_spec.Type is not None
+                        and resource_property_spec.Type.lower() == "map"
+                    ):
+                    # e.g. CustomResponseBody in AWS::WAFv2::WebACL
+                        
+                        property_spec = property_specs.get(
+                            CfnSpecificationPropertyTypeName(f"{resource_info.type}.{resource_property_spec.ItemType}", context).fullname
+                        )
+                        if property_spec is None or property_spec.Properties is None:
+                            continue
+                        definition_map = definitions.get(property_name, {"key": None})
+                        if not isinstance(definition_map, dict):
+                            raise ValueError
+                        property_nodes_map:Mapping[str, CfnTemplateResourcePropertyNode] = {}
+                        for key, definition in definition_map.items():
+                            # for prop_name, prop_spec in property_spec.Properties.items():
+                            # prop_name is ContentType, Content, ...
+                            prop_json_path = f"{self.json_path}.{property_name}.{key}"
+                            description = cfn_docgen_metadata.get_property_description_by_json_path(
+                                json_path=prop_json_path
+                            ) if cfn_docgen_metadata is not None else None
+                            if resource_info.is_recursive and definition is None:
+                                continue
+                            property_nodes_map[key] = CfnTemplateResourcePropertyNode(
+                                definitions=definition,
+                                resource_property_spec=resource_property_spec,
+                                description=description,
+                                json_path=prop_json_path,
+                                properties_spec=property_spec.Properties,
+                                property_specs=property_specs,
+                                resource_info=resource_info,
+                                cfn_docgen_metadata=cfn_docgen_metadata,
+                                context=context,
+                            )
+                        self.property_nodes_map[property_name] = property_nodes_map.copy()
+                        continue
+
+                # the rest is e.g. CpuOptions in AWS::EC2::Instance
+                property_spec = property_specs.get(
+                    CfnSpecificationPropertyTypeName(f"{resource_info.type}.{resource_property_spec.Type}", context).fullname
+                )
+                if property_spec is None or property_spec.Properties is None:
+                    continue
                 definition = definitions.get(property_name, None)
                 prop_json_path = f"{self.json_path}.{property_name}"
                 description = cfn_docgen_metadata.get_property_description_by_json_path(
-                    json_path=prop_json_path,
+                    json_path=prop_json_path
                 ) if cfn_docgen_metadata is not None else None
                 if resource_info.is_recursive and definition is None:
                     continue
-                self.property_leaves[property_name] = CfnTemplateResourcePropertyLeaf(
-                    definition=definition,
-                    property_spec=resource_property_spec,
-                    description=description,
+                self.property_nodes[property_name] = CfnTemplateResourcePropertyNode(
+                    definitions=definition,
+                    resource_property_spec=resource_property_spec,
+                    properties_spec=property_spec.Properties,
+                    property_specs=property_specs,
+                    resource_info=resource_info,
                     json_path=prop_json_path,
+                    description=description,
+                    cfn_docgen_metadata=cfn_docgen_metadata,
+                    context=context,
                 )
                 continue
 
-            if resource_property_spec.ItemType is not None:
-                if (
-                    resource_property_spec.Type is not None
-                    and resource_property_spec.Type.lower() == "list"
-                ):
-                # e.g. BlockDeviceMappings in AWS::EC2::Instance
-                    property_spec = property_specs.get(
-                        CfnSpecificationPropertyTypeName(f"{resource_info.type}.{resource_property_spec.ItemType}").fullname
-                    )
-                    if property_spec is None and resource_property_spec.ItemType == "Tag":
-                        property_spec = property_specs.get(
-                            CfnSpecificationPropertyTypeName(resource_property_spec.ItemType).fullname
-                        )
-                    if property_spec is None or property_spec.Properties is None:
-                        continue
-                    definition_list = definitions.get(property_name, [None])
-                    if not isinstance(definition_list, list):
-                        raise ValueError
-                    property_nodes_list:List[CfnTemplateResourcePropertyNode] = []
-                    for i, definition in enumerate(definition_list):
-                        # prop_name is DeviceName, Ebs, ...
-                        prop_json_path = f"{self.json_path}.{property_name}[{i}]"
-                        description = cfn_docgen_metadata.get_property_description_by_json_path(
-                            json_path=prop_json_path,
-                        ) if cfn_docgen_metadata is not None else None
-                        if resource_info.is_recursive and definition is None:
-                            continue
-                        property_nodes_list.append(CfnTemplateResourcePropertyNode(
-                            definitions=definition,
-                            resource_property_spec=resource_property_spec,
-                            description=description,
-                            json_path=prop_json_path,
-                            properties_spec=property_spec.Properties,
-                            property_specs=property_specs,
-                            resource_info=resource_info,
-                            cfn_docgen_metadata=cfn_docgen_metadata,
-                        ))
-                    self.property_nodes_list[property_name] = property_nodes_list.copy()
-                    continue
-
-                if (
-                    resource_property_spec.Type is not None
-                    and resource_property_spec.Type.lower() == "map"
-                ):
-                # e.g. CustomResponseBody in AWS::WAFv2::WebACL
-                    
-                    property_spec = property_specs.get(
-                        CfnSpecificationPropertyTypeName(f"{resource_info.type}.{resource_property_spec.ItemType}").fullname
-                    )
-                    if property_spec is None or property_spec.Properties is None:
-                        continue
-                    definition_map = definitions.get(property_name, {"key": None})
-                    if not isinstance(definition_map, dict):
-                        raise ValueError
-                    property_nodes_map:Mapping[str, CfnTemplateResourcePropertyNode] = {}
-                    for key, definition in definition_map.items():
-                        # for prop_name, prop_spec in property_spec.Properties.items():
-                        # prop_name is ContentType, Content, ...
-                        prop_json_path = f"{self.json_path}.{property_name}.{key}"
-                        description = cfn_docgen_metadata.get_property_description_by_json_path(
-                            json_path=prop_json_path
-                        ) if cfn_docgen_metadata is not None else None
-                        if resource_info.is_recursive and definition is None:
-                            continue
-                        property_nodes_map[key] = CfnTemplateResourcePropertyNode(
-                            definitions=definition,
-                            resource_property_spec=resource_property_spec,
-                            description=description,
-                            json_path=prop_json_path,
-                            properties_spec=property_spec.Properties,
-                            property_specs=property_specs,
-                            resource_info=resource_info,
-                            cfn_docgen_metadata=cfn_docgen_metadata,
-                        )
-                    self.property_nodes_map[property_name] = property_nodes_map.copy()
-                    continue
-
-            # the rest is e.g. CpuOptions in AWS::EC2::Instance
-            property_spec = property_specs.get(
-                CfnSpecificationPropertyTypeName(f"{resource_info.type}.{resource_property_spec.Type}").fullname
-            )
-            if property_spec is None or property_spec.Properties is None:
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateResourcePropertyNode for property [{property_name}]")
                 continue
-            definition = definitions.get(property_name, None)
-            prop_json_path = f"{self.json_path}.{property_name}"
-            description = cfn_docgen_metadata.get_property_description_by_json_path(
-                json_path=prop_json_path
-            ) if cfn_docgen_metadata is not None else None
-            if resource_info.is_recursive and definition is None:
-                continue
-            self.property_nodes[property_name] = CfnTemplateResourcePropertyNode(
-                definitions=definition,
-                resource_property_spec=resource_property_spec,
-                properties_spec=property_spec.Properties,
-                property_specs=property_specs,
-                resource_info=resource_info,
-                json_path=prop_json_path,
-                description=description,
-                cfn_docgen_metadata=cfn_docgen_metadata,
-            )
-            continue
+
 
 class CfnTemplateResourceNode:
     def __init__(
@@ -717,6 +736,7 @@ class CfnTemplateResourceNode:
         definition:CfnTemplateResourceDefinition,
         specs:CfnSpecificationForResource,
         resource_info:ResourceInfo,
+        context:AppContext,
     ) -> None:
         metadata = definition.Metadata
         cfn_docgen = metadata.CfnDocgen if metadata is not None else None
@@ -733,13 +753,18 @@ class CfnTemplateResourceNode:
 
         self.spec = specs.ResourceSpec
 
-        self.properties_node = CfnTemplateResourcePropertiesNode(
-            definitions=definition.Properties,
-            resource_property_specs=specs.ResourceSpec.Properties,
-            property_specs=specs.PropertySpecs,
-            cfn_docgen_metadata=cfn_docgen,
-            resource_info=resource_info,
-        )
+        try:
+            self.properties_node = CfnTemplateResourcePropertiesNode(
+                definitions=definition.Properties,
+                resource_property_specs=specs.ResourceSpec.Properties,
+                property_specs=specs.PropertySpecs,
+                cfn_docgen_metadata=cfn_docgen,
+                resource_info=resource_info,
+                context=context,
+            )
+        except Exception:
+            context.log_warning(f"failed to build CfnTemplateResourcePropertiesNode")
+
 
 @dataclass
 class ResourceInfo:
@@ -751,19 +776,24 @@ class CfnTemplateResourcesNode:
         self,
         definitions:Mapping[str, CfnTemplateResourceDefinition],
         spec_repository:ICfnSpecificationRepository,
+        context:AppContext,
     ) -> None:
         self.resource_nodes:Mapping[str, CfnTemplateResourceNode] = {}
         for name, definition in definitions.items():
-            specs = spec_repository.get_specs_for_resource(CfnSpecificationResourceTypeName(definition.Type))
-            resource_info=ResourceInfo(
-                type=definition.Type, 
-                is_recursive=spec_repository.is_recursive(CfnSpecificationResourceTypeName(definition.Type))
-            )
-            self.resource_nodes[name] = CfnTemplateResourceNode(
-                definition=definition, 
-                specs=specs,
-                resource_info=resource_info,
-            )
+            try:
+                specs = spec_repository.get_specs_for_resource(CfnSpecificationResourceTypeName(definition.Type, context))
+                resource_info=ResourceInfo(
+                    type=definition.Type, 
+                    is_recursive=spec_repository.is_recursive(CfnSpecificationResourceTypeName(definition.Type, context))
+                )
+                self.resource_nodes[name] = CfnTemplateResourceNode(
+                    definition=definition, 
+                    specs=specs,
+                    resource_info=resource_info,
+                    context=context,
+                )
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateResourceNode for resource [{name}]")
 
 class CfnTemplateOutputLeaf:
     def __init__(
@@ -775,21 +805,24 @@ class CfnTemplateOutputLeaf:
 class CfnTemplateOutputsNode:
     def __init__(
         self,
-        definitions:Mapping[str, CfnTemplateOutputDefinition,
-    ]) -> None:
-        self.output_leaves = {
-            name: CfnTemplateOutputLeaf(
-                definition=definition
-            )
-            for name, definition in definitions.items()
-        }
+        definitions:Mapping[str, CfnTemplateOutputDefinition],
+        context:AppContext,
+    ) -> None:
+        self.output_leaves:Mapping[str, CfnTemplateOutputLeaf] = {}
+        for name, definition in definitions.items():
+            try:
+                self.output_leaves[name] = CfnTemplateOutputLeaf(
+                    definition=definition,
+                )
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateOutputLeaf for output [{name}]")
+
 
 SupportedSourceType = Literal["LocalFilePath", "S3BucketKey", "HttpUrl"]
 class CfnTemplateSource:
     type: SupportedSourceType
     source: str
-
-    def __init__(self, source:str) -> None:
+    def __init__(self, source:str, context:AppContext) -> None:
         self.source = source
         if source.startswith("s3://"):
             self.type = "S3BucketKey"
@@ -797,6 +830,8 @@ class CfnTemplateSource:
             self.type = "HttpUrl"
         else:
             self.type = "LocalFilePath"
+
+        context.log_debug(f"the type of template source [{self.source}] is [{self.type}]")
     
     @property
     def basename(self) -> str:
@@ -810,6 +845,7 @@ class CfnTemplateTree:
         template_source:CfnTemplateSource,
         definition:CfnTemplateDefinition, 
         spec_repository:ICfnSpecificationRepository,
+        context:AppContext,
     ) -> None:
         self.template_source = template_source
         self.description = definition.Description
@@ -820,24 +856,30 @@ class CfnTemplateTree:
         self.parameters_node = CfnTemplateParametersNode(
             definitions=definition.Parameters,
             parameter_groups=definition.get_parameter_groups(),
+            context=context,
         )
         self.mappings_node = CfnTemplateMappingsNode(
             definitions=definition.Mappings,
             descriptions=definition.get_mapping_descriptions(),
+            context=context,
         )
         self.rules_node = CfnTemplateRulesNode(
             definitions=definition.Rules,
             descriptions=definition.get_rule_descriptions(),
+            context=context,
         )
         self.conditions_node = CfnTemplateConditionsNode(
             definitions=definition.Conditions,
             descriptions=definition.get_condition_descriptions(),
+            context=context,
         )
         self.resources_node = CfnTemplateResourcesNode(
             definitions=definition.Resources,
             spec_repository=spec_repository,
+            context=context,
         )
         self.outputs_node = CfnTemplateOutputsNode(
             definitions=definition.Outputs,
+            context=context,
         )
 

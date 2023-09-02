@@ -4,6 +4,8 @@ import re
 from typing import Literal, Mapping, Optional
 from pydantic import BaseModel
 
+from cfn_docgen.config import AppContext
+
 class CfnSpecificationProperty(BaseModel):
     Documentation: Optional[str] = None
     DuplicatesAllowed: Optional[bool] = None
@@ -25,17 +27,6 @@ class CfnSpecificationResourceType(BaseModel):
     Attributes: Mapping[str, CfnSpecificationResourceTypeAttribute] = {}
     Documentation: Optional[str] = None
     Properties: Mapping[str, CfnSpecificationProperty] = {}
-
-
-# class CfnSpecificationChildProperty(BaseModel):
-#     Documentation: Optional[str] = None
-#     DuplicatesAllowed: Optional[bool] = None
-#     ItemType: Optional[str] = None
-#     PrimitiveType: Optional[str] = None
-#     PrimitiveItemType: Optional[str] = None
-#     Required: Optional[bool] = None
-#     Type: Optional[str] = None
-#     UpdateType: Optional[Literal["Conditional", "Immutable", "Mutable"]] = None
 
 
 class CfnSpecificationPropertyType(BaseModel):
@@ -65,22 +56,25 @@ class CfnSpecificationResourceTypeName:
     fullname:str
     __pattern = r"^[a-zA-Z0-9]+::[a-zA-Z0-9]+::[a-zA-Z0-9]+$"
 
-    def __init__(self, resource_type:str) -> None:
-        assert re.match(self.__pattern, resource_type) is not None, f"Valid pattern for PropertyType is {self.__pattern} (e.g. AWS::EC2::Instance)"
-        self.fullname = resource_type
+    def __init__(self, resource_type:str, context:AppContext) -> None:
+        try:
+            assert re.match(self.__pattern, resource_type) is not None, f"Valid pattern for ResourceType is {self.__pattern} (e.g. AWS::EC2::Instance)"
+        except AssertionError as ex:
+            context.log_error(f"failed to instanciate for resource type {resource_type}. {str(ex)}")
+            raise ex
 
-    # def __hash__(self) -> int:
-    #     return hash(self.fullname)
-    
-    # def __eq__(self, __value: object) -> bool:
-    #     return isinstance(__value, CfnSpecificationResourceType) and self.fullname == __value.fullname
+        self.fullname = resource_type
 
 class CfnSpecificationPropertyTypeName:
     fullname:str
     __pattern = r"^[a-zA-Z0-9]+::[a-zA-Z0-9]+::[a-zA-Z0-9]+\.[a-zA-Z0-9]+$|^Tag$"
 
-    def __init__(self, property_type:str) -> None:
-        assert re.match(self.__pattern, property_type) is not None, f"Valid pattern for PropertyType is {self.__pattern} (e.g. AWS::EC2::Instance.BlockDeviceMapping)"
+    def __init__(self, property_type:str, context:AppContext) -> None:
+        try:
+            assert re.match(self.__pattern, property_type) is not None, f"Valid pattern for PropertyType is {self.__pattern} (e.g. AWS::EC2::Instance.BlockDeviceMapping)"
+        except AssertionError as ex:
+            context.log_error(f"failed to instanciate for property type {property_type}. {str(ex)}")
+            raise ex
         self.fullname = property_type
 
     @property
@@ -90,9 +84,3 @@ class CfnSpecificationPropertyTypeName:
     @property
     def suffix(self, ) -> str:
         return self.fullname.split(".")[-1]
-    
-    # def __hash__(self) -> int:
-    #     return hash(self.fullname)
-    
-    # def __eq__(self, __value: object) -> bool:
-    #     return isinstance(__value, CfnSpecificationPropertyType) and self.fullname == __value.fullname

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import json
 import re
 from typing import Any, List, Literal, Mapping, cast
+from cfn_docgen.config import AppContext
 from cfn_docgen.domain.model.cfn_specification import CfnSpecificationProperty
 
 from cfn_docgen.domain.model.cfn_template import CfnTemplateParameterDefinition, CfnTemplateResourcePropertiesNode, CfnTemplateResourcePropertyNode, CfnTemplateTree
@@ -11,11 +12,11 @@ from cfn_docgen.domain.model.cfn_template import CfnTemplateParameterDefinition,
 SupportedFormat = Literal["markdown"]
 
 
-def document_generator_factory(fmt:SupportedFormat) -> ICfnDocumentGenerator:
+def document_generator_factory(fmt:SupportedFormat, context:AppContext) -> ICfnDocumentGenerator:
     match fmt:
         case "markdown":
-            return CfnMarkdownDocumentGenerator()
-        
+            context.log_debug(f"format is [{fmt}]. return {CfnMarkdownDocumentGenerator.__name__}")
+            return CfnMarkdownDocumentGenerator(context=context)
         case _: # type: ignore
             raise NotImplementedError
 
@@ -23,7 +24,7 @@ class CfnDocumentDestination:
     type: Literal["LocalFilePath", "S3BucketKey", "HttpUrl"]
     dest: str
 
-    def __init__(self, dest:str) -> None:
+    def __init__(self, dest:str, context:AppContext) -> None:
         if dest.startswith("s3://"):
             self.type = "S3BucketKey"
         elif dest.startswith("http://") or dest.startswith("https://"):
@@ -31,6 +32,9 @@ class CfnDocumentDestination:
         else:
             self.type = "LocalFilePath"
         self.dest = dest
+
+        context.log_debug(f"type of dest [{dest}] is [{self.type}]")
+
 
 @dataclass
 class PropertyField:
@@ -46,6 +50,9 @@ class PropertyField:
         )
 
 class ICfnDocumentGenerator(ABC):
+
+    def __init__(self, context:AppContext) -> None:
+        self.context = context
 
     @abstractmethod
     def generate(self, cfn_template_tree:CfnTemplateTree) -> str:

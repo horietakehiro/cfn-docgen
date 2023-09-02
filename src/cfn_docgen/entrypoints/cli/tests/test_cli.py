@@ -186,3 +186,39 @@ def test_cli_s3_prefix_source_s3_prefix_dest():
     for output_key in [OUTPUT_MD_KEY1, OUTPUT_MD_KEY2]:
         res = s3_client.get_object(Bucket=TEST_BUCKET_NAME, Key=output_key)
         assert res["Body"].read() == expected
+
+def test_cli_build_units_of_work_fail():
+    args = CliArguement(
+        subcommand="docgen",
+        format="markdown",
+        source="not-exist-source",
+        dest=f"s3://{TEST_BUCKET_NAME}/{OUTPUT_ROOT_PREFIX}",
+    )
+    runner = CliRunner()
+    result = runner.invoke(main, args=args.as_list())
+    assert result.exit_code == 1
+    assert "failed to invoke the command" in result.output
+
+
+def test_cli_continue():
+    
+    # temporary replace template source with invalid one
+    try:
+        with open(INPUT_FILE1, "wb") as fp:
+            fp.write(b"invalid")
+        args = CliArguement(
+            subcommand="docgen",
+            format="markdown",
+            source=INPUT_ROOT_DIR,
+            dest=OUTPUT_ROOT_DIR,
+        )
+        runner = CliRunner()
+        result = runner.invoke(main, args=args.as_list())
+        assert result.exit_code == 0
+        assert f"[WARNING] failed to process source[{INPUT_FILE1}] and dest[{OUTPUT_MD_FILE1}]"
+    except Exception:
+        pytest.fail()
+        
+    finally:
+        shutil.copy(INPUT_MASTER_FILE, INPUT_FILE1)
+

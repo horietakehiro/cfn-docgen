@@ -1,14 +1,15 @@
 import hashlib
 import os
+from cfn_docgen.config import AppContext
 from cfn_docgen.domain.ports.cache import IFileCache
 
 HexHashString = str
 
 class NoFileCache(IFileCache):
 
-    def __init__(self, cache_root_dir: str) -> None:
-        super().__init__(cache_root_dir)
-
+    def __init__(self, cache_root_dir: str, context: AppContext) -> None:
+        super().__init__(cache_root_dir, context)
+        
     def get(self, filepath: str) -> str | None:
         return None
     
@@ -17,9 +18,10 @@ class NoFileCache(IFileCache):
 
 class LocalFileCache(IFileCache):
 
-    def __init__(self, cache_root_dir: str) -> None:
-        self.cache_root_dir = cache_root_dir
+    def __init__(self, cache_root_dir: str, context: AppContext) -> None:
+        super().__init__(cache_root_dir, context)
         os.makedirs(self.cache_root_dir, exist_ok=True)
+        context.log_debug(f"create directory for cache at [{self.cache_root_dir}]")
 
         self.encoding = "UTF-8"
 
@@ -37,6 +39,7 @@ class LocalFileCache(IFileCache):
         filepath_hash = self.hash(filepath)
         cache_filepath = os.path.join(self.cache_root_dir, filepath_hash)
         if os.path.isfile(cache_filepath):
+            self.context.log_debug(f"cache [{cache_filepath}] hit")
             with open(cache_filepath, "r", encoding=self.encoding) as fp:
                 body = fp.read()
             return body

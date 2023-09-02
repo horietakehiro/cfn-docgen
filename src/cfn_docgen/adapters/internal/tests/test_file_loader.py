@@ -1,10 +1,11 @@
+import logging
 import os
 import shutil
 from typing import Any, List
 
 import boto3
 import pytest
-from cfn_docgen.config import AppConfig
+from cfn_docgen.config import AppConfig, AppContext
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
 
@@ -51,6 +52,9 @@ OUTPUT_MD_KEY2=OUTPUT_PREFIX2+"/sample-template.md"
 # http url
 INPUT_URL="https://d33vqc0rt9ld30.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json"
 
+@pytest.fixture
+def context():
+    return AppContext(log_level=logging.DEBUG)
 
 @pytest.fixture(scope="class", autouse=True)
 def class_local_dirs_and_files():
@@ -117,16 +121,16 @@ def function_s3_bucket_and_keys():
         )
 
 
-def test_LocalFileLoader_download():
-    loader = LocalFileLoader()
+def test_LocalFileLoader_download(context:AppContext):
+    loader = LocalFileLoader(context=context)
     body = loader.download(INPUT_FILE1)
 
     with open(INPUT_MASTER_FILE, "rb") as fp:
         expected = fp.read()
     assert body == expected
 
-def test_LocalFileLoader_upload():
-    loader = LocalFileLoader()
+def test_LocalFileLoader_upload(context:AppContext):
+    loader = LocalFileLoader(context=context)
     with open(EXPECTED_MASTER_FILE, "rb") as fp:
         loader.upload(fp.read(), OUTPUT_MD_FILE1)
 
@@ -149,16 +153,16 @@ def test_LocalFileLoader_upload():
         [INPUT_FILE1],
     ),
 ])
-def test_LocalFileLoader_list(source:str, expected:List[str]):
-    loader = LocalFileLoader()
+def test_LocalFileLoader_list(source:str, expected:List[str], context:AppContext):
+    loader = LocalFileLoader(context=context)
     files = loader.list(source)
 
     assert len(files) == len(expected)
     for f in files:
         assert f in expected
 
-def test_RemoteFileLoader_download():
-    loader = RemoteFileLoader()
+def test_RemoteFileLoader_download(context:AppContext):
+    loader = RemoteFileLoader(context=context)
     body = loader.download(INPUT_URL)
 
     assert body.decode()[0] == "{" and body.decode()[-1] == "}"
@@ -177,11 +181,12 @@ def test_RemoteFileLoader_download():
         RemoteFileLoader,
     )
 ])
-def test_file_loader_factory(source:str, expected:Any):
+def test_file_loader_factory(source:str, expected:Any, context:AppContext):
     template_source = CfnTemplateSource(
         source=source,
+        context=context,
     )
-    loader = file_loader_factory(template_source)
+    loader = file_loader_factory(template_source, context=context)
     assert isinstance(loader, expected)
 
 @pytest.mark.parametrize("dest,expected", [
@@ -198,23 +203,24 @@ def test_file_loader_factory(source:str, expected:Any):
         RemoteFileLoader,
     )
 ])
-def test_document_loader_factory(dest:str, expected:Any):
+def test_document_loader_factory(dest:str, expected:Any, context:AppContext):
     document_dest = CfnDocumentDestination(
         dest=dest,
+        context=context,
     )
-    loader = document_loader_factory(document_dest)
+    loader = document_loader_factory(document_dest, context=context)
     assert isinstance(loader, expected)
 
-def test_S3Fileloader_download():
-    loader = S3FileLoader()
+def test_S3Fileloader_download(context:AppContext):
+    loader = S3FileLoader(context=context)
     body = loader.download(
         source=f"s3://{TEST_BUCKET_NAME}/{INPUT_KEY1}"
     )
     with open(INPUT_MASTER_FILE, "rb") as fp:
         assert fp.read() == body
 
-def test_S3Fileloader_upload():
-    loader = S3FileLoader()
+def test_S3Fileloader_upload(context:AppContext):
+    loader = S3FileLoader(context=context)
     dest = f"s3://{TEST_BUCKET_NAME}/{OUTPUT_MD_KEY1}"
     with open(EXPECTED_MASTER_FILE, "rb") as fp:
         expected = fp.read()
@@ -240,8 +246,8 @@ def test_S3Fileloader_upload():
         [INPUT_KEY1],
     ),
 ])
-def test_S3Fileloader_list(source:str, expected:List[str]):
-    loader = S3FileLoader()
+def test_S3Fileloader_list(source:str, expected:List[str], context:AppContext):
+    loader = S3FileLoader(context=context)
     keys = loader.list(f"s3://{TEST_BUCKET_NAME}/{source}")
 
     expected = [f"s3://{TEST_BUCKET_NAME}/{e}" for e in expected]
