@@ -22,8 +22,8 @@ phases:
       - export=PYTHONPATH=`pwd`:`pwd`/src:`pwd`/tests/features:${PYTHONPATH}
 
       # run unit tests
+      - PYTHONPATH=`pwd`:`pwd`/src:`pwd`/tests/features:${PYTHONPATH} python setup.py develop
       - pytest -v --junit-xml UnitTestReports.xml --cov=src --cov-report=xml ./src/
-      - python setup.py develop
       - cfn-docgen --version
 
       # build docker images for bdd tests
