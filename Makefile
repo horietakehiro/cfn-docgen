@@ -42,6 +42,20 @@ deploy-serverless:
         --stack-name cfn-docgen-serverless \
         --capabilities CAPABILITY_IAM
 
+deploy-cicd:
+	sam deploy \
+		--template-file deployments/cicd.yaml \
+		--stack-name cfn-docgen-cicd \
+		--capabilities CAPABILITY_IAM \
+		--no-fail-on-empty-changeset \
+		--parameter-overrides \
+			ParameterKey=ApiTokenParamName,ParameterValue=/pypi/api-token \
+			ParameterKey=GithubTokenParamName,ParameterValue=/GitHub/MyToken \
+			ParameterKey=DockerHubPasswordParamName,ParameterValue=/DockerHub/Password \
+			ParameterKey=ServerlessTestBucketName,ParameterValue=cfn-docgen-bdd-382098889955-ap-northeast-1 \
+			ParameterKey=GitHubConnectionArn,ParameterValue=arn:aws:codestar-connections:ap-northeast-1:382098889955:connection/6f899bca-b98f-4fe3-ab68-ce57f8d600e4
+
+
 build-docker-image: develop
 	docker build -t horietakehiro/cfn-docgen:`python -c "from cfn_docgen import VERSION; print(VERSION)"` ./ -f ./deployments/Dockerfile
 deploy-docker-image: build-docker-image

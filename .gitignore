@@ -28,3 +28,4 @@ layer
 packaged.yaml
 old
 data
+*.packaged

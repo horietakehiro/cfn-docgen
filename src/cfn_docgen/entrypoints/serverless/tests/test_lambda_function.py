@@ -1,3 +1,4 @@
+import logging
 import pytest
 import os
 import boto3
@@ -122,3 +123,47 @@ def test_serverless():
         ),
     )
     assert res["Body"].read() == expected
+
+
+
+def test_serverless_continue(caplog:pytest.LogCaptureFixture):
+    caplog.set_level(logging.WARNING)
+    try:
+        event = S3NotificationEvent(
+            Records=[
+                S3NotificationEventRecord(
+                    s3=S3NotificationEventRecordS3(
+                        bucket=S3NotificationEventRecordS3Bucket(
+                            name=TEST_BUCKET_NAME
+                        ),
+                        object=S3NotificationEventRecordS3Object(
+                            key=INPUT_KEY1.replace(f"s3://{TEST_BUCKET_NAME}/", "")
+                        )
+                    )
+                ),
+                S3NotificationEventRecord(
+                    s3=S3NotificationEventRecordS3(
+                        bucket=S3NotificationEventRecordS3Bucket(
+                            name=TEST_BUCKET_NAME
+                        ),
+                        object=S3NotificationEventRecordS3Object(
+                            key=INPUT_KEY2.replace(f"s3://{TEST_BUCKET_NAME}/", "")
+                        )
+                    )
+                )
+            ]
+        )
+        # replace partial file with invalid body
+        s3_client.put_object(Bucket=TEST_BUCKET_NAME, Key=INPUT_KEY1.replace(f"s3://{TEST_BUCKET_NAME}/", ""), Body=b"invalid")
+
+        result = lambda_function.lambda_handler(event=event.model_dump(), context=None)
+        assert len(result) == 1
+
+        warn_messages = [r.message for r in caplog.records if r.levelno == logging.WARNING]
+
+        assert "failed to generate document" in warn_messages[0]
+
+    finally:
+        with open(INPUT_MASTER_FILE, "rb") as fp:
+            s3_client.put_object(Bucket=TEST_BUCKET_NAME, Key=INPUT_KEY1.replace(f"s3://{TEST_BUCKET_NAME}/", ""), Body=fp.read())
+

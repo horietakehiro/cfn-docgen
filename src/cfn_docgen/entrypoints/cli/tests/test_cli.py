@@ -197,7 +197,7 @@ def test_cli_build_units_of_work_fail():
     runner = CliRunner()
     result = runner.invoke(main, args=args.as_list())
     assert result.exit_code == 1
-    assert "failed to invoke the command" in result.output
+    assert "[ERROR] failed to setup pairs of template sources and document dests" in result.output
 
 
 def test_cli_continue():
@@ -211,14 +211,14 @@ def test_cli_continue():
             format="markdown",
             source=INPUT_ROOT_DIR,
             dest=OUTPUT_ROOT_DIR,
+            debug=False,
         )
         runner = CliRunner()
         result = runner.invoke(main, args=args.as_list())
         assert result.exit_code == 0
-        assert f"[WARNING] failed to process source[{INPUT_FILE1}] and dest[{OUTPUT_MD_FILE1}]"
-    except Exception:
-        pytest.fail()
-        
+        assert f"[WARNING] failed to generate document [{OUTPUT_MD_FILE1}] from template [{INPUT_FILE1}]" in result.output
+        assert f"[INFO] successfully generate document [{OUTPUT_MD_FILE2}] from template [{INPUT_FILE2}]" in result.output
+
     finally:
         shutil.copy(INPUT_MASTER_FILE, INPUT_FILE1)
 

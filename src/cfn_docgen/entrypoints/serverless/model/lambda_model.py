@@ -40,37 +40,47 @@ class CfnDocgenServerlessUnitsOfWork:
             args=args,
             context=context,
         )
+        try:
+            assert len(self.units_of_work) > 0, "no valid template sources and document dests are proided"
+        except AssertionError as ex:
+            context.log_error(ex.args[0])
+            raise ex
 
     def build_units_of_work(
         self, 
         args:ServerlessArguement, 
         context:AppContext,
     ) -> List[CfnDocgenServiceCommandInput]:
-        units_of_work:List[CfnDocgenServiceCommandInput] = []
         
-        # source must be a single file
-        for source in args.sources:
-            bucket = source.bucket.name
-            key = source.object.key
+        units_of_work:List[CfnDocgenServiceCommandInput] = []
 
-            source_dir = os.path.dirname(key)
-            base_prefix, _ = os.path.splitext(os.path.basename(key))
-            dest_bucket = args.dest_bucket
-            dest_prefix = args.dest_prefix
-            if dest_prefix.endswith("/"):
-                dest_prefix = dest_prefix[:-1]
+        try:
+            # source must be a single file
+            for source in args.sources:
+                bucket = source.bucket.name
+                key = source.object.key
 
-            units_of_work.append(
-                CfnDocgenServiceCommandInput(
-                    template_source=CfnTemplateSource(f"s3://{bucket}/{key}"),
-                    document_dest=CfnDocumentDestination(
-                        f"s3://{dest_bucket}/{dest_prefix}/{source_dir}/{base_prefix}.{ext_by_format[args.format]}"
-                    ),
-                    fmt=args.format,
+                source_dir = os.path.dirname(key)
+                base_prefix, _ = os.path.splitext(os.path.basename(key))
+                dest_bucket = args.dest_bucket
+                dest_prefix = args.dest_prefix
+                if dest_prefix.endswith("/"):
+                    dest_prefix = dest_prefix[:-1]
+
+                units_of_work.append(
+                    CfnDocgenServiceCommandInput(
+                        template_source=CfnTemplateSource(f"s3://{bucket}/{key}", context=context),
+                        document_dest=CfnDocumentDestination(
+                            f"s3://{dest_bucket}/{dest_prefix}/{source_dir}/{base_prefix}.{ext_by_format[args.format]}",
+                            context=context,
+                        ),
+                        fmt=args.format,
+                    )
                 )
-            )
-        return units_of_work
-
+            return units_of_work
+        except Exception:
+            context.log_error("failed to prepare template sources and document dests")
+            return []
 
     def provide(self) -> List[CfnDocgenServiceCommandInput]:
         return self.units_of_work

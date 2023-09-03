@@ -2,6 +2,7 @@
 # pylint: disable=missing-function-docstring
 
 from behave import given, then, when
+from cfn_docgen.config import AppContext
 
 from tests.features.environment import PackageContext
 
@@ -11,6 +12,7 @@ def step_impl(context:PackageContext):
 
 @when("Invoke cfn-docgen from python code")
 def step_impl(context:PackageContext):
+    app_context = AppContext()
     from cfn_docgen import (
         CfnDocgenService, CfnDocgenServiceCommandInput,
         CfnTemplateSource, CfnDocumentDestination
@@ -18,8 +20,8 @@ def step_impl(context:PackageContext):
     service = CfnDocgenService.with_default()
     service.main(
         command_input=CfnDocgenServiceCommandInput(
-            template_source=CfnTemplateSource(context.source),
-            document_dest=CfnDocumentDestination(context.dest),
+            template_source=CfnTemplateSource(context.source, context=app_context),
+            document_dest=CfnDocumentDestination(context.dest, context=app_context),
             fmt=context.format,
         )
     )

@@ -19,14 +19,18 @@ class CliArguement:
     format: SupportedFormat
     source: str
     dest: str
+    debug: bool = False
 
     def as_list(self) -> List[str]:
-        return [
+        arg_list = [
             self.subcommand,
             "--format", self.format,
             "--source", self.source,
             "--dest", self.dest,
         ]
+        if self.debug:
+            arg_list.append("--debug")
+        return arg_list
     
 class CfnDocgenCLIUnitsOfWork:
     args:CliArguement

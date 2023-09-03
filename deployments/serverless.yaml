@@ -172,6 +172,7 @@ Outputs:
   SourceS3Bucket:
     Description: Source S3 bucket path that cfn templates should be stored in.
     Value: !Sub s3:/${SourceBucket}/templates
+
   DestS3Bucket:
     Description: Dest S3 bucket path that documents will be stored in.
     Value:
@@ -180,4 +181,3 @@ Outputs:
         - !Sub s3:/${SourceBucket}/${DestBucketKeyPrefix}
         - !Sub s3:/${DestBucketName}/${DestBucketKeyPrefix}
 
-  

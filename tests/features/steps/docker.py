@@ -25,7 +25,6 @@ def step_impl(context:DockerContext):
 
 @then("markdown document files are created and saved locally")
 def step_impl(context:DockerContext):
-    print()
     with open(context.expected[0], "r") as fp:
         output = fp.read()
     with open(context.master, "r") as fp:

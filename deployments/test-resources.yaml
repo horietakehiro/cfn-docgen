@@ -30,6 +30,9 @@ Resources:
 Outputs:
   TestBucketName:
     Value: !Ref TestBucket
+    Export:
+      Name: cfn-docgen-test-bucket-name
+      
   ArtifactBucketName:
     Value: !Ref ArtifactBucket
     Export:

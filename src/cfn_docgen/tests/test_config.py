@@ -22,32 +22,30 @@ def test_AppContext_logging(caplog:pytest.LogCaptureFixture):
     caplog.set_level(logging.DEBUG)
     context = AppContext(log_level=logging.DEBUG)
 
+    context.log_warning("warning")
     context.log_info("info")
     context.log_error("error")
-    context.log_warning("warning")
     context.log_debug("debug")
 
-    assert context.log_messages.info[0] == "info"
-    assert context.log_messages.error[0] == "error"
-    assert context.log_messages.warning[0] == "warning"
-    assert context.log_messages.debug[0] == "debug"
-    for msg, record in zip(["info", "error", "warning", "debug"], caplog.records):
+    assert context.log_messages.messages[0].message == "warning"
+    assert context.log_messages.messages[1].message == "info"
+    assert context.log_messages.messages[2].message == "error"
+    assert context.log_messages.messages[3].message == "debug"
+
+    for msg, record in zip(["warning", "info", "error", "debug"], caplog.records):
         assert "test_AppContext_logging" == record.funcName
         assert msg == record.message
 
 
 def test_AppContext_log_message():
-    context = AppContext()
+    context = AppContext(log_level=logging.INFO)
 
     context.log_info("info")
+    context.log_warning("warning")
     context.log_error("error")
     context.log_warning("warning")
     context.log_debug("debug")
-    context.log_debug("debug")
 
-    for level, msg in zip(
-        [logging.INFO, logging.WARNING, logging.ERROR],
-        ["info", "warning", "error"]
-    ):
-        assert context.log_messages.as_string(level) == f"[{msg.upper()}] {msg}"
-    assert context.log_messages.as_string(logging.DEBUG) == "[DEBUG] debug\n[DEBUG] debug"
+    log_string = context.log_messages.as_string(logging.INFO)
+    expected = "[INFO] info\n[WARNING] warning\n[ERROR] error\n[WARNING] warning"
+    assert log_string == expected

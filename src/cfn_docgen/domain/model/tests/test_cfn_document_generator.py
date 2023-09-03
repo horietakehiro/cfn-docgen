@@ -563,7 +563,6 @@ def test_MarkdownDocumentGenerator_dump_json(
     generator = CfnMarkdownDocumentGenerator(context=context)
 
     dumped = generator._dump_json(j) # type: ignore
-    print(dumped)
     assert dumped == expected
     
 
@@ -962,7 +961,6 @@ def test_MarkdownDocumentGenerator_flatten_properties(context:AppContext):
     properties = generator._flatten_properties_node(cfn_template_tree.resource_nodes["Instance"].properties_node) # type: ignore
     assert len(properties) == len(expected)
     for p, e in zip(properties, expected):
-        print(p)
         assert p.Property == e.Property
         assert p.Type == e.Type
         assert p.Value == e.Value
@@ -1044,7 +1042,6 @@ def test_MarkdownDocumentGenerator_outputs(
     cfn_template_tree.outputs_node = outputs_node
     generator = CfnMarkdownDocumentGenerator(context=context)
     outputs = generator.outputs(cfn_template_tree)
-    print(outputs)
     assert outputs == e_outputs
 
 @pytest.mark.parametrize("tree,e_template", [

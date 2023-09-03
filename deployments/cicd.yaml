@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS resources for CI/CD piepeline
+
+Metadata:
+  CfnDocgen:
+    Description: |
+      1. code pipeline will be triggered when source repository branch `release` changes
+      2. firstly, run all tests, and publish python package to pypi
+      3. next, build serverless application and docker image and publish them
+      4. finally, merge all changes on branch `release` with branch `master`
+
+Parameters:
+  AppName:
+    Description: App name
+    Type: String
+    Default: cfn-docgen
+  ApiTokenParamName:
+    Description: Paramter name of api token for uploading a package to pypi  
+    Type: String
+  GitHubConnectionArn:
+    Description: codestar connection arn for github
+    Type: String
+  DockerHubPasswordParamName:
+    Description: Paramter name of password for pushing image to DockerHub  
+    Type: String
+  GithubTokenParamName:
+    Description: Parameter name of github access token
+    Type: String
+  ServerlessTestBucketName:
+    Type: String
+
+
+Resources:
+
+  CodePiplineRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - codepipeline.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: Service Role for Codepipeline
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Path: /
+  BuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+
+  BuildProjectForTests:
+    Metadata:
+      CfnDocgen:
+        Properties:
+          Environment:
+            EnvironmentVariables:
+              - API_TOKEN must be set at Parameter store in advance.
+            Image: python3.10 is available only in standard:6.0
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Description: Run tests and upload package to pypi
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: DOCKERHUB_PASSWORD
+            Type: PARAMETER_STORE
+            Value: !Ref DockerHubPasswordParamName
+          - Name: GITHUB_TOKEN
+            Type: PARAMETER_STORE
+            Value: !Ref GithubTokenParamName
+          - Name: API_TOKEN
+            Type: PARAMETER_STORE
+            Value: !Ref ApiTokenParamName
+          - Name: TEST_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !ImportValue cfn-docgen-test-bucket-name
+          - Name: DEST_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !ImportValue cfn-docgen-test-bucket-name
+          - Name: DEST_BUCKET_PREFIX
+            Type: PLAINTEXT
+            Value: documents/
+          - Name: SERVERLESS_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Ref ServerlessTestBucketName
+          - Name: ARTIFACT_BUCKET
+            Type: PLAINTEXT
+            Value: !ImportValue cfn-docgen-artifact-bucket-name
+
+        Image: aws/codebuild/standard:6.0
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      Name: !Sub ${AppName}-buildproject-tests
+      ServiceRole: !Ref BuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: ./deployments/buildspec.yaml
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_CUSTOM_CACHE
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties: 
+      ArtifactStore: 
+        Type: S3
+        Location: !ImportValue cfn-docgen-artifact-bucket-name
+      Name: !Sub ${AppName}-pipeline
+      RestartExecutionOnUpdate: false
+      RoleArn:
+        Fn::GetAtt: [CodePiplineRole, Arn]
+      Stages: 
+        - Name: Source
+          Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: 1
+              Configuration:
+                BranchName: release
+                OutputArtifactFormat: CODE_ZIP
+                ConnectionArn: !Ref GitHubConnectionArn
+                FullRepositoryId: horietakehiro/cfn-docgen
+              Name: Source
+              Namespace: SourceVariables
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Region:
+                Ref: AWS::Region
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName:
+                  Ref: BuildProjectForTests
+              Name: Build
+              Namespace: BuildVariables
+              OutputArtifacts:
+                - Name: BuildArtifact
+              InputArtifacts:
+                - Name: SourceArtifact
+              Region:
+                Ref: AWS::Region
+              RunOrder: 1

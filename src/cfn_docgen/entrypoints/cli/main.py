@@ -56,8 +56,8 @@ def docgen(fmt:SupportedFormat, source:str, dest:str, debug:bool):
             context=context,
         )
     except AssertionError:
-        context.log_error("failed to invoke the command")
-        click.echo(context.log_messages.as_string(logging.ERROR))
+        context.log_error("failed to setup pairs of template sources and document dests")
+        click.echo(context.log_messages.as_string(logging.INFO))
         sys.exit(1)
 
     try:
@@ -76,12 +76,19 @@ def docgen(fmt:SupportedFormat, source:str, dest:str, debug:bool):
         )
         
     except Exception:
-        context.log_error("failed to invoke the command")
-        click.echo(context.log_messages.as_string(logging.ERROR))
+        context.log_error("failed to setup CfnDocgenService")
+        click.echo(context.log_messages.as_string(logging.INFO))
         sys.exit(1)
 
     for command_input in units_of_work.provide():
-        result = service.main(command_input=command_input)
-        click.echo(result.document_dest)
+        try:
+            context.log_debug(f"start cfn-docgen process for template source [{command_input.template_source.source}] and document dest [{command_input.document_dest.dest}]")
+            result = service.main(command_input=command_input)
+            context.log_info(f"successfully generate document [{result.document_dest}] from template [{command_input.template_source.source}]")
+        except Exception:
+            context.log_warning(f"failed to generate document [{command_input.document_dest.dest}] from template [{command_input.template_source.source}]")
+            continue
 
 
+    click.echo(context.log_messages.as_string(logging.INFO))
+    sys.exit(0)

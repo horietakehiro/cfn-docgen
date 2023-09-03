@@ -1,9 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import datetime
 from logging import Logger
 import logging
 import os
-from typing import List, Optional
+from typing import Iterable, List, Optional
 import uuid
 
 class AppConfig:
@@ -18,36 +19,32 @@ class AppConfig:
         "AWS::WAFv2::RuleGroup",
         "AWS::AmplifyUIBuilder::Component",
         "AWS::IoTTwinMaker::ComponentType",
-        
     ]
 
 @dataclass
+class AppContextLogMessage:
+    level: int
+    message: str
+    timestamp: float
+@dataclass
 class AppContextLogMessages:
-    info: List[str]
-    warning: List[str]
-    error: List[str]
-    debug: List[str]
+    messages: List[AppContextLogMessage]
 
-    def as_string(self, level:int, delimiter:str="\n") -> str:
-        prefix = ""
-        messages:List[str] = []
-        match level:
-            case logging.INFO:
-                prefix = "INFO"
-                messages = self.info
-            case logging.WARNING:
-                prefix = "WARNING"
-                messages = self.warning
-            case logging.ERROR:
-                prefix = "ERROR"
-                messages = self.error
-            case logging.DEBUG:
-                prefix = "DEBUG"
-                messages = self.debug
-            case _:
-                return ""
-            
-        return delimiter.join([f"[{prefix}] {message}" for message in messages])
+    def as_string(self, level:int, delimeter:str="\n") -> str:
+        prefixes = {
+            logging.INFO: "[INFO]",
+            logging.WARNING: "[WARNING]",
+            logging.ERROR: "[ERROR]",
+            logging.DEBUG: "[DEBUG]",
+        }
+        return_messages:Iterable[str] = map(
+            lambda m: f"{prefixes[m.level]} {m.message}",
+            filter(
+                lambda m: m.level >= level, 
+                sorted(self.messages, key=lambda m: m.timestamp),
+            )
+        )
+        return delimeter.join(return_messages)
 
 class AppContext:
 
@@ -56,23 +53,37 @@ class AppContext:
         request_id:Optional[str]=None,
         logger_name:str="cfn-docgen", 
         log_level:int=logging.CRITICAL, 
-    ) -> None:
+    ) -> None:        
         self.request_id = str(uuid.uuid4()) if request_id is None else request_id
         self.__logger = AppLogger(name=logger_name, loglevel=log_level, stacklevel=3)
-        self.log_messages = AppContextLogMessages(
-            info=[], warning=[], error=[], debug=[],
-        )
+        self.log_messages = AppContextLogMessages(messages=[])
+
     def log_info(self, msg:str, ):
-        self.log_messages.info.append(msg)
+        now = datetime.datetime.now().timestamp()
+        self.log_messages.messages.append(AppContextLogMessage(
+            level=logging.INFO, message=msg, timestamp=now,
+        ))
         self.__logger.info(msg)
+
     def log_warning(self, msg:str):
-        self.log_messages.warning.append(msg)
+        now = datetime.datetime.now().timestamp()
+        self.log_messages.messages.append(AppContextLogMessage(
+            level=logging.WARNING, message=msg, timestamp=now,
+        ))
         self.__logger.warning(msg)
+
     def log_error(self, msg:str):
-        self.log_messages.error.append(msg)
+        now = datetime.datetime.now().timestamp()
+        self.log_messages.messages.append(AppContextLogMessage(
+            level=logging.ERROR, message=msg, timestamp=now,
+        ))
         self.__logger.error(msg)
+
     def log_debug(self, msg:str):
-        self.log_messages.debug.append(msg)
+        now = datetime.datetime.now().timestamp()
+        self.log_messages.messages.append(AppContextLogMessage(
+            level=logging.DEBUG, message=msg, timestamp=now,
+        ))
         self.__logger.debug(msg)
 
 class AppLogger:
@@ -80,7 +91,7 @@ class AppLogger:
     def __init__(self, name:str, loglevel:int, stacklevel:int) -> None:
         logger = logging.getLogger(name)
         handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(module)s - %(funcName)s - %(lineno)d - %(levelname)s - %(message)s")
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(lineno)d - %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(loglevel)
@@ -91,7 +102,7 @@ class AppLogger:
     def info(self, msg:str, ):
         self.__logger.info(msg, stacklevel=self.__stacklevel)
     def warning(self, msg:str):
-        self.__logger.warning(msg, stacklevel=self.__stacklevel)
+        self.__logger.warning(msg, stacklevel=self.__stacklevel, exc_info=True)
     def error(self, msg:str):
         self.__logger.error(msg, stacklevel=self.__stacklevel, exc_info=True)
     def debug(self, msg:str):

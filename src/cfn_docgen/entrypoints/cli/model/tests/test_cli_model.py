@@ -411,7 +411,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_invalid_pattern(
         )
     
     error_msg = f"invalid arguement pattern: source {args.source} is a directory, while dest {args.dest} is a single file"
-    assert context.log_messages.error[0] == error_msg
+    assert error_msg in context.log_messages.as_string(logging.ERROR)
     assert caplog.records[0].message == error_msg
 
 
@@ -445,7 +445,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_not_exist_source(
         )
     
     error_msg =  f"failed to list template sources at [{args.source}]"
-    assert context.log_messages.error[0] == error_msg
+    assert error_msg in context.log_messages.as_string(logging.ERROR)
     assert caplog.records[0].message == error_msg and caplog.records[0].funcName == "build_units_of_work"
 
 

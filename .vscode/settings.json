@@ -15,6 +15,7 @@
     "python.analysis.stubPath": "${workspaceFolder}/tests/typings",
     "pylint.path": ["${workspaceFolder}/.venv/bin/pylint"],
     "pylint.args": [
-        "--load-plugins=pylint_behave"
+        "--load-plugins=pylint_behave",
+        "--disable=W0718,C0116"
     ],
 }
