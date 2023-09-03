@@ -65,3 +65,6 @@ deploy-test-resources:
 	sam deploy \
 		--template-file ./deployments/test-resources.yaml \
 		--stack-name cfn-docgen-test-resources
+
+deploy-local-build:
+	./codebuild_build.sh -c -i  -b deployments/buildspec.yaml -s ./ -a ./artifacts -e .env
