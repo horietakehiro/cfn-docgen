@@ -32,6 +32,7 @@ phases:
       - docker build -t horietakehiro/cfn-docgen:${VERSION} -f ./deployments/Dockerfile ./
 
       # deploy serverless application for bdd tests
+      - sam --version
       - sam package
           --template-file deployments/serverless.yaml
           --output-template-file deployments/serverless.yaml.packaged

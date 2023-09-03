@@ -244,7 +244,8 @@ fixture_registry = { # type: ignore
     ),
     "fixture.docker.markdown.local_single_file_local_single_dest": (
         docker_fixture, 
-        ["markdown", "/tmp/sample-template.yaml", "/out/sample-template.md", ["/tmp/sample-template.md"], EXPECTED_MASTER_FILE],
+        ["markdown", INPUT_KEY1, OUTPUT_MD_KEY1, [OUTPUT_MD_KEY1], EXPECTED_MASTER_FILE],
+        # ["markdown", "/tmp/sample-template.yaml", "/out/sample-template.md", ["/tmp/cfn-docgen-test/sample-template.md"], EXPECTED_MASTER_FILE],
         {},
     ),
 

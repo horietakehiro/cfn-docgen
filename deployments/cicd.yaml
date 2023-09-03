@@ -104,6 +104,9 @@ Resources:
           - Name: ARTIFACT_BUCKET_NAME
             Type: PLAINTEXT
             Value: !ImportValue cfn-docgen-artifact-bucket-name
+          - Name: SKIP_LONG_TEST
+            Type: PLAINTEXT
+            Value: 0
 
         Image: aws/codebuild/standard:6.0
         ImagePullCredentialsType: CODEBUILD

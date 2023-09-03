@@ -35,7 +35,7 @@ def step_impl(context:ServerlessContext):
 
 @then("markdown document files are created and uploaded to S3 bucket")
 def step_impl(context:ServerlessContext):
-    retry_count = 5
+    retry_count = 10
     current = 0
     s3 = boto3.client("s3") # type: ignore
     while current <= retry_count:
