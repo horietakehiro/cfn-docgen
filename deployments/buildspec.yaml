@@ -37,12 +37,12 @@ phases:
           --s3-bucket ${ARTIFACT_BUCKET}
           --s3-prefix serverless
       - sam deploy
-      		--template-file deployments/serverless.yaml.packaged
+          --template-file deployments/serverless.yaml.packaged
           --stack-name cfn-docgen-serverless-bdd
           --capabilities CAPABILITY_IAM
-      		--no-fail-on-empty-changeset
-      		--parameter-overrides ParameterKey=SourceBucketNamePrefix,ParameterValue=cfn-docgen-bdd
-	
+          --no-fail-on-empty-changeset
+          --parameter-overrides ParameterKey=SourceBucketNamePrefix,ParameterValue=cfn-docgen-bdd
+  
       # run bdd tests
       - behave tests/features/
 
