@@ -18,6 +18,7 @@ tests/cache
 .coverage
 *.xml
 .env
+.*.env
 tests/resources
 !sample/sample-template*
 # .vscode
