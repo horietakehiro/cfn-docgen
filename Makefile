@@ -67,4 +67,9 @@ deploy-test-resources:
 		--stack-name cfn-docgen-test-resources
 
 deploy-local-build:
-	./deployments/codebuild_build.sh -c -i aws/codebuild/standard:6.0 -b deployments/buildspec.yaml -s ./ -a ./../artifacts -e .codebuild_local.env
+	./deployments/codebuild_build.sh \
+		-i aws/codebuild/standard:6.0 \
+		-b deployments/buildspec.yaml \
+		-s ./ -a ./artifacts \
+		-e .codebuild_local.env \
+		-c 

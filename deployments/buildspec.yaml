@@ -35,7 +35,7 @@ phases:
       - sam package
           --template-file deployments/serverless.yaml
           --output-template-file deployments/serverless.yaml.packaged
-          --s3-bucket ${ARTIFACT_BUCKET}
+          --s3-bucket ${ARTIFACT_BUCKET_NAME}
           --s3-prefix serverless
       - sam deploy
           --template-file deployments/serverless.yaml.packaged

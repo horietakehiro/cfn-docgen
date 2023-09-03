@@ -101,7 +101,7 @@ Resources:
           - Name: SERVERLESS_BUCKET_NAME
             Type: PLAINTEXT
             Value: !Ref ServerlessTestBucketName
-          - Name: ARTIFACT_BUCKET
+          - Name: ARTIFACT_BUCKET_NAME
             Type: PLAINTEXT
             Value: !ImportValue cfn-docgen-artifact-bucket-name
 
