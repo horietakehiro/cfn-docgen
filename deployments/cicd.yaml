@@ -124,7 +124,7 @@ Resources:
         ReportBuildStatus: true
         # SourceIdentifier: 
         Type: GITHUB
-      SourceVersion:  release
+      SourceVersion:  refs/heads/release
       Cache:
         Type: LOCAL
         Modes:
