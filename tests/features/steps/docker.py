@@ -7,11 +7,11 @@ import boto3
 from behave import given, then, when
 
 from tests.features.environment import DockerContext
-from cfn_docgen import VERSION
+from cfn_docgen import __version__
 
 @given("cfn-docgen docker image is installed locally")
 def step_impl(context:DockerContext):
-    context.docker_client.images.get(f"horietakehiro/cfn-docgen:{VERSION}") # type: ignore
+    context.docker_client.images.get(f"horietakehiro/cfn-docgen:{__version__}") # type: ignore
 
 @when("Invoke cfn-docgen as docker container")
 def step_impl(context:DockerContext):
@@ -21,7 +21,7 @@ def step_impl(context:DockerContext):
         "AWS_SESSION_TOKEN": os.environ.get("AWS_SESSION_TOKEN", None)
     }
     context.docker_client.containers.run( # type: ignore
-        f"horietakehiro/cfn-docgen:{VERSION}",
+        f"horietakehiro/cfn-docgen:{__version__}",
         command=f"docgen -f markdown -s {context.source} -d {context.dest} --debug",
         remove=True,
         volumes={

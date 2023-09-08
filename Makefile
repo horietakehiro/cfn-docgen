@@ -57,9 +57,9 @@ deploy-cicd:
 
 
 build-docker-image: develop
-	docker build -t horietakehiro/cfn-docgen:`python -c "from cfn_docgen import VERSION; print(VERSION)"` ./ -f ./deployments/Dockerfile
+	docker build -t horietakehiro/cfn-docgen:`python -c "from cfn_docgen import __version__; print(__version__)"` ./ -f ./deployments/Dockerfile
 deploy-docker-image: build-docker-image
-	docker push horietakehiro/cfn-docgen:`python -c "from cfn_docgen import VERSION; print(VERSION)"`
+	docker push horietakehiro/cfn-docgen:`python -c "from cfn_docgen import __version__; print(__version__)"`
 
 deploy-test-resources:
 	sam deploy \

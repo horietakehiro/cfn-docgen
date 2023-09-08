@@ -1,6 +1,6 @@
 import os
 from setuptools import find_packages, setup
-from cfn_docgen import VERSION
+from cfn_docgen import __version__
 with open(os.path.join(
     os.path.dirname(__file__), "README.md"), "r", encoding="utf-8",
 ) as fp:
@@ -12,7 +12,7 @@ with open(os.path.join(
 
 setup(
     name = 'cfn-docgen',
-    version = VERSION,
+    version = __version__,
     author = 'Takehiro Horie',
     author_email = 'horie.takehiro@outlook.jp',
     license = 'MIT License',

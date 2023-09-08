@@ -7,14 +7,13 @@ from urllib.parse import urlparse
 from behave import given, then, when
 import boto3  # pylint: disable=no-name-in-module
 
-from cfn_docgen import VERSION
-# VERSION="1"
+from cfn_docgen import __version__
 from tests.features.environment import CommandLineToolContext
 
 @given("cfn-docgen command line tool is locally installed")
 def step_impl(context:CommandLineToolContext):
     installed_version = subprocess.check_output(["cfn-docgen", "--version"], ).decode()
-    assert f"version {VERSION}" in installed_version, f"Source code version is {VERSION} but installed version is {installed_version}"
+    assert f"version {__version__}" in installed_version, f"Source code version is {__version__} but installed version is {installed_version}"
 
 @given("CloudFormation template files are locally saved")
 def step_impl(context:CommandLineToolContext):
