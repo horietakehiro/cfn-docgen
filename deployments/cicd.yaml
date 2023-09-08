@@ -76,7 +76,7 @@ Resources:
               - 'sts:AssumeRole'
       Description: Service Role for Codepipeline
       ManagedPolicyArns: 
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AdministratorAccess
       Path: /
 
 
