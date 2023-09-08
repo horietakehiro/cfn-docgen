@@ -11,12 +11,12 @@ phases:
   pre_build:
     commands:
       - python -m venv .venv
-      # - source .venv/bin/activate && pip install -r ./requirements.txt -r ./requirements-dev.txt
+      - source .venv/bin/activate && pip install -r ./requirements.txt -r ./requirements-dev.txt
 
-      # - mkdir -p layer/python
-      # - source .venv/bin/activate && pip install --target ./layer/python -r ./requirements.txt
+      - mkdir -p layer/python
+      - source .venv/bin/activate && pip install --target ./layer/python -r ./requirements.txt
 
-      # - docker login -u horietakehiro -p ${DOCKERHUB_PASSWORD}
+      - docker login -u horietakehiro -p ${DOCKERHUB_PASSWORD}
 
   build:
     on-failure: ABORT
@@ -24,59 +24,59 @@ phases:
       - export PYTHONPATH=`pwd`:`pwd`/src:`pwd`/tests/features:${PYTHONPATH}
       - export PATH=/root/.pyenv/versions/3.10.12/bin:${PATH}
 
-      # - source .venv/bin/activate && python setup.py develop
-      # - source .venv/bin/activate && whereis  cfn-docgen
-      # - source .venv/bin/activate && cfn-docgen --version
-      # # run unit tests
-      # - source .venv/bin/activate && pytest -v --junit-xml UnitTestReports.xml --cov=src --cov-report=xml ./src/
+      - source .venv/bin/activate && python setup.py develop
+      - source .venv/bin/activate && whereis  cfn-docgen
+      - source .venv/bin/activate && cfn-docgen --version
+      # run unit tests
+      - source .venv/bin/activate && pytest -v --junit-xml UnitTestReports.xml --cov=src --cov-report=xml ./src/
 
-      # # build docker images for bdd tests
-      # - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`
-      # - docker build -t horietakehiro/cfn-docgen:${VERSION} -f ./deployments/Dockerfile ./
+      # build docker images for bdd tests
+      - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`
+      - docker build -t horietakehiro/cfn-docgen:${VERSION} -f ./deployments/Dockerfile ./
 
-      # # deploy serverless application for bdd tests
-      # - sam --version
-      # - sam package
-      #     --template-file deployments/serverless.yaml
-      #     --output-template-file deployments/serverless.yaml.packaged
-      #     --s3-bucket ${ARTIFACT_BUCKET_NAME}
-      #     --s3-prefix serverless
-      # - sam deploy
-      #     --template-file deployments/serverless.yaml.packaged
-      #     --stack-name cfn-docgen-serverless-bdd
-      #     --capabilities CAPABILITY_IAM
-      #     --no-fail-on-empty-changeset
-      #     --parameter-overrides ParameterKey=SourceBucketNamePrefix,ParameterValue=cfn-docgen-bdd
+      # deploy serverless application for bdd tests
+      - sam --version
+      - sam package
+          --template-file deployments/serverless.yaml
+          --output-template-file deployments/serverless.yaml.packaged
+          --s3-bucket ${ARTIFACT_BUCKET_NAME}
+          --s3-prefix serverless
+      - sam deploy
+          --template-file deployments/serverless.yaml.packaged
+          --stack-name cfn-docgen-serverless-bdd
+          --capabilities CAPABILITY_IAM
+          --no-fail-on-empty-changeset
+          --parameter-overrides ParameterKey=SourceBucketNamePrefix,ParameterValue=cfn-docgen-bdd
   
-      # # run bdd tests
-      # # these aws credentials are used inside behave tests
-      # - TEMP_ROLE=$(aws sts assume-role --role-arn ${DOCKER_CONTAINER_ROLE_ARN} --role-session-name docker-container-session)
-      # - export TEMP_ROLE
-      # - export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
-      # - export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')
-      # - export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.SessionToken')
-      # - source .venv/bin/activate && behave tests/features/
+      # run bdd tests
+      # these aws credentials are used inside behave tests
+      - TEMP_ROLE=$(aws sts assume-role --role-arn ${DOCKER_CONTAINER_ROLE_ARN} --role-session-name docker-container-session)
+      - export TEMP_ROLE
+      - export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.SessionToken')
+      - source .venv/bin/activate && behave tests/features/
 
 
   post_build:
     on-failure: ABORT
     commands:      
-      # # publish python package
-      # - source .venv/bin/activate && python setup.py sdist bdist_wheel
-      # - source .venv/bin/activate && twine upload --repository pypi --username __token__ --password ${API_TOKEN} dist/*
+      # publish python package
+      - source .venv/bin/activate && python setup.py sdist bdist_wheel
+      - source .venv/bin/activate && twine upload --repository pypi --username __token__ --password ${API_TOKEN} dist/*
 
-      # # push docker image
-      # - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`
-      # - docker push horietakehiro/cfn-docgen:${VERSION}
+      # push docker image
+      - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`
+      - docker push horietakehiro/cfn-docgen:${VERSION}
 
-      # # publish serverless application
-      # - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`
-      # - sed -i -e "s/__VERSION__/${VERSION}/g" deployments/serverless.yaml.packaged
-      # - sam publish -t deployments/serverless.yaml.packaged  --region ${AWS_REGION}
-      # - AWS_ACCOUNT_ID=`aws sts get-caller-identity  | jq -r .Account`
-      # - aws serverlessrepo  put-application-policy
-      #     --application-id arn:aws:serverlessrepo:${AWS_REGION}:${AWS_ACCOUNT_ID}:applications/cfn-docgen-serverless 
-      #     --statements  Principals=*,Actions=Deploy
+      # publish serverless application
+      - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`
+      - sed -i -e "s/__VERSION__/${VERSION}/g" deployments/serverless.yaml.packaged
+      - sam publish -t deployments/serverless.yaml.packaged  --region ${AWS_REGION}
+      - AWS_ACCOUNT_ID=`aws sts get-caller-identity  | jq -r .Account`
+      - aws serverlessrepo  put-application-policy
+          --application-id arn:aws:serverlessrepo:${AWS_REGION}:${AWS_ACCOUNT_ID}:applications/cfn-docgen-serverless 
+          --statements  Principals=*,Actions=Deploy
 
       # merge all changes to master branch
       - git config --global user.email "horie.takehiro@outlook.jp"
@@ -84,8 +84,6 @@ phases:
       - git checkout master
       - git status
       - git merge -X theirs --allow-unrelated-histories release
-      # - git merge --no-ff --allow-unrelated-histories  release
-      # - git rebase --continue release
       - git push https://${GITHUB_TOKEN}@github.com/horietakehiro/cfn-docgen.git master
 
 
