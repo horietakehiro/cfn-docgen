@@ -83,7 +83,7 @@ phases:
       - git config --global user.name "horie.takehiro"
       - git checkout master
       - git status
-      - git merge -X ours  release
+      - git merge -X theirs  release
       # - git merge --no-ff --allow-unrelated-histories  release
       # - git rebase --continue release
       - git push https://${GITHUB_TOKEN}@github.com/horietakehiro/cfn-docgen.git master
