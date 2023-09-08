@@ -33,7 +33,9 @@ $ cfn-docgen docgen \
 [INFO] successfully generate document [./docs/sample-template.md] from template [docs/sample-template.yaml]
 ```
 
-The left cfn template file is source
+The left image is a source cfn template file and the right image is a generated document markdown.
+
+For full example, see [docs folder](./docs/)
 
 ![template-source-and-document-dest](./docs/images/source-template-and-dest-document.png)
 
