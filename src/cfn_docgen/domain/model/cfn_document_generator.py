@@ -354,7 +354,6 @@ class CfnMarkdownDocumentGenerator(ICfnDocumentGenerator):
     def _dump_json(self, j:Any) -> str:
         if not isinstance(j, dict) and not isinstance(j, list):
             if isinstance(j, bool):
-                self.context.log_error(str(j).lower())
                 return str(j).lower()
             # in pydantic v1, bool value will be trated as string
             if isinstance(j, str) and (j == "True" or j == "False"):
