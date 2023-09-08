@@ -23,8 +23,6 @@
 
 ## Example
 
-Given that you created some cfn template yaml file like below.
-
-```Yaml
-
-```
+Given that you created some cfn template yaml file like [this](./docs/sample-template.yaml).
+When you use cfn-docgen.
+Then, you can generate markdown document like [this](./docs/sample-template.md) 
