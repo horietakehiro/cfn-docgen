@@ -82,8 +82,10 @@ phases:
       - git config --global user.email "horie.takehiro@outlook.jp"
       - git config --global user.name "horie.takehiro"
       - git checkout master
+      - git status
+      - git merge -X theirs --allow-unrelated-histories release
       # - git merge --no-ff --allow-unrelated-histories  release
-      - git rebase --continue release
+      # - git rebase --continue release
       - git push https://${GITHUB_TOKEN}@github.com/horietakehiro/cfn-docgen.git master
 
 
