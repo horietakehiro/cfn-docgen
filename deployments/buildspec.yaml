@@ -49,6 +49,12 @@ phases:
           --parameter-overrides ParameterKey=SourceBucketNamePrefix,ParameterValue=cfn-docgen-bdd
   
       # run bdd tests
+      # these aws credentials are used inside behave tests
+      - TEMP_ROLE=$(aws sts assume-role --role-arn DOCKER_CONTAINER_ROLE_ARN --role-session-name docker-container-session)
+      - export TEMP_ROLE
+      - export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.SessionToken')
       - source .venv/bin/activate && behave tests/features/
 
 

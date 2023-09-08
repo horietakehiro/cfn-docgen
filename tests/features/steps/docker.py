@@ -15,15 +15,19 @@ def step_impl(context:DockerContext):
 
 @when("Invoke cfn-docgen as docker container")
 def step_impl(context:DockerContext):
+    env_vars = {
+        "AWS_ACCESS_KEY_ID": os.environ.get("AWS_ACCESS_KEY_ID", None),
+        "AWS_SECRET_ACCESS_KEY": os.environ.get("AWS_SECRET_ACCESS_KEY", None),
+        "AWS_SESSION_TOKEN": os.environ.get("AWS_SESSION_TOKEN", None)
+    }
     context.docker_client.containers.run( # type: ignore
         f"horietakehiro/cfn-docgen:{VERSION}",
         command=f"docgen -f markdown -s {context.source} -d {context.dest} --debug",
         remove=True,
         volumes={
             os.path.join(os.path.expanduser("~"), ".aws") : {"bind": "/root/.aws", "mode": "ro"}
-            # os.path.join(os.path.dirname(__file__), "..", "..", "..", "docs") : {"bind": "/tmp/", "mode": "rw"},
-            # "/tmp/cfn-docgen-test/" : {"bind": "/out/", "mode": "rw"},
-        }
+        },
+        environment=env_vars if all(list(env_vars.values())) else {}
     )
 
 

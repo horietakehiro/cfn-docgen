@@ -32,22 +32,6 @@ Parameters:
 
 Resources:
 
-  CodePiplineRole:
-    Type: AWS::IAM::Role
-    Properties: 
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-              - codepipeline.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Description: Service Role for Codepipeline
-      ManagedPolicyArns: 
-        - arn:aws:iam::aws:policy/AdministratorAccess
-      Path: /
   BuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -63,6 +47,23 @@ Resources:
                 - codebuild.amazonaws.com
             Action:
               - 'sts:AssumeRole'
+
+  DockerContainerRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt BuildRole.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: Service Role for Codepipeline
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Path: /
+
 
   BuildProject:
     Metadata:
@@ -108,6 +109,9 @@ Resources:
           - Name: SKIP_LONG_TEST
             Type: PLAINTEXT
             Value: 0
+          - Name: DOCKER_CONTAINER_ROLE_ARN
+            Type: PLAINTEXT
+            Value: !GetAtt DockerContainerRole.Arn
 
         Image: aws/codebuild/standard:6.0
         ImagePullCredentialsType: CODEBUILD
