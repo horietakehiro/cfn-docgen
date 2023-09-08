@@ -83,7 +83,8 @@ phases:
       - git config --global user.name "horie.takehiro"
       - git fetch origin
       - git checkout master
-      - git merge --no-ff --allow-unrelated-histories  release
+      # - git merge --no-ff --allow-unrelated-histories  release
+      - git rebase  release
       - git push https://${GITHUB_TOKEN}@github.com/horietakehiro/cfn-docgen.git master
 
 
