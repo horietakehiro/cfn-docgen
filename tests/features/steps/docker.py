@@ -17,7 +17,7 @@ def step_impl(context:DockerContext):
 def step_impl(context:DockerContext):
     context.docker_client.containers.run( # type: ignore
         f"horietakehiro/cfn-docgen:{VERSION}",
-        command=f"docgen -f markdown -s {context.source} -d {context.dest}",
+        command=f"docgen -f markdown -s {context.source} -d {context.dest} --debug",
         remove=True,
         volumes={
             os.path.join(os.path.expanduser("~"), ".aws") : {"bind": "/root/.aws", "mode": "ro"}
