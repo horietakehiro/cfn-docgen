@@ -29,8 +29,23 @@ Parameters:
   ServerlessTestBucketName:
     Type: String
 
+  SkipLongTest:
+    Type: String
+    Default: "1"
+    AllowedValues:
+      - "1"
+      - "0"
 
 Resources:
+
+  SkipLongTextParam:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      DataType: text
+      Name: !Sub /${AppName}/CICD/SKIP_LONG_TEST
+      Type: String
+      Value: !Ref SkipLongTest
+
 
   BuildRole:
     Type: AWS::IAM::Role
@@ -107,8 +122,8 @@ Resources:
             Type: PLAINTEXT
             Value: !ImportValue cfn-docgen-artifact-bucket-name
           - Name: SKIP_LONG_TEST
-            Type: PLAINTEXT
-            Value: 0
+            Type: PARAMETER_STORE
+            Value: !Ref SkipLongTextParam
           - Name: DOCKER_CONTAINER_ROLE_ARN
             Type: PLAINTEXT
             Value: !GetAtt DockerContainerRole.Arn
