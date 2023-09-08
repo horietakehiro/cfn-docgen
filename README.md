@@ -23,6 +23,17 @@
 
 ## Example
 
-Given that you created some cfn template yaml file like [this](./docs/sample-template.yaml).
-When you use cfn-docgen.
-Then, you can generate markdown document like [this](./docs/sample-template.md) 
+Given that you created some cfn template yaml file. When you use cfn-docgen cli. Then, you can generate markdown document. 
+
+```Bash
+$ cfn-docgen docgen \
+    --format markdown \
+    --source docs/sample-template.yaml \
+    --dest ./docs/
+[INFO] successfully generate document [./docs/sample-template.md] from template [docs/sample-template.yaml]
+```
+
+The left cfn template file is source
+
+![template-source-and-document-dest](./docs/images/source-template-and-dest-document.png)
+
