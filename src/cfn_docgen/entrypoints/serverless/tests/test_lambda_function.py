@@ -104,7 +104,7 @@ def test_serverless():
             )
         ]
     )
-    result = lambda_function.lambda_handler(event=event.dict(), context=None)
+    result = lambda_function.lambda_handler(event=event.model_dump(), context=None)
     assert len(result) == 2
 
     with open(EXPECTED_MASTER_FILE, "rb") as fp:
@@ -156,7 +156,7 @@ def test_serverless_continue(caplog:pytest.LogCaptureFixture):
         # replace partial file with invalid body
         s3_client.put_object(Bucket=TEST_BUCKET_NAME, Key=INPUT_KEY1.replace(f"s3://{TEST_BUCKET_NAME}/", ""), Body=b"invalid")
 
-        result = lambda_function.lambda_handler(event=event.dict(), context=None)
+        result = lambda_function.lambda_handler(event=event.model_dump(), context=None)
         assert len(result) == 1
 
         warn_messages = [r.message for r in caplog.records if r.levelno == logging.WARNING]

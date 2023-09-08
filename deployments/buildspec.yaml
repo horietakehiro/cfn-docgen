@@ -8,6 +8,8 @@ phases:
 
   pre_build:
     commands:
+      - python -m venv .venv
+      - source .venv/bin/activate
       - pip install -r ./requirements.txt --upgrade
       - pip install -r ./requirements-dev.txt --upgrade
 
@@ -19,12 +21,14 @@ phases:
   build:
     on-failure: ABORT
     commands:
+      - source .venv/bin/activate
       - export PYTHONPATH=`pwd`:`pwd`/src:`pwd`/tests/features:${PYTHONPATH}
       - export PATH=/root/.pyenv/versions/3.10.12/bin:${PATH}
 
-      # run unit tests
       - python setup.py develop
+      - whereis  cfn-docgen
       - cfn-docgen --version
+      # run unit tests
       - pytest -v --junit-xml UnitTestReports.xml --cov=src --cov-report=xml ./src/
 
       # build docker images for bdd tests
@@ -52,6 +56,8 @@ phases:
   post_build:
     on-failure: ABORT
     commands:
+      - source .venv/bin/activate
+      
       # publish python package
       - python setup.py sdist bdist_wheel
       - twine upload --repository pypi --username __token__ --password ${API_TOKEN} dist/*
