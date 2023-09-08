@@ -17,9 +17,6 @@ Parameters:
   ApiTokenParamName:
     Description: Paramter name of api token for uploading a package to pypi  
     Type: String
-  GitHubConnectionArn:
-    Description: codestar connection arn for github
-    Type: String
   DockerHubPasswordParamName:
     Description: Paramter name of password for pushing image to DockerHub  
     Type: String
@@ -156,53 +153,3 @@ Resources:
               Pattern: PUSH
             - Type: HEAD_REF
               Pattern: ^refs/heads/release
-
-  # Pipeline:
-  #   Type: AWS::CodePipeline::Pipeline
-  #   Properties: 
-  #     ArtifactStore: 
-  #       Type: S3
-  #       Location: !ImportValue cfn-docgen-artifact-bucket-name
-  #     Name: !Sub ${AppName}-pipeline
-  #     RestartExecutionOnUpdate: false
-  #     RoleArn:
-  #       Fn::GetAtt: [CodePiplineRole, Arn]
-  #     Stages: 
-  #       - Name: Source
-  #         Actions:
-  #           - ActionTypeId:
-  #               Category: Source
-  #               Owner: AWS
-  #               Provider: CodeStarSourceConnection
-  #               Version: 1
-  #             Configuration:
-  #               BranchName: release
-  #               OutputArtifactFormat: CODE_ZIP
-  #               ConnectionArn: !Ref GitHubConnectionArn
-  #               FullRepositoryId: horietakehiro/cfn-docgen
-  #             Name: Source
-  #             Namespace: SourceVariables
-  #             OutputArtifacts:
-  #               - Name: SourceArtifact
-  #             Region:
-  #               Ref: AWS::Region
-  #             RunOrder: 1
-  #       - Name: Build
-  #         Actions:
-  #           - ActionTypeId:
-  #               Category: Build
-  #               Owner: AWS
-  #               Provider: CodeBuild
-  #               Version: 1
-  #             Configuration:
-  #               ProjectName:
-  #                 Ref: BuildProjectForTests
-  #             Name: Build
-  #             Namespace: BuildVariables
-  #             OutputArtifacts:
-  #               - Name: BuildArtifact
-  #             InputArtifacts:
-  #               - Name: SourceArtifact
-  #             Region:
-  #               Ref: AWS::Region
-  #             RunOrder: 1

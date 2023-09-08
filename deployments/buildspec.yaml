@@ -70,6 +70,8 @@ phases:
       - docker push horietakehiro/cfn-docgen:${VERSION}
 
       # publish serverless application
+      - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import VERSION; print(VERSION)"`
+      - sed -i -e "s/__VERSION__/${VERSION}/g" deployments/serverless.yaml.packaged
       - sam publish -t deployments/serverless.yaml.packaged  --region ${AWS_REGION}
       - AWS_ACCOUNT_ID=`aws sts get-caller-identity  | jq -r .Account`
       - aws serverlessrepo  put-application-policy
