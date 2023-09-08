@@ -129,6 +129,14 @@ Resources:
         Type: LOCAL
         Modes:
           - LOCAL_CUSTOM_CACHE
+      Triggers:
+        BuildType: BUILD
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PUSH
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/release
 
   # Pipeline:
   #   Type: AWS::CodePipeline::Pipeline
