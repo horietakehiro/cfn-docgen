@@ -80,7 +80,7 @@ phases:
 
       # merge all changes to master branch
       - git checkout master
-      - git rebase release
+      - git merge release
       - git push https://${GITHUB_TOKEN}@github.com/horietakehiro/cfn-docgen.git master
 
 
