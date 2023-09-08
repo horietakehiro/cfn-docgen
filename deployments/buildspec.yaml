@@ -11,30 +11,27 @@ phases:
   pre_build:
     commands:
       - python -m venv .venv
-      - source .venv/bin/activate
-      - pip install -r ./requirements.txt --upgrade
-      - pip install -r ./requirements-dev.txt --upgrade
+      - source .venv/bin/activate && pip install -r ./requirements.txt -r ./requirements-dev.txt
 
       - mkdir -p layer/python
-      - pip install --target ./layer/python -r ./requirements.txt
+      - source .venv/bin/activate && pip install --target ./layer/python -r ./requirements.txt
 
       - docker login -u horietakehiro -p ${DOCKERHUB_PASSWORD}
 
   build:
     on-failure: ABORT
     commands:
-      - source .venv/bin/activate
       - export PYTHONPATH=`pwd`:`pwd`/src:`pwd`/tests/features:${PYTHONPATH}
       - export PATH=/root/.pyenv/versions/3.10.12/bin:${PATH}
 
-      - python setup.py develop
-      - whereis  cfn-docgen
-      - cfn-docgen --version
+      - source .venv/bin/activate && python setup.py develop
+      - source .venv/bin/activate && whereis  cfn-docgen
+      - source .venv/bin/activate && cfn-docgen --version
       # run unit tests
-      - pytest -v --junit-xml UnitTestReports.xml --cov=src --cov-report=xml ./src/
+      - source .venv/bin/activate && pytest -v --junit-xml UnitTestReports.xml --cov=src --cov-report=xml ./src/
 
       # build docker images for bdd tests
-      - VERSION=`python -c "from cfn_docgen import VERSION; print(VERSION)"`
+      - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import VERSION; print(VERSION)"`
       - docker build -t horietakehiro/cfn-docgen:${VERSION} -f ./deployments/Dockerfile ./
 
       # deploy serverless application for bdd tests
@@ -52,20 +49,18 @@ phases:
           --parameter-overrides ParameterKey=SourceBucketNamePrefix,ParameterValue=cfn-docgen-bdd
   
       # run bdd tests
-      - behave tests/features/
+      - source .venv/bin/activate && behave tests/features/
 
 
   post_build:
     on-failure: ABORT
-    commands:
-      - source .venv/bin/activate
-      
+    commands:      
       # publish python package
-      - python setup.py sdist bdist_wheel
-      - twine upload --repository pypi --username __token__ --password ${API_TOKEN} dist/*
+      - source .venv/bin/activate && python setup.py sdist bdist_wheel
+      - source .venv/bin/activate && twine upload --repository pypi --username __token__ --password ${API_TOKEN} dist/*
 
       # push docker image
-      - VERSION=`python -c "from cfn_docgen import VERSION; print(VERSION)"`
+      - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import VERSION; print(VERSION)"`
       - docker push horietakehiro/cfn-docgen:${VERSION}
 
       # publish serverless application
