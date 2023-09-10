@@ -73,3 +73,7 @@ deploy-local-build:
 		-s ./ -a ./artifacts \
 		-e .codebuild_local.env \
 		-c 
+
+synth-cdk:
+	cdk synth -o cdk.out
+	cfn-docgen docgen -s cdk.out -d cdk.doc

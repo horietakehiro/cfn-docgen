@@ -210,6 +210,21 @@ def docker_fixture(
     yield context
 
 
+@fixture # type: ignore
+def cdk_fixture(
+    context:DockerContext, 
+    fmt:str, source:str, dest:str, expected:List[str], master:str,
+    *args, **kwargs # type: ignore
+):
+    setup_local_dirs_and_files()
+
+    context.format = fmt
+    context.source = source
+    context.dest = dest
+    context.expected = expected
+    context.master = master
+
+    yield context
 
 fixture_registry = { # type: ignore
     "fixture.command_line_tool.markdown.local_single_file_local_single_dest": (
@@ -246,6 +261,17 @@ fixture_registry = { # type: ignore
         docker_fixture, 
         ["markdown", INPUT_KEY1, OUTPUT_MD_KEY1, [OUTPUT_MD_KEY1], EXPECTED_MASTER_FILE],
         # ["markdown", "/tmp/sample-template.yaml", "/out/sample-template.md", ["/tmp/cfn-docgen-test/sample-template.md"], EXPECTED_MASTER_FILE],
+        {},
+    ),
+    "fixture.cdk.markdown": (
+        cdk_fixture, 
+        [
+            "markdown", 
+            os.path.join(os.path.dirname(__file__), "..", "..", "cdk.out", "CfnDocgenSampleCdkStack.template.json"), 
+            os.path.join(os.path.dirname(__file__), "..", "..", "cdk.doc", "CfnDocgenSampleCdkStack.template.md"), 
+            [], 
+            EXPECTED_MASTER_FILE
+        ],
         {},
     ),
 

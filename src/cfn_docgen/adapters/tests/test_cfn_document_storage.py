@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 from cfn_docgen.adapters.cfn_document_storage import CfnDocumentStorage
 from cfn_docgen.adapters.internal.file_loader import document_loader_factory
-from cfn_docgen.config import AppContext
+from cfn_docgen.config import AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
 
 OUTPUT_FILE=os.path.join(
@@ -14,7 +14,10 @@ OUTPUT_FILE=os.path.join(
 
 @pytest.fixture
 def context():
-    return AppContext(log_level=logging.DEBUG)
+    return AppContext(
+        log_level=logging.DEBUG,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
 def teardown_function(function:Any):
     try:

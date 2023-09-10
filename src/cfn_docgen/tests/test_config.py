@@ -2,7 +2,7 @@ import logging
 import re
 
 import pytest
-from cfn_docgen.config import AppContext
+from cfn_docgen.config import AppContext, AwsConnectionSettings, ConnectionSettings
 
 
 def test_AppContext_default():
@@ -14,13 +14,19 @@ def test_AppContext_default():
 
 def test_AppContext_any_id():
     request_id = "any-id"
-    context = AppContext(request_id=request_id)
+    context = AppContext(
+        request_id=request_id,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
     assert context.request_id == request_id
 
 def test_AppContext_logging(caplog:pytest.LogCaptureFixture):
     caplog.set_level(logging.DEBUG)
-    context = AppContext(log_level=logging.DEBUG)
+    context = AppContext(
+        log_level=logging.DEBUG,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
     context.log_warning("warning")
     context.log_info("info")
@@ -38,7 +44,10 @@ def test_AppContext_logging(caplog:pytest.LogCaptureFixture):
 
 
 def test_AppContext_log_message():
-    context = AppContext(log_level=logging.INFO)
+    context = AppContext(
+        log_level=logging.INFO,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
     context.log_info("info")
     context.log_warning("warning")

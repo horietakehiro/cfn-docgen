@@ -91,6 +91,12 @@ class S3FileLoader(IFileLoader):
     def __init__(self, context: AppContext) -> None:
         super().__init__(context)
         self.client = boto3.client("s3") # type: ignore
+        if context.connection_settings is not None:
+            if context.connection_settings.aws.profile_name is not None:
+                sess = boto3.Session(
+                    profile_name=context.connection_settings.aws.profile_name
+                )
+                self.client = sess.client("s3") # type: ignore
 
     def download(self, source: str) -> bytes:
         s3_url = urlparse(source)

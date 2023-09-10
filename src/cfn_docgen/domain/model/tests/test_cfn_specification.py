@@ -1,11 +1,14 @@
 import logging
 import pytest
-from cfn_docgen.config import AppContext
+from cfn_docgen.config import AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_specification import CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName
 
 @pytest.fixture
 def context():
-    return AppContext(log_level=logging.DEBUG)
+    return AppContext(
+        log_level=logging.DEBUG,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
 @pytest.mark.parametrize("resource_type", [
     ("AWS::EC2::Instance"), ("Custom::hoge::fuga")

@@ -2,10 +2,11 @@ import logging
 import os
 import shutil
 from typing import Any, List
+from botocore.exceptions import ProfileNotFound
 
 import boto3
 import pytest
-from cfn_docgen.config import AppConfig, AppContext
+from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
 
@@ -54,7 +55,10 @@ INPUT_URL="https://d33vqc0rt9ld30.cloudfront.net/latest/gzip/CloudFormationResou
 
 @pytest.fixture
 def context():
-    return AppContext(log_level=logging.DEBUG)
+    return AppContext(
+        log_level=logging.DEBUG,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
 @pytest.fixture(scope="class", autouse=True)
 def class_local_dirs_and_files():
@@ -254,3 +258,10 @@ def test_S3Fileloader_list(source:str, expected:List[str], context:AppContext):
     assert len(keys) == len(expected)
     for k in keys:
         assert k in expected
+
+def test_S3Fileloader_custom_profile(context:AppContext):
+    context.connection_settings = ConnectionSettings(
+        aws=AwsConnectionSettings(profile_name="not-exist-profile")
+    )
+    with pytest.raises(ProfileNotFound):
+        S3FileLoader(context=context)

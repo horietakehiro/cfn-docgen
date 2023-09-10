@@ -1,14 +1,17 @@
 import logging
 import os
 import pytest
-from cfn_docgen.config import AppContext
+from cfn_docgen.config import AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_template import CfnTemplateDefinition, CfnTemplateSource
 from cfn_docgen.adapters.cfn_template_provider import CfnTemplateProvider
 from cfn_docgen.adapters.internal.file_loader import file_loader_factory
 
 @pytest.fixture
 def context():
-    return AppContext(log_level=logging.DEBUG)
+    return AppContext(
+        log_level=logging.DEBUG,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
 @pytest.fixture
 def input_yaml_file():

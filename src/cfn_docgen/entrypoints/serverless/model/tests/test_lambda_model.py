@@ -1,11 +1,14 @@
 import logging
 import pytest
-from cfn_docgen.config import AppContext
+from cfn_docgen.config import AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.entrypoints.serverless.model.lambda_model import CfnDocgenServerlessUnitsOfWork, S3NotificationEventRecordS3, S3NotificationEventRecordS3Bucket, S3NotificationEventRecordS3Object, ServerlessArguement
 
 @pytest.fixture
 def context():
-    return AppContext(log_level=logging.DEBUG)
+    return AppContext(
+        log_level=logging.DEBUG,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
 def test_CfnDocgenServerlessUnitsOfWork_build_units_of_work(context:AppContext):
     args = ServerlessArguement(

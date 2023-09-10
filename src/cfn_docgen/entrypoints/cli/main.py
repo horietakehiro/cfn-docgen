@@ -1,12 +1,13 @@
 import logging
 import sys
+from typing import Optional
 import click
 from cfn_docgen.adapters.cfn_document_storage import document_storage_facotory
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.cfn_template_provider import template_provider_factory
 from cfn_docgen.adapters.internal.cache import LocalFileCache
 from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader, file_loader_factory
-from cfn_docgen.config import AppConfig, AppContext
+from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import document_generator_factory
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenService
 
@@ -17,10 +18,9 @@ from cfn_docgen.entrypoints.cli.model.cli_model import CfnDocgenCLIUnitsOfWork, 
 def main():
     pass
 
-
 @main.command()
 @click.option(
-    "-f", "--format", "fmt", required=True, type=click.Choice(["markdown"]), 
+    "-f", "--format", "fmt", required=False, type=click.Choice(["markdown"]), show_default=True, default="markdown",
     help="format of output file"
 )
 @click.option(
@@ -32,14 +32,21 @@ def main():
     help="output document destination. (can be file or directory with form of local path or S3 url)"
 )
 @click.option(
+    "-p", "--profile", "profile", required=False, type=str, default=None,
+    help="aws profile name."
+)
+@click.option(
     "--debug", "debug", required=False, is_flag=True, show_default=True, default=False,
     help="enable logging"
 )
-def docgen(fmt:SupportedFormat, source:str, dest:str, debug:bool):
+def docgen(fmt:SupportedFormat, source:str, dest:str, profile:Optional[str]=None, debug:bool=False):
     context = AppContext(
         request_id=None,
         logger_name="cfn-docgen",
         log_level=logging.DEBUG if debug else logging.CRITICAL,
+        connection_settings=ConnectionSettings(
+            aws=AwsConnectionSettings(profile_name=profile)
+        )
     )
     args = CliArguement(
         subcommand="docgen",

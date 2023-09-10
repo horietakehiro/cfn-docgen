@@ -1,8 +1,9 @@
 # pyright: reportGeneralTypeIssues=false
 # pylint: disable=missing-function-docstring
 
+import logging
 from behave import given, then, when
-from cfn_docgen.config import AppContext
+from cfn_docgen.config import AppContext, AwsConnectionSettings, ConnectionSettings
 
 from tests.features.environment import PackageContext
 
@@ -12,7 +13,10 @@ def step_impl(context:PackageContext):
 
 @when("Invoke cfn-docgen from python code")
 def step_impl(context:PackageContext):
-    app_context = AppContext()
+    app_context = AppContext(
+        log_level=logging.CRITICAL,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
     from cfn_docgen import (
         CfnDocgenService, CfnDocgenServiceCommandInput,
         CfnTemplateSource, CfnDocumentDestination
