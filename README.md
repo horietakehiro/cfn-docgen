@@ -49,10 +49,15 @@ You can embed custom descriptions in  `Metadata` at top level and each resources
 
 ```Bash
 $ pip install cfn-docgen
-# you can also geenrate documents from templates at S3 bucket and upload them directory.
+# you can also geenrate a document from a template at S3 bucket and upload it directory.
 $ cfn-docgen \
     --source s3://bucket/templates/sample-template.yaml \
     --dest s3://bucket/documents/ \
+    --format markdown
+# and you can generate multiple documents from templates in direcotry(or s3 bucket prefix)
+$ cfn-docgen \
+    --source ./templates/ \
+    --dest ./documents/ \
     --format markdown
 ```
 
@@ -86,6 +91,25 @@ $ tree /tmp/sample/
 └── sample-template.md
 
 0 directories, 2 files
+```
+
+---
+
+### API
+
+```python
+from cfn_docgen import (
+    CfnDocgenService, CfnDocgenServiceCommandInput,
+    CfnTemplateSource, CfnDocumentDestination
+)
+service = CfnDocgenService.with_default()
+service.main(
+    command_input=CfnDocgenServiceCommandInput(
+        template_source=CfnTemplateSource("s3://bucket/template.yaml", service.context),
+        document_dest=CfnDocumentDestination("s3://bucket/document.md", service.context),
+        fmt="markdown",
+    )
+)
 ```
 
 ---
