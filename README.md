@@ -39,3 +39,120 @@ For full example, see [docs folder](./docs/)
 
 ![template-source-and-document-dest](./docs/images/source-template-and-dest-document.png)
 
+You can embed custom descriptions in  `Metadata` at top level and each resources like below.
+
+![](./docs/images/metadata-examples.png)
+
+## Install
+
+### CLI
+
+```Bash
+$ pip install cfn-docgen
+# you can also geenrate documents from templates at S3 bucket and upload them directory.
+$ cfn-docgen \
+    --source s3://bucket/templates/sample-template.yaml \
+    --dest s3://bucket/documents/ \
+    --format markdown
+```
+
+---
+
+### Docker Image
+
+```Bash
+# pull image from DockerHub
+$ docker pull horietakehiro/cfn-docgen:latest
+
+# local directory(before)
+$ tree /tmp/sample/
+/tmp/sample/
+└── sample-template.json
+
+0 directories, 1 files
+
+# run as command
+$ docker run \
+  -v /tmp/sample/:/tmp/ \
+  horietakehiro/cfn-docgen:latest docgen \
+    --source /tmp/sample-template.json \
+    --dest /tmp/ \
+    --fmt markdown
+
+# local directory(after)
+$ tree /tmp/sample/
+/tmp/sample/
+├── sample-template.json
+└── sample-template.md
+
+0 directories, 2 files
+```
+
+---
+
+### Serverless
+
+You can also use cfn-docgen on AWS Cloud as serverless application.
+
+You can deploy resources at [AWS Serverless Application Repository](https://ap-northeast-1.console.aws.amazon.com/lambda/home?region=ap-northeast-1#/create/app?applicationId=arn:aws:serverlessrepo:ap-northeast-1:382098889955:applications/cfn-docgen-serverless).
+
+Once deployed, tha S3 bucket named cfn-docgen-\${AWS::AccountId}-\${AWS::Region} is created on your account.
+
+When you upload cfn template json/yaml files at `templates/` folder of the bucket, cfn-docgen-serverless automatically will be triggered and generates markdown docments for them at `documents/` folder.
+
+---
+
+## Embedding Descirptions
+
+---
+
+### Top level descriptions
+
+You can embed description for the template at top level `Metadata` section like this, then markdown document will be generated from it.
+
+```Yaml
+Metadata:
+  CfnDocgen:
+    Description: |
+      このテンプレートファイル東京リージョン上で以下のリソースを作成します
+      - VPC
+      - パブリックサブネット(2AZに1つずつ)
+
+      ![Archtecture](./images/sample-template.drawio.png)
+
+
+      **注意点**
+      - このテンプレートファイルは**東京リージョン**上でのみの使用に制限しています
+      - このテンプレートファイルを使用する前に、[東京リージョン上に作成可能なVPCの最大数の設定](https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas/L-F678F1CE)を確認することを推奨します(デフォルトは5VPC)**
+```
+
+You can also embed descriptions for each sections - Mappings, Conditions, Rules.
+
+```Yaml
+Metadata:
+  CfnDocgen:
+    Mappings:
+      CidrBlockMap: CidrBlocks for each environment
+    Conditions:
+      EnvCondition: Check if the value of parameter `EnvType` is `prod`
+    Rules:
+      RegionRule: This template is available only in ap-northeast-1
+```
+
+### Resources and Properties description
+
+You can embed descriptions for resources and their properties in `Metadata` section in each resources.
+
+```Yaml
+Resources: 
+  VPC:
+    Metadata:
+      CfnDocgen:
+        Description: vpc for application to be deployed
+        Properties:
+          EnableDnsHostnames: application instances in public subnet have to be resolved their names from public internet.
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: ...
+```
+
