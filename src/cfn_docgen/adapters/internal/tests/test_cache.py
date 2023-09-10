@@ -5,11 +5,14 @@ import os
 import pytest
 from cfn_docgen.adapters.internal.cache import LocalFileCache
 
-from cfn_docgen.config import AppConfig, AppContext
+from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 
 @pytest.fixture
 def context():
-    return AppContext(log_level=logging.DEBUG)
+    return AppContext(
+        log_level=logging.DEBUG, 
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
 def test_LocalFileCache_put(context:AppContext):
     path1 = "/foo/bar.json"

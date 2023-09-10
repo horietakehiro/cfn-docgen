@@ -3,7 +3,7 @@ import pytest
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.internal.cache import LocalFileCache
 from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader
-from cfn_docgen.config import AppConfig, AppContext
+from cfn_docgen.config import AppConfig, AppContext, ConnectionSettings, AwsConnectionSettings
 from cfn_docgen.domain.model.cfn_specification import CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName
 
 
@@ -13,8 +13,11 @@ def cfn_specification_url():
 
 @pytest.fixture
 def context():
-    return AppContext(log_level=logging.DEBUG)
-
+    return AppContext(
+        log_level=logging.DEBUG,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
+ # type: ignore
 @pytest.fixture
 def repository(context:AppContext):
     return CfnSpecificationRepository(

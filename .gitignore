@@ -30,3 +30,15 @@ packaged.yaml
 old
 data
 *.packaged
+
+*.swp
+package-lock.json
+__pycache__
+.pytest_cache
+.venv
+*.egg-info
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+cdk.doc

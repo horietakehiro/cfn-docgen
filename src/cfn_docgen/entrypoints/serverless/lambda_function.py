@@ -7,7 +7,7 @@ from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRep
 from cfn_docgen.adapters.cfn_template_provider import template_provider_factory
 from cfn_docgen.adapters.internal.cache import LocalFileCache
 from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader
-from cfn_docgen.config import AppConfig, AppContext
+from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import document_generator_factory
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenService, CfnDocgenServiceCommandOutput
 from cfn_docgen.entrypoints.serverless.model.lambda_model import CfnDocgenServerlessUnitsOfWork, S3NotificationEvent, ServerlessArguement
@@ -19,7 +19,10 @@ if DEST_BUCKET_PREFIX.startswith("/"):
 
 def lambda_handler(event:Mapping[str, Optional[Any]], context:Any) -> List[str]:
     outputs:List[CfnDocgenServiceCommandOutput] = []
-    app_context = AppContext(log_level=logging.INFO)
+    app_context = AppContext(
+        log_level=logging.INFO,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+    )
 
     try:
         s3_notification_event = S3NotificationEvent(**event) # type: ignore

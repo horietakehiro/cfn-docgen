@@ -1,12 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import logging
 from typing import Callable, Mapping
 from cfn_docgen.adapters.cfn_document_storage import document_storage_facotory
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.cfn_template_provider import template_provider_factory
 from cfn_docgen.adapters.internal.cache import LocalFileCache
 from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader
-from cfn_docgen.config import AppConfig, AppContext
+from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination, ICfnDocumentGenerator, SupportedFormat, document_generator_factory
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource, CfnTemplateTree
 from cfn_docgen.domain.ports.cfn_document_storage import ICfnDocumentStorage
@@ -101,7 +102,10 @@ class CfnDocgenService(object):
 
     @classmethod
     def with_default(cls) -> CfnDocgenService:
-        context = AppContext()
+        context = AppContext(
+            log_level=logging.CRITICAL,
+            connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+        )
         return CfnDocgenService(
             context=context,
             cfn_template_provider_facotry=template_provider_factory,

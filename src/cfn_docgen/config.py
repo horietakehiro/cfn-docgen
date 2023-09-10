@@ -46,17 +46,27 @@ class AppContextLogMessages:
         )
         return delimeter.join(return_messages)
 
+@dataclass
+class AwsConnectionSettings:
+    profile_name:Optional[str]
+
+@dataclass
+class ConnectionSettings:
+    aws: AwsConnectionSettings
+
 class AppContext:
 
     def __init__(
         self, 
         request_id:Optional[str]=None,
         logger_name:str="cfn-docgen", 
-        log_level:int=logging.CRITICAL, 
+        log_level:int=logging.CRITICAL,
+        connection_settings:Optional[ConnectionSettings]=None,
     ) -> None:        
         self.request_id = str(uuid.uuid4()) if request_id is None else request_id
         self.__logger = AppLogger(name=logger_name, loglevel=log_level, stacklevel=3)
         self.log_messages = AppContextLogMessages(messages=[])
+        self.connection_settings = connection_settings
 
     def log_info(self, msg:str, ):
         now = datetime.datetime.now().timestamp()

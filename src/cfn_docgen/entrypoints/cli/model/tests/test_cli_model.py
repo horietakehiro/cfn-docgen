@@ -5,7 +5,7 @@ from typing import List
 import boto3
 import pytest
 from cfn_docgen.adapters.internal.file_loader import file_loader_factory
-from cfn_docgen.config import AppContext
+from cfn_docgen.config import AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenServiceCommandInput
@@ -119,6 +119,8 @@ def function_s3_bucket_and_keys():
 def context():
     return AppContext(
         log_level=logging.DEBUG,
+        connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+
     )
 
 @pytest.mark.parametrize("case,args,expected", [
@@ -132,8 +134,14 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             )
         ]
@@ -148,8 +156,14 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             )
         ]
@@ -164,8 +178,14 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             )
         ]
@@ -180,8 +200,14 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             )
         ]
@@ -196,13 +222,25 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE2, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE2, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_FILE2, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE2, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
         ]
@@ -217,13 +255,25 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE2, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY2, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_FILE2, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY2, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
         ]
@@ -238,8 +288,14 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
         ]
@@ -254,8 +310,14 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
         ]
@@ -270,8 +332,14 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
         ]
@@ -286,8 +354,14 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
         ]
@@ -302,13 +376,25 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY2, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE2, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_KEY2, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE2, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_FILE1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
         ]
@@ -323,13 +409,25 @@ def context():
         ),
         [
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY2, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY2, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_KEY2, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY2, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
             CfnDocgenServiceCommandInput(
-                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(log_level=logging.DEBUG)),
-                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(log_level=logging.DEBUG)),
+                template_source=CfnTemplateSource(INPUT_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
+                document_dest=CfnDocumentDestination(OUTPUT_MD_KEY1, context=AppContext(
+                    log_level=logging.DEBUG,
+                    connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+                )),
                 fmt="markdown",
             ),
         ]

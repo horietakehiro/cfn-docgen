@@ -18,6 +18,8 @@ phases:
 
       - docker login -u horietakehiro -p ${DOCKERHUB_PASSWORD}
 
+      - npm install -g aws-cdk
+
   build:
     on-failure: ABORT
     commands:
@@ -55,9 +57,11 @@ phases:
       - export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
       - export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')
       - export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r '.Credentials.SessionToken')
+      - source .venv/bin/activate && cdk synth -o cdk.out
+      - source .venv/bin/activate && cfn-docgen docgen -s cdk.out -d cdk.doc
       - source .venv/bin/activate && behave tests/features/
 
-
+  
   post_build:
     on-failure: ABORT
     commands:      
