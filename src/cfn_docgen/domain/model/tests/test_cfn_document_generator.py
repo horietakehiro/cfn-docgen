@@ -175,6 +175,76 @@ def test_MarkdownDocumentGenerator_table_of_contents(
     assert toc == expected_toc
 
 
+def test_MarkdownDocumentGenerator_table_of_contents_with_resource_groups(
+    context:AppContext,
+):
+
+    generator = CfnMarkdownDocumentGenerator(context=context)
+    expected_toc = "\n".join([
+        "- [template.yaml](#templateyaml)",
+        "  - [Description](#description)",
+        "  - [Parameters](#parameters)",
+        "  - [Mappings](#mappings)",
+        "  - [Conditions](#conditions)",
+        "  - [Rules](#rules)",
+        "  - [Resources](#resources)",
+        "    - [ResourceGroup1](#resourcegroup1)",
+        "      - [Resource12 (AWS::CertificateManager::Certificate)](#resource12-awscertificatemanagercertificate)",
+        "      - [Resource11 (AWS::EC2::Instance)](#resource11-awsec2instance)",
+        "    - [ResourceGroup2](#resourcegroup2)",
+        "      - [Resource22 (AWS::CertificateManager::Certificate)](#resource22-awscertificatemanagercertificate)",
+        "      - [Resource21 (AWS::EC2::Instance)](#resource21-awsec2instance)",
+        "  - [Outputs](#outputs)",
+    ])
+    spec_repository = CfnSpecificationRepository(
+        source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+        loader=RemoteFileLoader(context=context),
+        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
+        recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+        context=context,
+    )
+
+    definition = CfnTemplateDefinition(
+        Resources={
+            "Resource11": CfnTemplateResourceDefinition(
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/ResourceGroup1/resource11"
+                }), # type: ignore
+                Type="AWS::EC2::Instance",
+                Properties={}
+            ),
+            "Resource12": CfnTemplateResourceDefinition(
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/ResourceGroup1/resource12"
+                }), # type: ignore
+                Type="AWS::CertificateManager::Certificate",
+                Properties={}
+            ),
+            "Resource21": CfnTemplateResourceDefinition(
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/ResourceGroup2/resource21"
+                }), # type: ignore
+                Type="AWS::EC2::Instance",
+                Properties={}
+            ),
+            "Resource22": CfnTemplateResourceDefinition(
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/ResourceGroup2/resource22"
+                }), # type: ignore
+                Type="AWS::CertificateManager::Certificate",
+                Properties={}
+            )
+        },
+    )
+    tree = CfnTemplateTree(
+        template_source=CfnTemplateSource("/tmp/template.yaml", context=AppContext(log_level=logging.DEBUG)),
+        definition=definition,
+        spec_repository=spec_repository,
+        context=context
+    )
+    toc = generator.table_of_contents(tree)
+    assert toc == expected_toc
+
 @pytest.mark.parametrize("version,description,transform,e_version,e_description,e_transform", [
     ("2012-10", "template-descirption", "t1", "2012-10", "template-descirption", "t1"),
     ("2012-10", "template-descirption", ["t1", "t2"], "2012-10", "template-descirption", "<ul><li>t1</li><li>t2</li></ul>"),
@@ -755,7 +825,8 @@ def test_MarkdownDocumentGenerator_rules(
                 loader=RemoteFileLoader(context=AppContext(log_level=logging.DEBUG)),
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(log_level=logging.DEBUG)),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
-            )
+            ),
+            resource_groups={},
         ),
         "\n".join([
             "## Resources",
@@ -811,7 +882,8 @@ def test_MarkdownDocumentGenerator_rules(
                 loader=RemoteFileLoader(context=AppContext(log_level=logging.DEBUG)),
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(log_level=logging.DEBUG)),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
-            )
+            ),
+            resource_groups={},
         ),
         "\n".join([
             "## Resources",
@@ -886,7 +958,8 @@ def test_MarkdownDocumentGenerator_flatten_properties(context:AppContext):
             loader=RemoteFileLoader(context=context),
             cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context,),
             recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
-        )
+        ),
+        resource_groups={},
     )
     expected:List[PropertyField] = [
         PropertyField(
@@ -961,7 +1034,9 @@ def test_MarkdownDocumentGenerator_flatten_properties(context:AppContext):
 
     generator = CfnMarkdownDocumentGenerator(context=context,)
 
-    properties = generator._flatten_properties_node(cfn_template_tree.resource_nodes["Instance"].properties_node) # type: ignore
+    properties = generator._flatten_properties_node( # type: ignore
+        cfn_template_tree.group_nodes[cfn_template_tree.group_name_for_independent_resources].resource_nodes["Instance"].properties_node,
+    )
     assert len(properties) == len(expected)
     for p, e in zip(properties, expected):
         assert p.Property == e.Property

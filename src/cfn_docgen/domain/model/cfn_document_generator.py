@@ -157,11 +157,26 @@ class CfnMarkdownDocumentGenerator(ICfnDocumentGenerator):
                 toc.append(line(name=rule_name, indent=4))
             
             toc.append(line(name="Resources", indent=2))
-            for resource_name, resource_node in sorted(
-                tree.resources_node.resource_nodes.items(),
-                key=lambda item: (item[1].type, item[0])
+            for group_name in sorted(
+                tree.resources_node.group_nodes.keys(),
             ):
-                toc.append(line(name=f"{resource_name} ({resource_node.type})", indent=4))
+                if group_name == tree.resources_node.group_name_for_independent_resources:
+                    continue
+                toc.append(line(name=group_name, indent=4))
+                for resource_name, resource_node in sorted(
+                    tree.resources_node.group_nodes[group_name].resource_nodes.items(),
+                    key=lambda item: (item[1].type, item[0])
+                ):
+                    toc.append(line(name=f"{resource_name} ({resource_node.type})", indent=6))
+            independent_nodes = tree.resources_node.group_nodes.get(
+                tree.resources_node.group_name_for_independent_resources,
+            )
+            if independent_nodes is not None:
+                for resource_name, resource_node in sorted(
+                    independent_nodes.resource_nodes.items(),
+                    key=lambda item: (item[1].type, item[0])
+                ):
+                    toc.append(line(name=f"{resource_name} ({resource_node.type})", indent=6))
             
             toc.append(line(name="Outputs", indent=2))
             for out_name in sorted(tree.outputs_node.output_leaves.keys()):

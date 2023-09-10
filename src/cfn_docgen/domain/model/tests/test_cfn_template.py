@@ -375,9 +375,10 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(
         definitions=definitions,
         spec_repository=spec_repository,
         context=context,
+        resource_groups={},
     )
 
-    instance_node = resources_node.resource_nodes.get("Instance")
+    instance_node = resources_node.group_nodes[resources_node.group_name_for_independent_resources].resource_nodes.get("Instance")
     assert instance_node is not None
     assert instance_node.description is not None and instance_node.description == resource_description
     assert len(instance_node.depends_on) == 1 and instance_node.depends_on[0] == "VPC"
@@ -545,9 +546,10 @@ def test_CfnTemplateResourcesNode_all_resource_types(
         definitions=definitions,
         spec_repository=spec_repository,
         context=context,
+        resource_groups={},
     )
 
-    resource_node = resources_node.resource_nodes.get(resource_type)
+    resource_node = resources_node.group_nodes[resources_node.group_name_for_independent_resources].resource_nodes.get(resource_type)
     assert resource_node is not None
     assert resource_node.spec is not None
     properties_node = resource_node.properties_node
@@ -604,8 +606,9 @@ def test_CfnTemplateResourcesNode_avoid_recursion_error(
         definitions=definitions,
         spec_repository=spec_repository,
         context=context,
+        resource_groups={},
     )
-    with_definition_node = resources_node.resource_nodes.get("WithDefinition")
+    with_definition_node = resources_node.group_nodes[resources_node.group_name_for_independent_resources].resource_nodes.get("WithDefinition")
     assert with_definition_node is not None
     rules = with_definition_node.properties_node.property_nodes_list.get("Rules")
     assert rules is not None and len(rules) == 1
@@ -622,7 +625,7 @@ def test_CfnTemplateResourcesNode_avoid_recursion_error(
     method = field_to_match.property_leaves.get("Method")
     assert method is not None and method.definition is not None and cast(Mapping[str, Any], method.definition)["Name"] == "GET"
 
-    without_definition_node = resources_node.resource_nodes.get("WithoutDefinition")
+    without_definition_node = resources_node.group_nodes[resources_node.group_name_for_independent_resources].resource_nodes.get("WithoutDefinition")
     assert without_definition_node is not None
     rules_node = without_definition_node.properties_node.property_nodes_list["Rules"]
     assert len(rules_node) == 0
@@ -752,7 +755,7 @@ def test_CfnTemplateTree(
     cond1_leaf = tree.conditions_node.condition_leaves["cond1"]
     assert cond1_leaf.descirption == "cond1-description"
 
-    resource1_node = tree.resources_node.resource_nodes["resource1"]
+    resource1_node = tree.resources_node.group_nodes[tree.resources_node.group_name_for_independent_resources].resource_nodes["resource1"]
     assert resource1_node.description == "resource1-description"
     image_id_leaf = resource1_node.properties_node.property_leaves["ImageId"]
     assert image_id_leaf.description is None
@@ -776,4 +779,92 @@ def test_CfnTemplateSource_localfilepath_basename(
     source = CfnTemplateSource(filepath, context=context)
     assert source.basename == "template.yaml"
     
+
+def test_CfnTemplateDefinition_get_resource_groups():
+    definition = CfnTemplateDefinition(
+        Resources={
+            "vpc-resource1" : CfnTemplateResourceDefinition(
+                Type="AWS::EC2::VPC",
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/vpc/resource"
+                }), # type: ignore
+                Properties={}
+            ),
+            "vpc-resource2" : CfnTemplateResourceDefinition(
+                Type="AWS::EC2::Subnet",
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/vpc/privatesubnet/subnet"
+                }), # type: ignore
+                Properties={}
+            ),
+            "not-vpc-resource": CfnTemplateResourceDefinition(
+                Type="AWS::EC2::Instance",
+                Metadata=None,
+                Properties={}
+            )
+        }
+    )
+
+    resource_group = definition.get_resource_groups()
+    assert len(resource_group.keys()) == 1
+    assert set(resource_group["vpc"]) == set(["vpc-resource1", "vpc-resource2"])
+
+def test_CfnTemplateResourcesNode_resource_groups(
+    spec_repository:CfnSpecificationRepository,
+    context:AppContext,
+):
+    template_definition = CfnTemplateDefinition(
+        Resources={
+            "vpc-resource1" : CfnTemplateResourceDefinition(
+                Type="AWS::EC2::VPC",
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/Vpc/resource"
+                }), # type: ignore
+                Properties={}
+            ),
+            "vpc-resource2" : CfnTemplateResourceDefinition(
+                Type="AWS::EC2::Subnet",
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/Vpc/privatesubnet/subnet"
+                }), # type: ignore
+                Properties={}
+            ),
+            "instance-resource1": CfnTemplateResourceDefinition(
+                Type="AWS::EC2::Instance",
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/Instance/instance1"
+                }), # type: ignore
+                Properties={}
+            ),
+            "instance-resource2": CfnTemplateResourceDefinition(
+                Type="AWS::EC2::Instance",
+                Metadata=CfnTemplateResourceMetadataDefinition(**{
+                    "aws:cdk:path": "some-stack/Instance/instance2"
+                }), # type: ignore
+                Properties={}
+            ),
+            "independent-resource1": CfnTemplateResourceDefinition(
+                Type="AWS::EC2::Instance",
+                Properties={}
+            ),
+            "independent-resource2": CfnTemplateResourceDefinition(
+                Type="AWS::EC2::Instance",
+                Properties={}
+            ),
+        }
+    )
+    resources_node = CfnTemplateResourcesNode(
+        definitions=template_definition.Resources,
+        spec_repository=spec_repository,
+        context=context,
+        resource_groups=template_definition.get_resource_groups()
+    )
+
+    vpc_node = resources_node.group_nodes["Vpc"]
+    assert set(vpc_node.resource_nodes.keys()) == set(["vpc-resource1", "vpc-resource2"])
+    instance_node = resources_node.group_nodes["Instance"]
+    assert set(instance_node.resource_nodes.keys()) == set(["instance-resource1", "instance-resource2"])
+    independent_node = resources_node.group_nodes[resources_node.group_name_for_independent_resources]
+    assert set(independent_node.resource_nodes.keys()) == set(["independent-resource1", "independent-resource2"])
+
 
