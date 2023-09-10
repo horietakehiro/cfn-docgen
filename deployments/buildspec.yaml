@@ -79,8 +79,11 @@ phases:
           --statements  Principals=*,Actions=Deploy
 
       # merge all changes to master branch
+      - git config --global user.email "horie.takehiro@outlook.jp"
+      - git config --global user.name "horie.takehiro"
       - git checkout master
-      - git rebase release
+      - git status
+      - git merge -X theirs --allow-unrelated-histories release
       - git push https://${GITHUB_TOKEN}@github.com/horietakehiro/cfn-docgen.git master
 
 
