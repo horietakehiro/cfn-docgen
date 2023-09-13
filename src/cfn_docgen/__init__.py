@@ -8,7 +8,7 @@ from cfn_docgen.domain.services.cfn_docgen_service import (
 )
 
 
-__version__="0.10.3"
+__version__="0.10.5"
 
 CfnDocgenService = __CfnDocgenService
 CfnDocgenServiceCommandInput = __CfnDocgenServiceCommandInput
