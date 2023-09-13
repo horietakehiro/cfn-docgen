@@ -1,10 +1,8 @@
-# cfn-docgen
-
-**Generate human-readable documents from AWS CloudFormation yaml/json templates.**
+# cfn-docgen - AWS CloudFormation Document Generator
 
 <p align="left">
     <a href="https://pypi.org/project/cfn-docgen/">
-        <img alt="AWS CodeBuild status" src="https://codebuild.ap-northeast-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiMFdPYkd4WU5JaGdNUTNrVlE1aDlYVUtkY3Mzb3BKQ3IyM2F3dXJPTEhCVG9ldkplSE9rcXlsK0dtY2xhcDFlckhZR1lGYjFMN0c5Z1g5OHdMa29aWXE4PSIsIml2UGFyYW1ldGVyU3BlYyI6IkJaalJCTGZzeDNjTFFvZzQiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=main">
+        <img alt="AWS CodeBuild status" src="https://codebuild.ap-northeast-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiOXljK25KclpqNzR3Zks0TFRQYTJvMWIvblNnenFDMDA4Z05NQitRUDI0aHZhMGNvckU2MWMrbkpMcVBBZldVQ1hSWHp0RVpuSkI4dE5wRWMxTm1HL0tjPSIsIml2UGFyYW1ldGVyU3BlYyI6IkRGMjUzSHZKMStNdWsxUFUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=release">
     </a>
     <a href="https://pypi.org/project/cfn-docgen/">
         <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/cfn-docgen">
@@ -13,9 +11,19 @@
         <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/cfn-docgen">
     </a>
     <a href="https://pypi.org/project/cfn-docgen/">
+        <img alt="Docker Image Version (latest semver)" src="https://img.shields.io/docker/v/horietakehiro/cfn-docgen?label=docker">
+    </a>
+    <a href="https://pypi.org/project/cfn-docgen/">
         <img alt="PyPI - License" src="https://img.shields.io/pypi/l/cfn-docgen">
     </a>
 </p>
+
+
+**Generate human-readable documents from AWS CloudFormation yaml/json templates.**
+
+---
+
+## Notice
 
 ***We have made breaking changes from [v0.7](https://github.com/horietakehiro/cfn-docgen/tree/v0.7) to current versions.***
 
@@ -39,26 +47,34 @@ For full example, see [docs folder](./docs/)
 
 ![template-source-and-document-dest](./docs/images/source-template-and-dest-document.png)
 
-You can embed custom descriptions in  `Metadata` at top level and each resources like below.
+---
 
-![](./docs/images/metadata-examples.png)
-
-## Install
+## Install and How to use
 
 ### CLI
 
 ```Bash
 $ pip install cfn-docgen
+
 # you can also geenrate a document from a template at S3 bucket and upload it directory.
-$ cfn-docgen \
-    --source s3://bucket/templates/sample-template.yaml \
-    --dest s3://bucket/documents/ \
-    --format markdown
-# and you can generate multiple documents from templates in direcotry(or s3 bucket prefix)
-$ cfn-docgen \
+$ cfn-docgen docgen \
+  --source s3://bucket/prefix/sample-template.yaml \
+  --dest s3://bucket/prefix/sample-template.md
+[INFO] successfully generate document [s3://bucket/prefix/sample-template.md] from template [s3://bucket/prefix/sample-template.yaml]
+
+# and you can generate multiple documents from templates in direcotry(or s3 bucket prefix) at once
+$ tree ./templates/
+./templates/
+├── sample-template-1.yaml
+└── subfolder
+    └── sample-template-2.yaml
+
+1 directory, 2 files
+$ cfn-docgen docgen \
     --source ./templates/ \
-    --dest ./documents/ \
-    --format markdown
+    --dest s3://bucket/documents/
+[INFO] successfully generate document [s3://bucket/documents/sample-template-1.md] from template [./templates/sample-template-1.yaml]
+[INFO] successfully generate document [s3://bucket/documents/subfolder/sample-template-2.md] from template [./templates/subfolder/sample-template-2.yaml]
 ```
 
 ---
@@ -81,8 +97,8 @@ $ docker run \
   -v /tmp/sample/:/tmp/ \
   horietakehiro/cfn-docgen:latest docgen \
     --source /tmp/sample-template.json \
-    --dest /tmp/ \
-    --fmt markdown
+    --dest /tmp/
+[INFO] successfully generate document [/tmp/sample-template.md] from template [/tmp/sample-template.json]
 
 # local directory(after)
 $ tree /tmp/sample/
@@ -120,7 +136,7 @@ You can also use cfn-docgen on AWS Cloud as serverless application.
 
 You can deploy resources at [AWS Serverless Application Repository](https://ap-northeast-1.console.aws.amazon.com/lambda/home?region=ap-northeast-1#/create/app?applicationId=arn:aws:serverlessrepo:ap-northeast-1:382098889955:applications/cfn-docgen-serverless).
 
-Once deployed, tha S3 bucket named cfn-docgen-\${AWS::AccountId}-\${AWS::Region} is created on your account.
+Once deployed, tha S3 bucket named `cfn-docgen-${AWS::AccountId}-${AWS::Region}` is created on your account.
 
 When you upload cfn template json/yaml files at `templates/` folder of the bucket, cfn-docgen-serverless automatically will be triggered and generates markdown docments for them at `documents/` folder.
 
@@ -150,6 +166,10 @@ Metadata:
       - このテンプレートファイルを使用する前に、[東京リージョン上に作成可能なVPCの最大数の設定](https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas/L-F678F1CE)を確認することを推奨します(デフォルトは5VPC)**
 ```
 
+Then, the generated description will be like below.
+
+![top-level-description](./docs/images/top-level-description.png)
+
 You can also embed descriptions for each sections - Mappings, Conditions, Rules.
 
 ```Yaml
@@ -163,6 +183,10 @@ Metadata:
       RegionRule: This template is available only in ap-northeast-1
 ```
 
+Then, the generated description will be like below.
+
+![each-section-description](./docs/images/each-section-description.png)
+
 ### Resources and Properties description
 
 You can embed descriptions for resources and their properties in `Metadata` section in each resources.
@@ -172,11 +196,55 @@ Resources:
   VPC:
     Metadata:
       CfnDocgen:
-        Description: vpc for application to be deployed
+        Description: アプリケーションサーバを稼働させるために使用するVPC
         Properties:
-          EnableDnsHostnames: application instances in public subnet have to be resolved their names from public internet.
+          EnableDnsHostnames: アプリケーションサーバのホスト名でパブリックIPを名前解決できるように有効化する
     Type: AWS::EC2::VPC
     Properties: 
       CidrBlock: ...
 ```
 
+Then, the generated description will be like below.
+
+![resource-level-description](./docs/images/resource-level-description.png)
+
+---
+
+## Integration with AWS CDK
+
+cfn-docgen can generate documents from AWS-CDK-generated templates, and you can also embed descriptions in cdk codes like below.
+
+```Python
+from aws_cdk import (
+    Stack,
+    aws_ec2 as ec2,
+    
+)
+from constructs import Construct
+from typing import Any
+from cfn_docgen.domain.model.cfn_template import (
+    CfnTemplateMetadataCfnDocgenDefinition as Metadata,
+    CfnTemplateResourceMetadataDefinition as ResourceMetadata,
+    CfnTemplateResourceMetadataCfnDocgenDefinition as CfnDocgen
+)
+class CfnDocgenSampleCdkStack(Stack):
+
+    def __init__(self, scope: Construct, construct_id: str, **kwargs:Any) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+        # top-level description for the stack
+        self.add_metadata(
+            "CfnDocgen", Metadata(
+                Description="top-level-description"
+            ).model_dump(),
+        )
+        self.vpc_construct = ec2.Vpc(self, "VpcConstruct", max_azs=1)
+        # resource-level descriptions
+        self.vpc_construct.node.default_child.cfn_options.metadata = ResourceMetadata(
+            CfnDocgen=CfnDocgen(Description="resource-level-description")
+        ).model_dump()
+
+```
+
+Then, the table of contents of generated document will be like below.
+
+![](./docs/images/table-of-contents-from-cdk-generated-template.png)
