@@ -142,7 +142,7 @@ class CfnMarkdownDocumentGenerator(ICfnDocumentGenerator):
             )
             if independent_nodes is not None:
                 for param_name in sorted(independent_nodes.leaves.keys()):
-                    toc.append(line(name=param_name, indent=6))
+                    toc.append(line(name=param_name, indent=4))
             
             toc.append(line(name="Mappings", indent=2))
             for map_name in sorted(tree.mappings_node.mapping_leaves.keys()):
@@ -176,7 +176,7 @@ class CfnMarkdownDocumentGenerator(ICfnDocumentGenerator):
                     independent_nodes.resource_nodes.items(),
                     key=lambda item: (item[1].type, item[0])
                 ):
-                    toc.append(line(name=f"{resource_name} ({resource_node.type})", indent=6))
+                    toc.append(line(name=f"{resource_name} ({resource_node.type})", indent=4))
             
             toc.append(line(name="Outputs", indent=2))
             for out_name in sorted(tree.outputs_node.output_leaves.keys()):
@@ -310,7 +310,7 @@ class CfnMarkdownDocumentGenerator(ICfnDocumentGenerator):
                 ):
                     try:
                         d = param.definition
-                        parameters.append(f"#### {param_name}")
+                        parameters.append(f"### {param_name}")
                         parameters.append("")
                         parameters.append(
                             d.Description if d.Description is not None else ""
@@ -599,41 +599,126 @@ class CfnMarkdownDocumentGenerator(ICfnDocumentGenerator):
 
             resources.append("## Resources")
             resources.append("")
-            for resource_name, resource_node in sorted(
-                tree.resources_node.resource_nodes.items(), key=lambda r: (r[1].type, r[0])
+            # for resource_name, resource_node in sorted(
+            #     tree.resources_node.resource_nodes.items(), key=lambda r: (r[1].type, r[0])
+            # ):
+            #     try:
+                    
+            #         resources.append("### [{Name} ({Type})]({Url})".format(
+            #             Name=resource_name,
+            #             Type=resource_node.type,
+            #             Url=resource_node.spec.Documentation,
+            #         ))
+            #         resources.append("")
+            #         resources.append(
+            #             resource_node.description if resource_node.description is not None else ""
+            #         )
+            #         resources.append("")
+            #         resources.append("|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|")
+            #         resources.append("|-|-|-|-|-|-|")
+            #         resources.append("|{DependsOn}|{Condition}|{CreationPolicy}|{UpdatePolicy}|{UpdateReplacePolicy}|{DeletionPolicy}|".format(
+            #             DependsOn=self._dump_json(resource_node.depends_on) if len(resource_node.depends_on) > 0 else "-",
+            #             Condition=resource_node.condition if resource_node.condition is not None else "-",
+            #             CreationPolicy=self._dump_json(resource_node.creation_policy) if resource_node.creation_policy is not None else "-",
+            #             UpdatePolicy=self._dump_json(resource_node.update_policy) if resource_node.update_policy is not None else "-",
+            #             UpdateReplacePolicy=resource_node.update_replace_policy,
+            #             DeletionPolicy=resource_node.deletion_policy,
+            #         ))
+            #         resources.append("")
+
+            #         resources.append("|Property|Value|Description|Type|Required|UpdateType|")
+            #         resources.append("|-|-|-|-|-|-|")
+            #         property_fields = self._flatten_properties_node(resource_node.properties_node)
+            #         for property_field in property_fields:
+            #             resources.append(property_field.as_table_row())
+            #         resources.append("")
+            #     except Exception:
+            #         self.context.log_warning(f"failed to build resource [{resource_name}]")
+
+            for group_name, group_node in sorted(
+                tree.resources_node.group_nodes.items(), key=lambda item: item[0]
             ):
                 try:
-                    
-                    resources.append("### [{Name} ({Type})]({Url})".format(
-                        Name=resource_name,
-                        Type=resource_node.type,
-                        Url=resource_node.spec.Documentation,
-                    ))
+                    if group_name == tree.resources_node.group_name_for_independent_resources:
+                        continue
+                    resources.append(f"### {group_name}")
                     resources.append("")
-                    resources.append(
-                        resource_node.description if resource_node.description is not None else ""
-                    )
-                    resources.append("")
-                    resources.append("|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|")
-                    resources.append("|-|-|-|-|-|-|")
-                    resources.append("|{DependsOn}|{Condition}|{CreationPolicy}|{UpdatePolicy}|{UpdateReplacePolicy}|{DeletionPolicy}|".format(
-                        DependsOn=self._dump_json(resource_node.depends_on) if len(resource_node.depends_on) > 0 else "-",
-                        Condition=resource_node.condition if resource_node.condition is not None else "-",
-                        CreationPolicy=self._dump_json(resource_node.creation_policy) if resource_node.creation_policy is not None else "-",
-                        UpdatePolicy=self._dump_json(resource_node.update_policy) if resource_node.update_policy is not None else "-",
-                        UpdateReplacePolicy=resource_node.update_replace_policy,
-                        DeletionPolicy=resource_node.deletion_policy,
-                    ))
-                    resources.append("")
+                    for resource_name, resource_node in sorted(
+                        group_node.resource_nodes.items(), key= lambda item: (item[1].type, item[0])
+                    ):
+                        try:
+                            
+                            resources.append("#### [{Name} ({Type})]({Url})".format(
+                                Name=resource_name,
+                                Type=resource_node.type,
+                                Url=resource_node.spec.Documentation,
+                            ))
+                            resources.append("")
+                            resources.append(
+                                resource_node.description if resource_node.description is not None else ""
+                            )
+                            resources.append("")
+                            resources.append("|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|")
+                            resources.append("|-|-|-|-|-|-|")
+                            resources.append("|{DependsOn}|{Condition}|{CreationPolicy}|{UpdatePolicy}|{UpdateReplacePolicy}|{DeletionPolicy}|".format(
+                                DependsOn=self._dump_json(resource_node.depends_on) if len(resource_node.depends_on) > 0 else "-",
+                                Condition=resource_node.condition if resource_node.condition is not None else "-",
+                                CreationPolicy=self._dump_json(resource_node.creation_policy) if resource_node.creation_policy is not None else "-",
+                                UpdatePolicy=self._dump_json(resource_node.update_policy) if resource_node.update_policy is not None else "-",
+                                UpdateReplacePolicy=resource_node.update_replace_policy,
+                                DeletionPolicy=resource_node.deletion_policy,
+                            ))
+                            resources.append("")
 
-                    resources.append("|Property|Value|Description|Type|Required|UpdateType|")
-                    resources.append("|-|-|-|-|-|-|")
-                    property_fields = self._flatten_properties_node(resource_node.properties_node)
-                    for property_field in property_fields:
-                        resources.append(property_field.as_table_row())
-                    resources.append("")
+                            resources.append("|Property|Value|Description|Type|Required|UpdateType|")
+                            resources.append("|-|-|-|-|-|-|")
+                            property_fields = self._flatten_properties_node(resource_node.properties_node)
+                            for property_field in property_fields:
+                                resources.append(property_field.as_table_row())
+                            resources.append("")
+                        except Exception:
+                            self.context.log_warning(f"failed to build resource [{resource_name}]")
                 except Exception:
-                    self.context.log_warning(f"failed to build resource [{resource_name}]")
+                    self.context.log_warning(f"failed to build resource group [{group_name}]")
+
+            independent_node = tree.resources_node.group_nodes.get(
+                tree.resources_node.group_name_for_independent_resources,
+            )
+            if independent_node is not None:
+                for resource_name, resource_node in sorted(
+                    independent_node.resource_nodes.items(), key= lambda item: (item[1].type, item[0])
+                ):
+                    try:
+                        resources.append("### [{Name} ({Type})]({Url})".format(
+                            Name=resource_name,
+                            Type=resource_node.type,
+                            Url=resource_node.spec.Documentation,
+                        ))
+                        resources.append("")
+                        resources.append(
+                            resource_node.description if resource_node.description is not None else ""
+                        )
+                        resources.append("")
+                        resources.append("|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|")
+                        resources.append("|-|-|-|-|-|-|")
+                        resources.append("|{DependsOn}|{Condition}|{CreationPolicy}|{UpdatePolicy}|{UpdateReplacePolicy}|{DeletionPolicy}|".format(
+                            DependsOn=self._dump_json(resource_node.depends_on) if len(resource_node.depends_on) > 0 else "-",
+                            Condition=resource_node.condition if resource_node.condition is not None else "-",
+                            CreationPolicy=self._dump_json(resource_node.creation_policy) if resource_node.creation_policy is not None else "-",
+                            UpdatePolicy=self._dump_json(resource_node.update_policy) if resource_node.update_policy is not None else "-",
+                            UpdateReplacePolicy=resource_node.update_replace_policy,
+                            DeletionPolicy=resource_node.deletion_policy,
+                        ))
+                        resources.append("")
+
+                        resources.append("|Property|Value|Description|Type|Required|UpdateType|")
+                        resources.append("|-|-|-|-|-|-|")
+                        property_fields = self._flatten_properties_node(resource_node.properties_node)
+                        for property_field in property_fields:
+                            resources.append(property_field.as_table_row())
+                        resources.append("")
+                    except Exception:
+                        self.context.log_warning(f"failed to build resource [{resource_name}]")
 
             if resources[-1] == "":
                 resources = resources[:-1]

@@ -35,3 +35,5 @@ def step_impl(context:CommandLineToolContext):
         doc = fp.read()
     assert "top-level-description" in doc
     assert "resource-level-description" in doc
+    assert "### VpcConstruct" in doc
+

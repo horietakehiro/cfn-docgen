@@ -268,7 +268,7 @@ fixture_registry = { # type: ignore
         [
             "markdown", 
             os.path.join(os.path.dirname(__file__), "..", "..", "cdk.out", "CfnDocgenSampleCdkStack.template.json"), 
-            os.path.join(os.path.dirname(__file__), "..", "..", "cdk.doc", "CfnDocgenSampleCdkStack.template.md"), 
+            os.path.join(os.path.dirname(__file__), "..", "..", "docs", "CfnDocgenSampleCdkStack.template.md"), 
             [], 
             EXPECTED_MASTER_FILE
         ],

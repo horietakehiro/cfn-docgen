@@ -1,5 +1,5 @@
 SHELL = /bin/bash
-.PHONY: deploy-test-resources build develop
+.PHONY: deploy-test-resources build develop synth-cdk
 
 develop:
 	. .venv/bin/activate
@@ -12,7 +12,7 @@ build:
 	pip install -r requirements.txt
 	python setup.py sdist bdist_wheel 
 
-test-bdd: develop build-docker-image
+test-bdd: develop build-docker-image synth-cdk
 	source .env
 	sam package \
 		--template-file deployments/serverless.yaml \
@@ -25,7 +25,6 @@ test-bdd: develop build-docker-image
         --capabilities CAPABILITY_IAM \
 		--no-fail-on-empty-changeset \
 		--parameter-overrides ParameterKey=SourceBucketNamePrefix,ParameterValue=cfn-docgen-bdd
-	
 	behave tests/features/
 
 test-ut:
@@ -76,4 +75,4 @@ deploy-local-build:
 
 synth-cdk:
 	cdk synth -o cdk.out
-	cfn-docgen docgen -s cdk.out -d cdk.doc
+	cfn-docgen docgen -s cdk.out -d docs/
