@@ -270,7 +270,7 @@ class CfnMarkdownDocumentGenerator(ICfnDocumentGenerator):
 
             def row(d:CfnTemplateParameterDefinition) -> str:
                 return "|{Type}|{Default}|{AllowedValues}|{AllowedPattern}|{NoEcho}|{MinValue}|{MaxValue}|{MinLength}|{MaxLength}|{ConstraintDescription}|".format(
-                    Type=d.Type,
+                    Type=self._dump_json(d.Type),
                     Default=self._unordered_list(d.Default) if d.Default is not None else "-",
                     AllowedValues=self._unordered_list(d.AllowedValues) if d.AllowedValues is not None else "-",
                     AllowedPattern=d.AllowedPattern if d.AllowedPattern is not None else "-",
@@ -376,11 +376,26 @@ class CfnMarkdownDocumentGenerator(ICfnDocumentGenerator):
         if not isinstance(j, dict) and not isinstance(j, list):
             if isinstance(j, bool):
                 return str(j).lower()
-            # in pydantic v1, bool value will be trated as string
-            if isinstance(j, str) and (j == "True" or j == "False"):
-                return str(j).lower()
-            return str(j) # type: ignore
-        dumped = json.dumps(j, indent=2, )
+            
+            return str(j).replace(
+                "$", "\\$"
+            ).replace(
+                "|", "\\|"
+            ).replace(
+                "<", "\\<",
+            ).replace(
+                ">", "\\>"
+            )
+        
+        dumped = json.dumps(j, indent=2, ensure_ascii=False).replace(
+            "$", "\\$"
+        ).replace(
+            "|", "\\|"
+        ).replace(
+            "<", "\\<",
+        ).replace(
+            ">", "\\>"
+        )
         dumped = dumped.replace("\n", "<br/>").replace(" ", "&nbsp;")
         return dumped
 

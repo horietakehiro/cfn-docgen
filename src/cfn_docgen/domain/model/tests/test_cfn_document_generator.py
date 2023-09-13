@@ -636,7 +636,40 @@ def test_CfnMarkdownDocumentGenerator_conditions(
     (
         True,
         "true"
+    ),
+    (
+        "${string}",
+        "\\${string}"
+    ),
+    (
+        {"Sub": "${string}"},
+        '{<br/>&nbsp;&nbsp;"Sub":&nbsp;"\\${string}"<br/>}',
+    ),
+    (
+        "string|string",
+        "string\\|string"
+    ),
+    (
+        {"Ref": "string|string"},
+        '{<br/>&nbsp;&nbsp;"Ref":&nbsp;"string\\|string"<br/>}',
+    ),
+    (
+        "日本語",
+        "日本語"
+    ),
+    (
+        {"Ref": "日本語"},
+        '{<br/>&nbsp;&nbsp;"Ref":&nbsp;"日本語"<br/>}',
+    ),
+    (
+        "List<AWS::EC2::VPC>",
+        "List\\<AWS::EC2::VPC\\>"
+    ),
+    (
+        {"Ref": "List<AWS::EC2::VPC>"},
+        '{<br/>&nbsp;&nbsp;"Ref":&nbsp;"List\\<AWS::EC2::VPC\\>"<br/>}',
     )
+
 ])
 def test_CfnMarkdownDocumentGenerator_dump_json(
     j:Any,expected:str,
