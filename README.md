@@ -4,6 +4,9 @@
     <a href="https://pypi.org/project/cfn-docgen/">
         <img alt="AWS CodeBuild status" src="https://codebuild.ap-northeast-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiOXljK25KclpqNzR3Zks0TFRQYTJvMWIvblNnenFDMDA4Z05NQitRUDI0aHZhMGNvckU2MWMrbkpMcVBBZldVQ1hSWHp0RVpuSkI4dE5wRWMxTm1HL0tjPSIsIml2UGFyYW1ldGVyU3BlYyI6IkRGMjUzSHZKMStNdWsxUFUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=release">
     </a>
+    <a href="https://codecov.io/github/horietakehiro/cfn-docgen" > 
+        <img src="https://codecov.io/github/horietakehiro/cfn-docgen/graph/badge.svg?token=A5GN5Y4IQO"/> 
+   </a>
     <a href="https://pypi.org/project/cfn-docgen/">
         <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/cfn-docgen">
     </a>
