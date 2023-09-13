@@ -35,6 +35,7 @@ phases:
       # build docker images for bdd tests
       - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`
       - docker build -t horietakehiro/cfn-docgen:${VERSION} -f ./deployments/Dockerfile ./
+      - docker tag horietakehiro/cfn-docgen:${VERSION} horietakehiro/cfn-docgen:latest
 
       # deploy serverless application for bdd tests
       - sam --version
@@ -72,6 +73,7 @@ phases:
       # push docker image
       - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`
       - docker push horietakehiro/cfn-docgen:${VERSION}
+      - docker push horietakehiro/cfn-docgen:latest
 
       # publish serverless application
       - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`

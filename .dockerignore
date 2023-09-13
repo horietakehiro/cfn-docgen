@@ -1,0 +1,14 @@
+.venv
+build
+dist
+**/__pycache__
+**/.pytest_cache
+layer
+.env
+.coverage
+.codebuild_local.env
+.git
+**/*.egg-info
+cdk.out
+cdk.doc
+.vscode

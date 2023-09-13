@@ -58,8 +58,11 @@ destroy-cicd:
 
 build-docker-image: develop
 	docker build -t horietakehiro/cfn-docgen:`python -c "from cfn_docgen import __version__; print(__version__)"` ./ -f ./deployments/Dockerfile
+	docker tag horietakehiro/cfn-docgen:`python -c "from cfn_docgen import __version__; print(__version__)"` horietakehiro/cfn-docgen:latest
 deploy-docker-image: build-docker-image
 	docker push horietakehiro/cfn-docgen:`python -c "from cfn_docgen import __version__; print(__version__)"`
+	docker push horietakehiro/cfn-docgen:latest
+
 
 deploy-test-resources:
 	sam deploy \
