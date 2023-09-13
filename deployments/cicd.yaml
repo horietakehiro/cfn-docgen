@@ -25,6 +25,9 @@ Parameters:
     Type: String
   ServerlessTestBucketName:
     Type: String
+  CodecovTokenParamName:
+    Type: String
+    Description: Paramter name of codecov token  
 
   SkipLongTest:
     Type: String
@@ -121,6 +124,9 @@ Resources:
           - Name: SKIP_LONG_TEST
             Type: PARAMETER_STORE
             Value: !Ref SkipLongTextParam
+          - Name: CODECOV_TOKEN
+            Type: PARAMETER_STORE
+            Value: !Ref CodecovTokenParamName
           - Name: DOCKER_CONTAINER_ROLE_ARN
             Type: PLAINTEXT
             Value: !GetAtt DockerContainerRole.Arn

@@ -52,7 +52,8 @@ deploy-cicd:
 			ParameterKey=GithubTokenParamName,ParameterValue=/GitHub/MyToken \
 			ParameterKey=DockerHubPasswordParamName,ParameterValue=/DockerHub/Password \
 			ParameterKey=ServerlessTestBucketName,ParameterValue=cfn-docgen-bdd-382098889955-ap-northeast-1 \
-			ParameterKey=GitHubConnectionArn,ParameterValue=arn:aws:codestar-connections:ap-northeast-1:382098889955:connection/6f899bca-b98f-4fe3-ab68-ce57f8d600e4
+			ParameterKey=GitHubConnectionArn,ParameterValue=arn:aws:codestar-connections:ap-northeast-1:382098889955:connection/6f899bca-b98f-4fe3-ab68-ce57f8d600e4 \
+			ParameterKey=CodecovTokenParamName,ParameterValue=/Codecov/Token
 destroy-cicd:
 	sam delete --stack-name cfn-docgen-cicd --no-prompts
 
