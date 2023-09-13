@@ -21,7 +21,7 @@ class CfnDocgenSampleCdkStack(Stack):
                 Description="top-level-description"
             ).model_dump(),
         )
-        self.vpc = ec2.Vpc(self, "VPC", max_azs=1)
-        self.vpc.node.default_child.cfn_options.metadata = ResourceMetadata( # type: ignore
+        self.vpc_construct = ec2.Vpc(self, "VpcConstruct", max_azs=1)
+        self.vpc_construct.node.default_child.cfn_options.metadata = ResourceMetadata( # type: ignore
             CfnDocgen=CfnDocgen(Description="resource-level-description")
         ).model_dump()

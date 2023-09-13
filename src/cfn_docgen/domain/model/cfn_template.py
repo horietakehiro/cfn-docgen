@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import defaultdict
 from dataclasses import dataclass
 import itertools
 import json
@@ -127,6 +128,7 @@ class CfnTemplateResourceMetadataCfnDocgenDefinition(BaseModel):
 
 class CfnTemplateResourceMetadataDefinition(BaseModel):
     CfnDocgen: Optional[CfnTemplateResourceMetadataCfnDocgenDefinition] = None
+    aws_cdk_path: Optional[str] = Field(alias="aws:cdk:path", default=None)
 
 CfnTemplateResourcePropertyDefinition = Union[
     str,int,float, bool, List[Any], Mapping[Any, Any]
@@ -212,6 +214,23 @@ class CfnTemplateDefinition(BaseModel):
         if cfn_docgen is None:
             return {}
         return cfn_docgen.Conditions
+    
+    def get_resource_groups(self) -> Mapping[str, List[str]]:
+        
+        resource_groups:Mapping[str, List[str]] = defaultdict(list)
+        for resource_id, resource_body in self.Resources.items():
+            if resource_body.Metadata is None:
+                continue
+            if resource_body.Metadata.aws_cdk_path is None:
+                continue
+            # aws:cdk:path wll be like CdkWorkshopStack/BlogVpc/PrivateSubnet1/Subnet
+            paths = resource_body.Metadata.aws_cdk_path.split("/")
+            if len(paths) < 2:
+                continue
+            resource_groups[paths[1]].append(resource_id)
+
+        return resource_groups
+
 
 class CfnTemplateParametersNode:
 
@@ -766,17 +785,13 @@ class CfnTemplateResourceNode:
             context.log_warning(f"failed to build CfnTemplateResourcePropertiesNode")
 
 
-@dataclass
-class ResourceInfo:
-    type: str
-    is_recursive: bool
-
-class CfnTemplateResourcesNode:
+class CfnTemplateResourceGroupNode:
     def __init__(
         self,
         definitions:Mapping[str, CfnTemplateResourceDefinition],
         spec_repository:ICfnSpecificationRepository,
         context:AppContext,
+
     ) -> None:
         self.resource_nodes:Mapping[str, CfnTemplateResourceNode] = {}
         for name, definition in definitions.items():
@@ -794,6 +809,69 @@ class CfnTemplateResourcesNode:
                 )
             except Exception:
                 context.log_warning(f"failed to build CfnTemplateResourceNode for resource [{name}]")
+
+@dataclass
+class ResourceInfo:
+    type: str
+    is_recursive: bool
+
+class CfnTemplateResourcesNode:
+    group_name_for_independent_resources = "__CFN_DOCGEN_INDEPENDENT_RESOURCES__"
+
+    def __init__(
+        self,
+        definitions:Mapping[str, CfnTemplateResourceDefinition],
+        resource_groups:Mapping[str, List[str]],
+        spec_repository:ICfnSpecificationRepository,
+        context:AppContext,
+
+    ) -> None:
+        self.group_nodes:Mapping[str, CfnTemplateResourceGroupNode] = {}
+        
+        for group_name, resource_ids in resource_groups.items():
+            try:
+                self.group_nodes[group_name] = CfnTemplateResourceGroupNode(
+                    definitions={
+                        id_: d for id_, d in definitions.items()
+                        if id_ in resource_ids
+                    },
+                    spec_repository=spec_repository,
+                    context=context,
+                )
+            except Exception:
+                context.log_warning(f"failed to build CfnTemplateResourcesNode for resource group [{group_name}]")
+                continue
+        try:
+            resource_ids_in_groups = list(itertools.chain.from_iterable(
+                [resource_ids for resource_ids in resource_groups.values()]
+            ))
+            self.group_nodes[self.group_name_for_independent_resources] = CfnTemplateResourceGroupNode(
+                definitions={
+                    id_: d for id_, d in definitions.items()
+                    if id_ not in resource_ids_in_groups
+                },
+                spec_repository=spec_repository,
+                context=context,
+            )
+        except Exception:
+            context.log_warning(f"failed to build CfnTemplateResourcesNode for resource group [{self.group_name_for_independent_resources}]")
+
+        # self.resource_nodes:Mapping[str, CfnTemplateResourceNode] = {}
+        # for name, definition in definitions.items():
+        #     try:
+        #         specs = spec_repository.get_specs_for_resource(CfnSpecificationResourceTypeName(definition.Type, context))
+        #         resource_info=ResourceInfo(
+        #             type=definition.Type, 
+        #             is_recursive=spec_repository.is_recursive(CfnSpecificationResourceTypeName(definition.Type, context))
+        #         )
+        #         self.resource_nodes[name] = CfnTemplateResourceNode(
+        #             definition=definition, 
+        #             specs=specs,
+        #             resource_info=resource_info,
+        #             context=context,
+        #         )
+        #     except Exception:
+        #         context.log_warning(f"failed to build CfnTemplateResourceNode for resource [{name}]")
 
 class CfnTemplateOutputLeaf:
     def __init__(
@@ -875,6 +953,7 @@ class CfnTemplateTree:
         )
         self.resources_node = CfnTemplateResourcesNode(
             definitions=definition.Resources,
+            resource_groups=definition.get_resource_groups(),
             spec_repository=spec_repository,
             context=context,
         )
