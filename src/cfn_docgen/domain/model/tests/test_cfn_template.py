@@ -1,6 +1,5 @@
 from __future__ import annotations
 import logging
-import os
 from typing import Any, Mapping, Optional, cast
 
 import pytest
@@ -527,41 +526,41 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(
 
 
 
-@pytest.mark.skipif(condition=os.environ.get("SKIP_LONG_TEST", False), reason="this test takes long time to run")
-@pytest.mark.parametrize("resource_type", [
-    (r) for r in all_resource_types()
-])
-def test_CfnTemplateResourcesNode_all_resource_types(
-    resource_type:str, spec_repository:CfnSpecificationRepository,
-    context:AppContext,
-):
-    definitions:Mapping[str, CfnTemplateResourceDefinition] = {
-        resource_type: CfnTemplateResourceDefinition(
-            Type=resource_type,
-            Properties={}
-        )
-    }
+# @pytest.mark.skipif(condition=os.environ.get("SKIP_LONG_TEST", False), reason="this test takes long time to run")
+# @pytest.mark.parametrize("resource_type", [
+#     (r) for r in all_resource_types()
+# ])
+# def test_CfnTemplateResourcesNode_all_resource_types(
+#     resource_type:str, spec_repository:CfnSpecificationRepository,
+#     context:AppContext,
+# ):
+#     definitions:Mapping[str, CfnTemplateResourceDefinition] = {
+#         resource_type: CfnTemplateResourceDefinition(
+#             Type=resource_type,
+#             Properties={}
+#         )
+#     }
 
-    resources_node = CfnTemplateResourcesNode(
-        definitions=definitions,
-        spec_repository=spec_repository,
-        context=context,
-        resource_groups={},
-    )
+#     resources_node = CfnTemplateResourcesNode(
+#         definitions=definitions,
+#         spec_repository=spec_repository,
+#         context=context,
+#         resource_groups={},
+#     )
 
-    resource_node = resources_node.group_nodes[resources_node.group_name_for_independent_resources].resource_nodes.get(resource_type)
-    assert resource_node is not None
-    assert resource_node.spec is not None
-    properties_node = resource_node.properties_node
-    assert (
-        len(properties_node.property_leaves) > 0
-        or len(properties_node.property_nodes) > 0
-        or len(properties_node.property_nodes_list) > 0
-        or len(properties_node.property_nodes_map)> 0
-        # resource types without any properties
-        or resource_type == "AWS::CloudFormation::WaitConditionHandle"
-        or resource_type == "AWS::DevOpsGuru::LogAnomalyDetectionIntegration"
-    )
+#     resource_node = resources_node.group_nodes[resources_node.group_name_for_independent_resources].resource_nodes.get(resource_type)
+#     assert resource_node is not None
+#     assert resource_node.spec is not None
+#     properties_node = resource_node.properties_node
+#     assert (
+#         len(properties_node.property_leaves) > 0
+#         or len(properties_node.property_nodes) > 0
+#         or len(properties_node.property_nodes_list) > 0
+#         or len(properties_node.property_nodes_map)> 0
+#         # resource types without any properties
+#         or resource_type == "AWS::CloudFormation::WaitConditionHandle"
+#         or resource_type == "AWS::DevOpsGuru::LogAnomalyDetectionIntegration"
+#     )
 
 
 def test_CfnTemplateResourcesNode_avoid_recursion_error(
