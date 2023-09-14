@@ -92,7 +92,7 @@ class CfnDocgenCLIUnitsOfWork:
             for s in sources:
                 base_prefix, _ = os.path.splitext(os.path.basename(s))
                 subdirs = s.replace(args.source, "")
-                if subdirs.startswith("/"):
+                if subdirs.startswith("/") or subdirs.startswith("\\"):
                     subdirs = subdirs[1:]
                 dests.append(
                     os.path.join(
