@@ -10,7 +10,7 @@ from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestinatio
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenServiceCommandInput
 
-from cfn_docgen.entrypoints.cli.model.cli_model import CfnDocgenCLIUnitsOfWork, CliArguement
+from cfn_docgen.entrypoints.cli.model.cli_model import CfnDocgenCLIUnitsOfWork, CliDocgenArguement
 
 INPUT_MASTER_FILE=os.path.join(
     os.path.dirname(__file__),
@@ -126,7 +126,7 @@ def context():
 @pytest.mark.parametrize("case,args,expected", [
     (
         "local source file and local dest file",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_FILE1,
@@ -148,7 +148,7 @@ def context():
     ),
     (
         "local source file and local dest dir",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_FILE1,
@@ -170,7 +170,7 @@ def context():
     ),
     (
         "local source file and s3 dest key",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_FILE1,
@@ -192,7 +192,7 @@ def context():
     ),
     (
         "local source file and s3 dest prefix",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_FILE1,
@@ -214,7 +214,7 @@ def context():
     ),
     (
         "local source dir and local dest dir ",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_ROOT_DIR,
@@ -247,7 +247,7 @@ def context():
     ),
     (
         "local source dir and s3 dest prefix", 
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_ROOT_DIR,
@@ -280,7 +280,7 @@ def context():
     ),
     (
         "s3 source key and local dest file",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_KEY1,
@@ -302,7 +302,7 @@ def context():
     ),
     (
         "s3 source key and local dest dir",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_KEY1,
@@ -324,7 +324,7 @@ def context():
     ),
     (
         "s3 source key and s3 dest key",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_KEY1,
@@ -346,7 +346,7 @@ def context():
     ),
     (
         "s3 source key and s3 dest prefix",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_KEY1,
@@ -368,7 +368,7 @@ def context():
     ),
     (
         "s3 source prefix and local dest dir",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_ROOT_PREFIX,
@@ -401,7 +401,7 @@ def context():
     ),
     (
         "s3 source prefix and s3 dest prefix",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_ROOT_PREFIX,
@@ -436,7 +436,7 @@ def context():
 ])
 def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_valid_pattern(
     case:str, # type: ignore
-    args:CliArguement,
+    args:CliDocgenArguement,
     expected:List[CfnDocgenServiceCommandInput],
     context:AppContext,
 ):
@@ -455,7 +455,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_valid_pattern(
 @pytest.mark.parametrize("case,args", [
     (
         "local source dir and local dest file",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_DIR1,
@@ -464,7 +464,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_valid_pattern(
     ),
     (
         "local source dir and s3 dest key",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_DIR1,
@@ -473,7 +473,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_valid_pattern(
     ),
     (
         "s3 source prefix and local dest file",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_PREFIX1,
@@ -482,7 +482,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_valid_pattern(
     ),
     (
         "s3 source prefix and s3 dest key",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_PREFIX1,
@@ -492,7 +492,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_valid_pattern(
 ])
 def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_invalid_pattern(
     case:str,
-    args:CliArguement,
+    args:CliDocgenArguement,
     context:AppContext,
     caplog:pytest.LogCaptureFixture,
 ):
@@ -516,7 +516,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_invalid_pattern(
 @pytest.mark.parametrize("case,args", [
     (
         "not exist template source",
-        CliArguement(
+        CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source="not-exist-source",
@@ -526,7 +526,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_invalid_pattern(
 ])
 def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_not_exist_source(
     case:str,
-    args:CliArguement,
+    args:CliDocgenArguement,
     context:AppContext,
     caplog:pytest.LogCaptureFixture,
 ):
