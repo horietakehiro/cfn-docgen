@@ -6,7 +6,7 @@ from cfn_docgen.adapters.cfn_document_storage import document_storage_facotory
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.cfn_template_provider import template_provider_factory
 from cfn_docgen.adapters.internal.cache import LocalFileCache
-from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader
+from cfn_docgen.adapters.internal.file_loader import specification_loader_factory
 from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import document_generator_factory
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenService, CfnDocgenServiceCommandOutput
@@ -16,6 +16,7 @@ DEST_BUCKET_NAME=os.environ["DEST_BUCKET_NAME"]
 DEST_BUCKET_PREFIX=os.environ["DEST_BUCKET_PREFIX"]
 if DEST_BUCKET_PREFIX.startswith("/"):
     DEST_BUCKET_PREFIX = DEST_BUCKET_PREFIX[1:] # type: ignore
+CUSTOM_RESOURCE_SPECIFICATION_URL=os.environ.get("CUSTOM_RESOURCE_SPECIFICATION_URL", None)
 
 def lambda_handler(event:Mapping[str, Optional[Any]], context:Any) -> List[str]:
     outputs:List[CfnDocgenServiceCommandOutput] = []
@@ -52,7 +53,8 @@ def lambda_handler(event:Mapping[str, Optional[Any]], context:Any) -> List[str]:
             cfn_specification_repository=CfnSpecificationRepository(
                 context=app_context,
                 source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-                loader=RemoteFileLoader(context=app_context),
+                custom_resource_specification_url=CUSTOM_RESOURCE_SPECIFICATION_URL,
+                loader_factory=specification_loader_factory,
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=app_context),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
             ),

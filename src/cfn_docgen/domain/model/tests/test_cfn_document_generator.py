@@ -3,7 +3,7 @@ from typing import Any, List, Optional, Union
 import pytest
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.internal.cache import LocalFileCache
-from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader
+from cfn_docgen.adapters.internal.file_loader import specification_loader_factory
 from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import CfnMarkdownDocumentGenerator, PropertyField
 
@@ -20,7 +20,7 @@ def context():
 def cfn_template_tree(context:AppContext):
     spec_repository = CfnSpecificationRepository(
         source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-        loader=RemoteFileLoader(context=context),
+        loader_factory=specification_loader_factory,
         cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
         context=context,
@@ -207,7 +207,7 @@ def test_CfnMarkdownDocumentGenerator_table_of_contents_with_resource_groups(
     ])
     spec_repository = CfnSpecificationRepository(
         source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-        loader=RemoteFileLoader(context=context),
+        loader_factory=specification_loader_factory,
         cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
         context=context,
@@ -864,7 +864,7 @@ def test_CfnMarkdownDocumentGenerator_rules(
             spec_repository=CfnSpecificationRepository(
                 context=AppContext(log_level=logging.DEBUG),
                 source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-                loader=RemoteFileLoader(context=AppContext(log_level=logging.DEBUG)),
+                loader_factory=specification_loader_factory,
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(log_level=logging.DEBUG)),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
             ),
@@ -921,7 +921,7 @@ def test_CfnMarkdownDocumentGenerator_rules(
             spec_repository=CfnSpecificationRepository(
                 context=AppContext(log_level=logging.DEBUG),
                 source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-                loader=RemoteFileLoader(context=AppContext(log_level=logging.DEBUG)),
+                loader_factory=specification_loader_factory,
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(log_level=logging.DEBUG)),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
             ),
@@ -997,7 +997,7 @@ def test_CfnMarkdownDocumentGenerator_flatten_properties(context:AppContext):
         spec_repository=CfnSpecificationRepository(
             context=context,
             source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-            loader=RemoteFileLoader(context=context),
+            loader_factory=specification_loader_factory,
             cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context,),
             recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
         ),
@@ -1177,7 +1177,7 @@ def test_CfnMarkdownDocumentGenerator_outputs(
             ),
             spec_repository=CfnSpecificationRepository(
                 context=AppContext(log_level=logging.DEBUG),
-                loader=RemoteFileLoader(context=AppContext(log_level=logging.DEBUG)),
+                loader_factory=specification_loader_factory,
                 source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(log_level=logging.DEBUG)),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,

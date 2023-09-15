@@ -7,7 +7,6 @@
   - [Rules](#rules)
   - [Resources](#resources)
     - [CustomResource2 (AWS::CloudFormation::CustomResource)](#customresource2-awscloudformationcustomresource)
-    - [Stack (AWS::CloudFormation::Stack)](#stack-awscloudformationstack)
     - [CustomResource1 (Custom::Resource)](#customresource1-customresource)
   - [Outputs](#outputs)
 
@@ -61,25 +60,6 @@
 |&nbsp;&nbsp;NumberProp|0|-|Integer|true|Mutable|
 |ServiceToken|{<br/>&nbsp;&nbsp;"Fn::GetAtt":&nbsp;[<br/>&nbsp;&nbsp;&nbsp;&nbsp;"Function",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"Arn"<br/>&nbsp;&nbsp;]<br/>}|-|String|true|Immutable|
 |StringProp|string|-|String|true|Mutable|
-
-### [Stack (AWS::CloudFormation::Stack)](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-stack.html)
-
-
-
-|DependsOn|Condition|CreationPolicy|UpdatePolicy|UpdateReplacePolicy|DeletionPolicy|
-|-|-|-|-|-|-|
-|-|-|-|-|Delete|Delete|
-
-|Property|Value|Description|Type|Required|UpdateType|
-|-|-|-|-|-|-|
-|Parameters|-|-|TemplateParameters|true|Mutable|
-|&nbsp;&nbsp;CommaDelimitedListParam|{<br/>&nbsp;&nbsp;"Fn::Join":&nbsp;[<br/>&nbsp;&nbsp;&nbsp;&nbsp;",",<br/>&nbsp;&nbsp;&nbsp;&nbsp;[<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"item1",<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"item2"<br/>&nbsp;&nbsp;&nbsp;&nbsp;]<br/>&nbsp;&nbsp;]<br/>}|-|String|true|Mutable|
-|&nbsp;&nbsp;StringParam|string|-|String|true|Mutable|
-|TemplateURL|https://bucket/prefix/template.yaml|-|String|true|Mutable|
-
-
-
-
 
 ### [CustomResource1 (Custom::Resource)](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html)
 

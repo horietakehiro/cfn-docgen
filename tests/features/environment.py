@@ -17,6 +17,20 @@ EXPECTED_MASTER_FILE=os.path.join(
     "..", "..", "docs", "sample-template.md"
 )
 
+INPUT_CUSTOM_MASTER_FILE=os.path.join(
+    os.path.dirname(__file__),
+    "..", "..", "docs", "custom-resources.yaml"
+)
+EXPECTED_CUSTOM_MASTER_FILE=os.path.join(
+    os.path.dirname(__file__),
+    "..", "..", "docs", "custom-resources.md"
+)
+CUSTOM_RESOURCE_SPECIFICATION=os.path.join(
+    os.path.dirname(__file__),
+    "..", "..", "docs", "custom-specification.json"
+)
+
+
 # local directories and files
 ROOT_DIR=os.path.join(os.path.dirname(__file__), "data")
 INPUT_ROOT_DIR=os.path.join(ROOT_DIR, "input")
@@ -130,6 +144,16 @@ class DockerContext:
     master: str
     docker_client:DockerClient
 
+@dataclass
+class CustomResourceContext:
+    format: str
+    source: str
+    dest: str
+    expected: List[str]
+    master: str
+    custom_resource: str
+
+
 @fixture # type: ignore
 def command_line_tool(
     context:CommandLineToolContext, 
@@ -148,6 +172,24 @@ def command_line_tool(
     context.dest = dest
     context.expected = expected
     context.master = master
+
+    yield context
+
+
+@fixture # type: ignore
+def command_line_tool_with_custom_resources(
+    context:CustomResourceContext, 
+    fmt:str, source:str, dest:str, expected:List[str], master:str, custom_resource:str,
+    *args, **kwargs # type: ignore
+):
+    setup_local_dirs_and_files()
+    shutil.copy(INPUT_CUSTOM_MASTER_FILE, source)
+    context.format = fmt
+    context.source = source
+    context.dest = dest
+    context.expected = expected
+    context.master = master
+    context.custom_resource = custom_resource
 
     yield context
 
@@ -245,6 +287,11 @@ fixture_registry = { # type: ignore
     "fixture.command_line_tool.markdown.s3_multiple_source_s3_multiple_dest": (
         command_line_tool, 
         ["markdown", INPUT_ROOT_PREFIX, OUTPUT_ROOT_PREFIX, [OUTPUT_MD_KEY1, OUTPUT_MD_KEY2], EXPECTED_MASTER_FILE],
+        {},
+    ),
+    "fixture.command_line_tool.markdown.use_custom_resource_specification": (
+        command_line_tool_with_custom_resources, 
+        ["markdown", INPUT_FILE1, OUTPUT_MD_FILE1, [OUTPUT_MD_FILE1], EXPECTED_CUSTOM_MASTER_FILE, CUSTOM_RESOURCE_SPECIFICATION],
         {},
     ),
     "fixture.serverless.markdown.s3_single_source_s3_single_dest": (

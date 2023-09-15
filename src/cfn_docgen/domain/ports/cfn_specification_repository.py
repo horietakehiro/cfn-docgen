@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Mapping
+from typing import Callable, List, Mapping, Optional
 from cfn_docgen.config import AppContext
 from cfn_docgen.domain.ports.cache import IFileCache
 from cfn_docgen.domain.ports.internal.file_loader import IFileLoader
@@ -9,17 +9,17 @@ from cfn_docgen.domain.model.cfn_specification import CfnSpecificationPropertyTy
 
 class ICfnSpecificationRepository(ABC):
 
+    @abstractmethod
     def __init__(
         self,
         source_url:str,
-        loader:IFileLoader, 
+        loader_factory:Callable[[str, AppContext], IFileLoader], 
         cache:IFileCache, 
         recursive_resource_types:List[str],
         context:AppContext,
+        custom_resource_specification_url:Optional[str]=None,
     ) -> None:
-        self.context = context
-        self.recursive_resource_types = recursive_resource_types
-        super().__init__()
+        pass
 
     @abstractmethod
     def get_resource_spec(self, resource_type:CfnSpecificationResourceTypeName) -> CfnSpecificationResourceType:

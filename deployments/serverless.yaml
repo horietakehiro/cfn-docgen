@@ -39,12 +39,23 @@ Parameters:
       "[Optional]The key prefix of s3 bucket where generated document files are stored.
     Type: String
     Default: "documents/"
+  CustomResourceSpecificationUrl:
+    Description: |
+      "[Optional]The s3 url for your custom resource specification file.
+    Type: String
+    Default: ""
+
 
 Conditions:
   DestBucketNullCond:
     Fn::Equals:
       - !Ref DestBucketName
       - ""
+  CustomResourceSpecificationUrlCond:
+    Fn::Not:
+      - Fn::Equals:
+        - !Ref CustomResourceSpecificationUrl
+        - ""
 
 Resources:
   FunctionRole:
@@ -121,6 +132,11 @@ Resources:
               - !Sub ${SourceBucketNamePrefix}-${AWS::AccountId}-${AWS::Region}
               - !Ref DestBucketName
           DEST_BUCKET_PREFIX: !Ref DestBucketKeyPrefix
+          CUSTOM_RESOURCE_SPECIFICATION_URL:
+            Fn::If:
+              - CustomResourceSpecificationUrlCond
+              - !Ref CustomResourceSpecificationUrl
+              - !Ref AWS::NoValue
       Events:
         JsonUploadEvent:
           Type: S3

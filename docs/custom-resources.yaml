@@ -1,6 +1,6 @@
 Resources:
   CustomResource1:
-    Type: Custom::Resource1
+    Type: Custom::Resource
     Properties:
       ServiceToken: !GetAtt Function.Arn
       StringProp: string
@@ -15,16 +15,5 @@ Resources:
       NestedProp:
         NumberProp: 0
         BoolProp: True
-  Stack:
-    Type: AWS::CloudFormation::Stack
-    Properties: 
-      Parameters: 
-        StringParam: string
-        CommaDelimitedListParam:
-          Fn::Join:
-            - ","
-            - 
-              - item1
-              - item2
-      TemplateURL: https://bucket/prefix/template.yaml
+
 
