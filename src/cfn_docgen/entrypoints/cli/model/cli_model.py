@@ -10,11 +10,24 @@ from cfn_docgen.domain.ports.internal.file_loader import IFileLoader
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenServiceCommandInput, SupportedFormat, ext_by_format
 
 
-Subcommand = Literal["docgen"]
-
+Subcommand = Literal["docgen", "skelton"]
 
 @dataclass
-class CliArguement:
+class CliSkeltonArguement:
+    subcommand: Subcommand
+    type: str
+    debug: bool = False
+    def as_list(self) -> List[str]:
+        arg_list = [
+            self.subcommand,
+            "--type", self.type,
+        ]
+        if self.debug:
+            arg_list.append("--debug")
+        return arg_list
+    
+@dataclass
+class CliDocgenArguement:
     subcommand:Subcommand
     format: SupportedFormat
     source: str
@@ -33,12 +46,12 @@ class CliArguement:
         return arg_list
     
 class CfnDocgenCLIUnitsOfWork:
-    args:CliArguement
+    args:CliDocgenArguement
     units_of_work:List[CfnDocgenServiceCommandInput]
 
     def __init__(
         self,
-        args:CliArguement,
+        args:CliDocgenArguement,
         file_loader_factory:Callable[[CfnTemplateSource, AppContext], IFileLoader],
         context:AppContext,
     ) -> None:
@@ -55,7 +68,7 @@ class CfnDocgenCLIUnitsOfWork:
 
     def build_units_of_work(
         self, 
-        args:CliArguement, 
+        args:CliDocgenArguement, 
         file_loader_factory:Callable[[CfnTemplateSource, AppContext], IFileLoader],
         context:AppContext,
     ) -> List[CfnDocgenServiceCommandInput]:

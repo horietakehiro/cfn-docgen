@@ -1,11 +1,14 @@
+import json
+import logging
 import pytest
 import os
 import shutil
 import boto3
 from click.testing import CliRunner
+from cfn_docgen.domain.model.cfn_specification import CfnSpecification
 
 from cfn_docgen.entrypoints.cli.main import main
-from cfn_docgen.entrypoints.cli.model.cli_model import CliArguement
+from cfn_docgen.entrypoints.cli.model.cli_model import CliDocgenArguement, CliSkeltonArguement
 
 INPUT_MASTER_FILE=os.path.join(
     os.path.dirname(__file__),
@@ -112,7 +115,7 @@ def function_s3_bucket_and_keys():
 
 
 def test_cli_local_file_source_local_file_dest():
-    args = CliArguement(
+    args = CliDocgenArguement(
         subcommand="docgen",
         format="markdown",
         source=INPUT_FILE1,
@@ -132,7 +135,7 @@ def test_cli_local_file_source_local_file_dest():
 
 
 def test_cli_s3_key_source_s3_key_dest():
-    args = CliArguement(
+    args = CliDocgenArguement(
         subcommand="docgen",
         format="markdown",
         source=f"s3://{TEST_BUCKET_NAME}/{INPUT_KEY1}",
@@ -151,7 +154,7 @@ def test_cli_s3_key_source_s3_key_dest():
 
 
 def test_cli_local_folder_source_local_folder_dest():
-    args = CliArguement(
+    args = CliDocgenArguement(
         subcommand="docgen",
         format="markdown",
         source=INPUT_ROOT_DIR,
@@ -170,7 +173,7 @@ def test_cli_local_folder_source_local_folder_dest():
             assert fp.read() == expected
 
 def test_cli_s3_prefix_source_s3_prefix_dest():
-    args = CliArguement(
+    args = CliDocgenArguement(
         subcommand="docgen",
         format="markdown",
         source=f"s3://{TEST_BUCKET_NAME}/{INPUT_ROOT_PREFIX}",
@@ -188,7 +191,7 @@ def test_cli_s3_prefix_source_s3_prefix_dest():
         assert res["Body"].read() == expected
 
 def test_cli_build_units_of_work_fail():
-    args = CliArguement(
+    args = CliDocgenArguement(
         subcommand="docgen",
         format="markdown",
         source="not-exist-source",
@@ -206,7 +209,7 @@ def test_cli_continue():
     try:
         with open(INPUT_FILE1, "wb") as fp:
             fp.write(b"invalid")
-        args = CliArguement(
+        args = CliDocgenArguement(
             subcommand="docgen",
             format="markdown",
             source=INPUT_ROOT_DIR,
@@ -222,3 +225,21 @@ def test_cli_continue():
     finally:
         shutil.copy(INPUT_MASTER_FILE, INPUT_FILE1)
 
+
+def test_cli_skelton_custom_resource_specification(
+    caplog:pytest.LogCaptureFixture
+):
+    caplog.set_level(logging.INFO)
+
+    args = CliSkeltonArguement(
+        subcommand="skelton",
+        type="custom-resource-specification"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(main, args=args.as_list())
+    assert result.exit_code == 0
+    _ = CfnSpecification(**json.loads("\n".join(result.stdout.split("\n")[:-2])))
+
+    expected = "for more information about AWS CloudFormation Resource Specification, see [https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-resource-specification.html]"
+    assert expected in [r.message for r in caplog.records]

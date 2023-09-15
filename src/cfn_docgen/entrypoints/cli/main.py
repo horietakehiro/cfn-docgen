@@ -10,13 +10,49 @@ from cfn_docgen.adapters.internal.file_loader import specification_loader_factor
 from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import document_generator_factory
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenService
+from cfn_docgen.domain.services.cfn_skelton_service import CfnSkeltonService, CfnSkeltonServiceCommandInput
 
-from cfn_docgen.entrypoints.cli.model.cli_model import CfnDocgenCLIUnitsOfWork, CliArguement, SupportedFormat
+from cfn_docgen.entrypoints.cli.model.cli_model import CfnDocgenCLIUnitsOfWork, CliDocgenArguement, SupportedFormat
 
 @click.group(name="cfn-docgen")
 @click.version_option(package_name="cfn-docgen")
 def main():
     pass
+
+@main.command()
+@click.option(
+    "-t", "--type", "skelton_type", required=True, type=click.Choice(["custom-resource-specification"]),
+    help="skelton type to be shown"
+)
+@click.option(
+    "--debug", "debug", required=False, is_flag=True, show_default=True, default=False,
+    help="enable logging"
+)
+def skelton(skelton_type:str, debug:bool=False):
+    
+    context = AppContext(
+        log_level=logging.DEBUG if debug else logging.INFO
+    )
+
+    try:
+        command_input = CfnSkeltonServiceCommandInput(
+            type=skelton_type
+        )
+        service = CfnSkeltonService(context=context)
+
+        command_output = service.main(command_input)
+        click.echo(command_output.skelton)
+        context.log_info(
+            "for more information about AWS CloudFormation Resource Specification, see [https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-resource-specification.html]"
+        )
+        sys.exit(0)
+
+    except Exception:
+        context.log_error(f"skelton for [{skelton_type}] failed to be shown")
+        click.echo(context.log_messages.as_string(level=logging.ERROR))
+        sys.exit(1)
+
+
 
 @main.command()
 @click.option(
@@ -59,7 +95,7 @@ def docgen(
             aws=AwsConnectionSettings(profile_name=profile)
         )
     )
-    args = CliArguement(
+    args = CliDocgenArguement(
         subcommand="docgen",
         format=fmt,
         source=source,

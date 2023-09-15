@@ -153,6 +153,11 @@ class CustomResourceContext:
     master: str
     custom_resource: str
 
+@dataclass
+class SkeltonContext:
+    type: str
+    stdout: str
+
 
 @fixture # type: ignore
 def command_line_tool(
@@ -268,6 +273,14 @@ def cdk_fixture(
 
     yield context
 
+@fixture # type: ignore
+def skelton(
+    context:SkeltonContext, 
+    *args, **kwargs # type: ignore
+):
+    context.type = "custom-resource-specification"
+
+
 fixture_registry = { # type: ignore
     "fixture.command_line_tool.markdown.local_single_file_local_single_dest": (
         command_line_tool, 
@@ -319,6 +332,11 @@ fixture_registry = { # type: ignore
             [], 
             EXPECTED_MASTER_FILE
         ],
+        {},
+    ),
+    "fixture.command_line_tool.skelton.cunstom_resource_specification": (
+        skelton, 
+        [],
         {},
     ),
 
