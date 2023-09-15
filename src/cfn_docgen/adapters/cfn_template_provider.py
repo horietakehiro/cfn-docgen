@@ -1,6 +1,6 @@
 from typing import Callable
 from cfn_flip import to_json # type: ignore
-from cfn_docgen.adapters.internal.file_loader import file_loader_factory
+from cfn_docgen.adapters.internal.file_loader import template_loader_factory
 from cfn_docgen.config import AppContext
 from cfn_docgen.domain.model.cfn_template import CfnTemplateDefinition, CfnTemplateSource
 from cfn_docgen.domain.ports.cfn_template_provider import ICfnTemplateProvider
@@ -9,7 +9,7 @@ from cfn_docgen.domain.ports.internal.file_loader import IFileLoader
 def template_provider_factory(template_source:CfnTemplateSource, context:AppContext) -> ICfnTemplateProvider:
     context.log_debug(f"type of template source is [{template_source.type}]. return CfnTemplateProvider")
     return CfnTemplateProvider(
-        file_loader_factory=file_loader_factory,
+        file_loader_factory=template_loader_factory,
         context=context,
     )
 

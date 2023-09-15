@@ -8,7 +8,7 @@ from behave import given, then, when
 import boto3  # pylint: disable=no-name-in-module
 
 from cfn_docgen import __version__
-from tests.features.environment import CommandLineToolContext
+from tests.features.environment import CommandLineToolContext, CustomResourceContext
 
 @given("cfn-docgen command line tool is locally installed")
 def step_impl(context:CommandLineToolContext):
@@ -34,6 +34,11 @@ def step_impl(context:CommandLineToolContext):
     )
     assert len(res["Contents"]) > 0
 
+@given("custom resource specification file is locally saved")
+def step_impl(context:CustomResourceContext):
+    assert os.path.isfile(context.custom_resource)
+
+
 @when("cfn-docgen is invoked, with specifying source and dest, and format as markdown")
 def step_impl(context:CommandLineToolContext):
     resutl = subprocess.run(
@@ -48,6 +53,20 @@ def step_impl(context:CommandLineToolContext):
     )
     assert resutl.returncode == 0, f"command failed with {resutl.returncode}, {resutl.stdout}, {resutl.stderr}"
 
+@when("cfn-docgen is invoked, with specifying custom resource specification")
+def step_impl(context:CustomResourceContext):
+    resutl = subprocess.run(
+        [
+            "cfn-docgen", "docgen",
+            "--format", context.format, 
+            "--source", context.source,
+            "--dest", context.dest,
+            "--custom-resource-specification", context.custom_resource,
+        ],
+        check=True,
+        capture_output=True,
+    )
+    assert resutl.returncode == 0, f"command failed with {resutl.returncode}, {resutl.stdout}, {resutl.stderr}"
 
 @then("markdown document files are locally created")
 def step_impl(context:CommandLineToolContext):
@@ -70,7 +89,7 @@ def step_impl(context:CommandLineToolContext):
         assert len(res["Contents"]) == 1
 
 @then("all of the definitions of CloudFormation template are written as a form of markdown in it.")
-def step_imlp(context:CommandLineToolContext):
+def step_impl(context:CommandLineToolContext):
     with open(context.master, "r", encoding="UTF-8") as fp:
         master = fp.read()
     for e in context.expected:
@@ -78,3 +97,13 @@ def step_imlp(context:CommandLineToolContext):
             expected = fp.read()
 
         assert expected == master
+
+@then("all of the definitions of CloudFormation template, including custom resources are written as a form of markdown in it.")
+def step_impl(context:CustomResourceContext):
+    for e in context.expected:
+        with open(e, "r", encoding="UTF8") as fp:
+            expected = fp.read()
+        assert "CustomResource1" in expected
+        assert "Custom::Resource" in expected
+        assert "&nbsp;&nbsp;BoolProp" in expected
+        assert "&nbsp;&nbsp;NumberProp" in expected

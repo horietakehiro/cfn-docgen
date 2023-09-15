@@ -29,3 +29,11 @@ Feature: cfn-docgen as command line tool
     When cfn-docgen is invoked, with specifying source and dest, and format as markdown
     Then markdown document files are created at S3 bucket
 
+  @fixture.command_line_tool.markdown.use_custom_resource_specification
+  Scenario: Generate a markdown document file with using custom resource specification file from CloudFormation template with custom resources
+    Given cfn-docgen command line tool is locally installed 
+    And CloudFormation template files are locally saved
+    And custom resource specification file is locally saved
+    When cfn-docgen is invoked, with specifying custom resource specification
+    Then markdown document files are locally created
+    And all of the definitions of CloudFormation template, including custom resources are written as a form of markdown in it.

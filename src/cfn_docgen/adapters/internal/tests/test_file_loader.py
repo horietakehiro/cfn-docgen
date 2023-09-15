@@ -10,7 +10,7 @@ from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, Conn
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
 
-from cfn_docgen.adapters.internal.file_loader import LocalFileLoader, RemoteFileLoader, S3FileLoader, document_loader_factory, file_loader_factory
+from cfn_docgen.adapters.internal.file_loader import LocalFileLoader, RemoteFileLoader, S3FileLoader, document_loader_factory, specification_loader_factory, template_loader_factory
 
 INPUT_MASTER_FILE=os.path.join(
     os.path.dirname(__file__),
@@ -190,7 +190,7 @@ def test_file_loader_factory(source:str, expected:Any, context:AppContext):
         source=source,
         context=context,
     )
-    loader = file_loader_factory(template_source, context=context)
+    loader = template_loader_factory(template_source, context=context)
     assert isinstance(loader, expected)
 
 @pytest.mark.parametrize("dest,expected", [
@@ -265,3 +265,19 @@ def test_S3Fileloader_custom_profile(context:AppContext):
     )
     with pytest.raises(ProfileNotFound):
         S3FileLoader(context=context)
+
+
+@pytest.mark.parametrize("url,expected", [
+    ("http://example.com/fie", RemoteFileLoader),
+    ("https://example.com/fie", RemoteFileLoader),
+    ("s3://bucket/fie", S3FileLoader),
+    ("/dir/file", LocalFileLoader),
+])
+def test_specification_loader_factory(
+    url:str, expected:Any,
+    context:AppContext,
+):
+    loader = specification_loader_factory(
+        specification_url=url, context=context,
+    )
+    assert isinstance(loader, expected)

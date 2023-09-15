@@ -1,0 +1,19 @@
+Resources:
+  CustomResource1:
+    Type: Custom::Resource
+    Properties:
+      ServiceToken: !GetAtt Function.Arn
+      StringProp: string
+      NestedProp:
+        NumberProp: 0
+        BoolProp: True
+  CustomResource2:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt Function.Arn
+      StringProp: string
+      NestedProp:
+        NumberProp: 0
+        BoolProp: True
+
+

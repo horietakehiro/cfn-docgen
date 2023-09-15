@@ -5,7 +5,7 @@ from typing import Any, Mapping, Optional, cast
 import pytest
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.internal.cache import LocalFileCache
-from cfn_docgen.adapters.internal.file_loader import  RemoteFileLoader
+from cfn_docgen.adapters.internal.file_loader import specification_loader_factory
 from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_template import (
     CfnTemplateConditionsNode,
@@ -287,7 +287,7 @@ def spec_repository(context:AppContext):
     return CfnSpecificationRepository(
         context=context,
         source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-        loader=RemoteFileLoader(context=context),
+        loader_factory=specification_loader_factory,
         cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )
@@ -297,7 +297,7 @@ def all_resource_types():
     spec_repository = CfnSpecificationRepository(
         context=context,
         source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-        loader=RemoteFileLoader(context=context),
+        loader_factory=specification_loader_factory,
         cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )

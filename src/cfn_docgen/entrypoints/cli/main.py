@@ -6,7 +6,7 @@ from cfn_docgen.adapters.cfn_document_storage import document_storage_facotory
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.cfn_template_provider import template_provider_factory
 from cfn_docgen.adapters.internal.cache import LocalFileCache
-from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader, file_loader_factory
+from cfn_docgen.adapters.internal.file_loader import specification_loader_factory, template_loader_factory
 from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import document_generator_factory
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenService
@@ -36,10 +36,21 @@ def main():
     help="aws profile name."
 )
 @click.option(
+    "-c", "--custom-resource-specification", "custom_resource_specification", required=False, type=str, default=None,
+    help="local file path or S3 URL for your custom resource specification json file"
+)
+@click.option(
     "--debug", "debug", required=False, is_flag=True, show_default=True, default=False,
     help="enable logging"
 )
-def docgen(fmt:SupportedFormat, source:str, dest:str, profile:Optional[str]=None, debug:bool=False):
+def docgen(
+    fmt:SupportedFormat, 
+    source:str,
+    dest:str, 
+    custom_resource_specification:str,
+    profile:Optional[str]=None, 
+    debug:bool=False,
+):
     context = AppContext(
         request_id=None,
         logger_name="cfn-docgen",
@@ -59,7 +70,7 @@ def docgen(fmt:SupportedFormat, source:str, dest:str, profile:Optional[str]=None
     try:
         units_of_work = CfnDocgenCLIUnitsOfWork(
             args=args,
-            file_loader_factory=file_loader_factory,
+            file_loader_factory=template_loader_factory,
             context=context,
         )
     except AssertionError:
@@ -74,7 +85,8 @@ def docgen(fmt:SupportedFormat, source:str, dest:str, profile:Optional[str]=None
             cfn_document_storage_factory=document_storage_facotory,
             cfn_specification_repository=CfnSpecificationRepository(
                 source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-                loader=RemoteFileLoader(context=context),
+                custom_resource_specification_url=custom_resource_specification,
+                loader_factory=specification_loader_factory,
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
                 context=context,

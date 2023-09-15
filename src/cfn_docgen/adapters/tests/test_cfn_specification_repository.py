@@ -1,8 +1,9 @@
 import logging
+import os
 import pytest
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.internal.cache import LocalFileCache
-from cfn_docgen.adapters.internal.file_loader import RemoteFileLoader
+from cfn_docgen.adapters.internal.file_loader import specification_loader_factory
 from cfn_docgen.config import AppConfig, AppContext, ConnectionSettings, AwsConnectionSettings
 from cfn_docgen.domain.model.cfn_specification import CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName
 
@@ -10,6 +11,12 @@ from cfn_docgen.domain.model.cfn_specification import CfnSpecificationPropertyTy
 @pytest.fixture
 def cfn_specification_url():
     return "https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json"
+@pytest.fixture
+def custom_resource_specification_url():
+    return os.path.join(
+        os.path.dirname(__file__),
+        "..", "..", "..", "..", "docs", "custom-specification.json"
+    )
 
 @pytest.fixture
 def context():
@@ -22,12 +29,12 @@ def context():
 def repository(context:AppContext):
     return CfnSpecificationRepository(
         source_url="https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json",
-        loader=RemoteFileLoader(context=context),
+        custom_resource_specification_url=None,
+        loader_factory=specification_loader_factory,
         cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
         context=context
     )
-
 
 def test_CfnSpecificationRepository_get_resource_spec(
     repository:CfnSpecificationRepository,
@@ -146,3 +153,35 @@ def test_CfnSpecificationRepository_is_recursive(
     assert repository.is_recursive(
         CfnSpecificationResourceTypeName(resource_type, context)
     ) == expected
+
+def test_CfnSpecificationRepository_with_custom_specification(
+    custom_resource_specification_url:str,
+    context:AppContext,
+):
+    repository = CfnSpecificationRepository(
+        source_url="https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json",
+        custom_resource_specification_url=custom_resource_specification_url,
+        loader_factory=specification_loader_factory,
+        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
+        recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+        context=context
+    )
+
+    custom_resource_spec = repository.get_specs_for_resource(
+        CfnSpecificationResourceTypeName("Custom::Resource", context),
+    )
+    assert custom_resource_spec.ResourceSpec.Properties["StringProp"].PrimitiveType is not None
+    assert custom_resource_spec.ResourceSpec.Properties["NestedProp"].Type is not None
+    nested_prop = custom_resource_spec.PropertySpecs["Custom::Resource.NestedProp"]
+    assert nested_prop.Properties is not None
+    assert nested_prop.Properties["NumberProp"].PrimitiveType is not None
+
+    custom_resource_spec = repository.get_specs_for_resource(
+        CfnSpecificationResourceTypeName("AWS::CloudFormation::CustomResource", context),
+    )
+    assert custom_resource_spec.ResourceSpec.Properties["StringProp"].PrimitiveType is not None
+    assert custom_resource_spec.ResourceSpec.Properties["NestedProp"].Type is not None
+    nested_prop = custom_resource_spec.PropertySpecs["AWS::CloudFormation::CustomResource.NestedProp"]
+    assert nested_prop.Properties is not None
+    assert nested_prop.Properties["NumberProp"].PrimitiveType is not None
+

@@ -27,7 +27,7 @@ def document_loader_factory(
             raise NotImplementedError(f"document dest type [{document_dest.type}] is not supported")
 
 
-def file_loader_factory(
+def template_loader_factory(
     template_source:CfnTemplateSource,
     context:AppContext,
 ) -> IFileLoader:
@@ -44,6 +44,19 @@ def file_loader_factory(
         case _: # type: ignore
             raise NotImplementedError(f"template source type [{template_source.type}] is not supported")
 
+def specification_loader_factory(
+    specification_url:str,
+    context:AppContext
+) -> IFileLoader:
+    if specification_url.startswith("https://") or specification_url.startswith("http://"):
+        context.log_debug("resource specification type is [http]. return RemoteFileLoader")
+        return RemoteFileLoader(context)
+    if specification_url.startswith("s3://"):
+        context.log_debug("resource specification type is [s3]. return S3FileLoader")
+        return S3FileLoader(context)
+    
+    context.log_debug("resource specification type is [local]. return LocalFileLoader")
+    return LocalFileLoader(context)
 
 class LocalFileLoader(IFileLoader):
     def __init__(self, context: AppContext) -> None:

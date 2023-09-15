@@ -4,7 +4,7 @@ import shutil
 from typing import List
 import boto3
 import pytest
-from cfn_docgen.adapters.internal.file_loader import file_loader_factory
+from cfn_docgen.adapters.internal.file_loader import template_loader_factory
 from cfn_docgen.config import AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
 from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
@@ -443,7 +443,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_valid_pattern(
     
     units_of_work = CfnDocgenCLIUnitsOfWork(
         args=args,
-        file_loader_factory=file_loader_factory,
+        file_loader_factory=template_loader_factory,
         context=context
     )
 
@@ -504,7 +504,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_invalid_pattern(
     ):
         CfnDocgenCLIUnitsOfWork(
             args=args,
-            file_loader_factory=file_loader_factory,
+            file_loader_factory=template_loader_factory,
             context=context
         )
     
@@ -538,7 +538,7 @@ def test_CfnDocgenCLIUnitsOfWork_build_units_of_work_not_exist_source(
     ):
         CfnDocgenCLIUnitsOfWork(
             args=args,
-            file_loader_factory=file_loader_factory,
+            file_loader_factory=template_loader_factory,
             context=context
         )
     
