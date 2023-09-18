@@ -82,6 +82,17 @@ $ cfn-docgen docgen \
 
 ---
 
+
+### Visual Studio Code Extension
+
+You can use cfn-docgen as [Visual Studio Code Extension](https://marketplace.visualstudio.com/items?itemName=horietakehiromarketplace.cfn-docgen-vsc-extension)
+
+![cfn-docgen-vsc-extension-docgen-sample](https://github.com/horietakehiro/cfn-docgen-vsc-extension/raw/master/images/single-dest-single-source.gif)
+
+![cfn-docgen-vsc-extension-skelton-sample](https://github.com/horietakehiro/cfn-docgen-vsc-extension/raw/master/images/skelton.gif)
+
+---
+
 ### Docker Image
 
 ```Bash
@@ -145,11 +156,15 @@ When you upload cfn template json/yaml files at `templates/` folder of the bucke
 
 ---
 
-## Embedding Descirptions
+## Features
 
 ---
 
-### Top level descriptions
+### Embedding Descirptions
+
+---
+
+#### Top level descriptions
 
 You can embed description for the template at top level `Metadata` section like this, then markdown document will be generated from it.
 
@@ -190,7 +205,7 @@ Then, the generated description will be like below.
 
 ![each-section-description](./docs/images/each-section-description.png)
 
-### Resources and Properties description
+#### Resources and Properties description
 
 You can embed descriptions for resources and their properties in `Metadata` section in each resources.
 
@@ -213,7 +228,7 @@ Then, the generated description will be like below.
 
 ---
 
-## Integration with AWS CDK
+### Integration with AWS CDK
 
 cfn-docgen can generate documents from AWS-CDK-generated templates, and you can also embed descriptions in cdk codes like below.
 
@@ -251,3 +266,66 @@ class CfnDocgenSampleCdkStack(Stack):
 Then, the table of contents of generated document will be like below.
 
 ![](./docs/images/table-of-contents-from-cdk-generated-template.png)
+
+---
+
+### Integration with custom resource specification
+
+You can define custom resource specification [like this](./docs/custom-specification.json) and generate documents for them.
+
+```Bash
+$ cfn-docgen docgen \
+  -s docs/sample-template.yaml \
+  -s docs/sample-template.md \
+  -c docs/custom-specification.json
+```
+
+---
+
+### Generate skeltons
+
+You can generate definition skeltons for each resource types.
+
+```Bash
+$ cfn-docgen skelton --type AWS::EC2::VPC --format yaml
+Type: AWS::EC2::VPC
+Metadata:
+  CfnDocgen:
+    Description: ''
+    Properties: {}
+Properties:
+  InstanceTenancy: String
+  Ipv4NetmaskLength: Integer
+  CidrBlock: String
+  Ipv4IpamPoolId: String
+  EnableDnsSupport: Boolean
+  EnableDnsHostnames: Boolean
+  Tags:
+    - Key: String
+      Value: String
+
+$ cfn-docgen skelton --type AWS::EC2::VPC --format json
+{
+  "Type": "AWS::EC2::VPC",
+  "Metadata": {
+    "CfnDocgen": {
+      "Description": "",
+      "Properties": {}
+    }
+  },
+  "Properties": {
+    "InstanceTenancy": "String",
+    "Ipv4NetmaskLength": "Integer",
+    "CidrBlock": "String",
+    "Ipv4IpamPoolId": "String",
+    "EnableDnsSupport": "Boolean",
+    "EnableDnsHostnames": "Boolean",
+    "Tags": [
+      {
+        "Key": "String",
+        "Value": "String"
+      }
+    ]
+  }
+}
+```
