@@ -13,6 +13,9 @@
     <a href="https://pypi.org/project/cfn-docgen/">
         <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/cfn-docgen">
     </a>
+    <a href="https://marketplace.visualstudio.com/items?itemName=horietakehiromarketplace.cfn-docgen-vsc-extension">
+    <img alt="Visual Studio Marketplace Version (including pre-releases)" src="https://img.shields.io/visual-studio-marketplace/v/horietakehiromarketplace.cfn-docgen-vsc-extension?label=visual studio code extension">
+    </a>
     <a href="https://hub.docker.com/r/horietakehiro/cfn-docgen/tags">
         <img alt="Docker Image Version (latest semver)" src="https://img.shields.io/docker/v/horietakehiro/cfn-docgen?label=docker">
     </a>
