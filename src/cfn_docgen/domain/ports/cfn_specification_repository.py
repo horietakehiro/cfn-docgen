@@ -43,3 +43,6 @@ class ICfnSpecificationRepository(ABC):
     def is_recursive(self, resource_type:CfnSpecificationResourceTypeName) -> bool:
         pass
 
+    @abstractmethod
+    def list_resource_types(self, ) -> List[str]:
+        pass

@@ -185,3 +185,20 @@ def test_CfnSpecificationRepository_with_custom_specification(
     assert nested_prop.Properties is not None
     assert nested_prop.Properties["NumberProp"].PrimitiveType is not None
 
+
+def test_CfnSpecificationRepository_list_resource_types(
+    custom_resource_specification_url:str,
+    context:AppContext,
+):
+    repository = CfnSpecificationRepository(
+        source_url="https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json",
+        custom_resource_specification_url=custom_resource_specification_url,
+        loader_factory=specification_loader_factory,
+        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
+        recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+        context=context
+    )
+
+    resource_types = repository.list_resource_types()
+    assert "AWS::EC2::Instance" in resource_types
+    assert "Custom::Resource" in resource_types

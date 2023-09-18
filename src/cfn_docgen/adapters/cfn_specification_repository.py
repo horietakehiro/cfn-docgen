@@ -94,3 +94,6 @@ class CfnSpecificationRepository(ICfnSpecificationRepository):
             self.context.log_debug(f"resource type [{resource_type}] is recurisive resource")
             return True
         return False
+
+    def list_resource_types(self) -> List[str]:
+        return sorted(list(self.spec.ResourceTypes.keys()))

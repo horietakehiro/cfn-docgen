@@ -1,12 +1,13 @@
 from __future__ import annotations
 import logging
-from typing import Any, Mapping, Optional, cast
+from typing import Any, Mapping, Optional, cast, List
 
 import pytest
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.internal.cache import LocalFileCache
 from cfn_docgen.adapters.internal.file_loader import specification_loader_factory
 from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
+from cfn_docgen.domain.model.cfn_specification import CfnSpecificationResourceTypeName
 from cfn_docgen.domain.model.cfn_template import (
     CfnTemplateConditionsNode,
     CfnTemplateDefinition,
@@ -23,12 +24,14 @@ from cfn_docgen.domain.model.cfn_template import (
     CfnTemplateResourceDefinition,
     CfnTemplateResourceMetadataCfnDocgenDefinition,
     CfnTemplateResourceMetadataDefinition,
+    CfnTemplateResourceNode,
     CfnTemplateResourcesNode,
     CfnTemplateRuleAssertDefinition,
     CfnTemplateRuleDefinition,
     CfnTemplateRulesNode,
     CfnTemplateSource,
-    CfnTemplateTree
+    CfnTemplateTree,
+    ResourceInfo
 )
 
 @pytest.fixture
@@ -866,4 +869,51 @@ def test_CfnTemplateResourcesNode_resource_groups(
     independent_node = resources_node.group_nodes[resources_node.group_name_for_independent_resources]
     assert set(independent_node.resource_nodes.keys()) == set(["independent-resource1", "independent-resource2"])
 
+
+def test_CfnTemplateResourcesNode_as_skelton(
+    spec_repository:CfnSpecificationRepository,
+    context:AppContext,
+):
+    resource_type = CfnSpecificationResourceTypeName(
+        resource_type="AWS::IAM::Role", context=context,
+    )
+    specs = spec_repository.get_specs_for_resource(resource_type)
+    resource_node = CfnTemplateResourceNode(
+        definition=CfnTemplateResourceDefinition(
+            Type=resource_type.fullname,
+            Properties={},
+        ),
+        resource_info=ResourceInfo(
+            type=resource_type.fullname,
+            is_recursive=spec_repository.is_recursive(resource_type),
+        ),
+        specs=specs,
+        context=context,
+    )
+
+    skelton = resource_node.as_skelton()
+
+    definition = CfnTemplateResourceDefinition(**skelton)
+
+    assert definition.Type == resource_type.fullname
+    assert definition.Metadata is not None and definition.Metadata.CfnDocgen is not None
+    assert definition.Metadata.CfnDocgen.Description == ""
+    assert definition.Metadata.CfnDocgen.Properties == {}
+
+    p = definition.Properties
+    assert p["AssumeRolePolicyDocument"] == "Json"
+    assert p["Description"] == "String"
+    assert p["ManagedPolicyArns"] == "List of String"
+    assert p["MaxSessionDuration"] == "Integer"
+    assert p["Path"] == "String"
+    assert p["PermissionsBoundary"] == "String"
+    policies = cast(List[Mapping[str, str]], p["Policies"])
+    assert len(policies) == 1
+    assert policies[0]["PolicyDocument"] == "Json"
+    assert policies[0]["PolicyName"] == "String"
+    assert p["RoleName"] == "String"
+    tags = cast(List[Mapping[str, str]], p["Tags"])
+    assert len(tags) == 1
+    assert tags[0]["Key"] == "String"
+    assert tags[0]["Value"] == "String"
 

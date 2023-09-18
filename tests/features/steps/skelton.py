@@ -4,16 +4,17 @@
 import json
 import subprocess
 from behave import then, when
-from cfn_docgen.domain.model.cfn_specification import CfnSpecification
+from cfn_docgen.domain.model.cfn_template import CfnTemplateResourceDefinition
 
 from environment import SkeltonContext
 
-@when("cfn-docgen skelton subcommand is invoked, with specifying skelton type as custom-resource-specification")
+@when("cfn-docgen skelton subcommand is invoked, with specifying resource type")
 def step_impl(context:SkeltonContext):
     result = subprocess.run(
         [
             "cfn-docgen", "skelton",
             "--type", context.type,
+            "--format", "json"
         ],
         check=True,
         capture_output=True,
@@ -22,8 +23,7 @@ def step_impl(context:SkeltonContext):
     context.stdout = result.stdout.decode(encoding="UTF-8")
 
 
-@then("sample skelton for custom resource specification is show in stdout")
+@then("skelton for the resource type is show in stdout")
 def step_impl(context:SkeltonContext):
-    custom_spec = CfnSpecification(**json.loads(context.stdout))
-    assert len(custom_spec.ResourceTypes) > 0
-    assert len(custom_spec.PropertyTypes) > 0
+    definition = CfnTemplateResourceDefinition(**json.loads(context.stdout))
+    assert definition.Type == context.type

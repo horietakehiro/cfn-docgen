@@ -278,7 +278,7 @@ def skelton(
     context:SkeltonContext, 
     *args, **kwargs # type: ignore
 ):
-    context.type = "custom-resource-specification"
+    context.type = "AWS::EC2::Instance"
 
 
 fixture_registry = { # type: ignore
@@ -334,7 +334,7 @@ fixture_registry = { # type: ignore
         ],
         {},
     ),
-    "fixture.command_line_tool.skelton.cunstom_resource_specification": (
+    "fixture.command_line_tool.skelton.resource_type": (
         skelton, 
         [],
         {},

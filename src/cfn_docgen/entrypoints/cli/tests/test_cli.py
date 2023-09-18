@@ -1,11 +1,12 @@
 import json
 import logging
+from typing import Optional
 import pytest
 import os
 import shutil
 import boto3
 from click.testing import CliRunner
-from cfn_docgen.domain.model.cfn_specification import CfnSpecification
+from cfn_docgen.domain.model.cfn_template import CfnTemplateResourceDefinition
 
 from cfn_docgen.entrypoints.cli.main import main
 from cfn_docgen.entrypoints.cli.model.cli_model import CliDocgenArguement, CliSkeltonArguement
@@ -48,6 +49,10 @@ OUTPUT_MD_KEY1=OUTPUT_PREFIX1+"/sample-template.md"
 OUTPUT_PREFIX2=OUTPUT_PREFIX1+"/dir2"
 OUTPUT_MD_KEY2=OUTPUT_PREFIX2+"/sample-template.md"
 
+CUSTOM_RESOURCE_SPECIFICATION=os.path.join(
+    os.path.dirname(__file__),
+    "..", "..","..", "..","..", "docs", "custom-specification.json"
+)
 
 @pytest.fixture(scope="class", autouse=True)
 def class_local_dirs_and_files():
@@ -226,20 +231,60 @@ def test_cli_continue():
         shutil.copy(INPUT_MASTER_FILE, INPUT_FILE1)
 
 
-def test_cli_skelton_custom_resource_specification(
+@pytest.mark.parametrize("resource_type,document_url", [
+    ("AWS::EC2::Instance", "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html"),
+    ("Custom::Resource", "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html"),
+])
+def test_cli_skelton(
+    resource_type:str, document_url:Optional[str],
     caplog:pytest.LogCaptureFixture
 ):
     caplog.set_level(logging.INFO)
 
     args = CliSkeltonArguement(
         subcommand="skelton",
-        type="custom-resource-specification"
+        type=resource_type,
+        format="json",
+        custom_resource_specification=CUSTOM_RESOURCE_SPECIFICATION,
     )
 
     runner = CliRunner()
     result = runner.invoke(main, args=args.as_list())
     assert result.exit_code == 0
-    _ = CfnSpecification(**json.loads("\n".join(result.stdout.split("\n")[:-2])))
+    _ = CfnTemplateResourceDefinition(**json.loads("\n".join(result.stdout.split("\n")[:-2])))
 
-    expected = "for more information about AWS CloudFormation Resource Specification, see [https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-resource-specification.html]"
+    expected = f"for more information about [{resource_type}], see [{document_url}]"
     assert expected in [r.message for r in caplog.records]
+
+def test_cli_skelton_error(
+    caplog:pytest.LogCaptureFixture
+):
+    caplog.set_level(logging.INFO)
+
+    args = CliSkeltonArguement(
+        subcommand="skelton",
+        type="Custom::NotExist",
+        custom_resource_specification=CUSTOM_RESOURCE_SPECIFICATION,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(main, args=args.as_list())
+    assert result.exit_code == 1
+
+    expected = "skelton for [Custom::NotExist] failed to be shown"
+    assert expected in [r.message for r in caplog.records]
+
+def test_cli_skelton_list():
+
+    args = CliSkeltonArguement(
+        subcommand="skelton",
+        list=True,
+        custom_resource_specification=CUSTOM_RESOURCE_SPECIFICATION
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(main, args=args.as_list())
+    assert result.exit_code == 0
+
+    assert "AWS::EC2::Instance" in result.stdout
+    assert "Custom::Resource" in result.stdout

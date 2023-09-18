@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import os
-from typing import Callable, Literal, List
+from typing import Callable, Literal, List, Optional
 from cfn_docgen.config import AppContext
 
 from cfn_docgen.domain.model.cfn_document_generator import CfnDocumentDestination
@@ -8,6 +8,7 @@ from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
 from cfn_docgen.domain.ports.internal.file_loader import IFileLoader
 
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenServiceCommandInput, SupportedFormat, ext_by_format
+from cfn_docgen.domain.services.cfn_skelton_service import SkeltonFormat
 
 
 Subcommand = Literal["docgen", "skelton"]
@@ -15,15 +16,26 @@ Subcommand = Literal["docgen", "skelton"]
 @dataclass
 class CliSkeltonArguement:
     subcommand: Subcommand
-    type: str
+    type: Optional[str] = None
+    custom_resource_specification:Optional[str] = None
+    format: SkeltonFormat = "yaml"
+    list: bool = False
     debug: bool = False
     def as_list(self) -> List[str]:
         arg_list = [
             self.subcommand,
-            "--type", self.type,
+            "--format", self.format,
         ]
+        if self.type is not None:
+            arg_list.append("--type")
+            arg_list.append(self.type)
+        if self.custom_resource_specification is not None:
+            arg_list.append("--custom-resource-specification")
+            arg_list.append(self.custom_resource_specification)
         if self.debug:
             arg_list.append("--debug")
+        if self.list:
+            arg_list.append("--list")
         return arg_list
     
 @dataclass

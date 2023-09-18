@@ -387,7 +387,16 @@ class CfnTemplateResourcePropertyLeaf:
         self.description = description
         self.json_path = json_path
 
-
+    def type_repr(self,) -> str:
+        if self.spec.PrimitiveType is not None:
+            return self.spec.PrimitiveType
+        if self.spec.PrimitiveItemType is not None and self.spec.Type is not None:
+            return f"{self.spec.Type} of {self.spec.PrimitiveItemType}"
+        if self.spec.ItemType is not None and self.spec.Type is not None:
+            return f"{self.spec.Type} of {self.spec.ItemType}"
+        if self.spec.Type is not None:
+            return self.spec.Type
+        return "-"
 
 class CfnTemplateResourcePropertyNode:
     def __init__(
@@ -782,7 +791,53 @@ class CfnTemplateResourceNode:
                 context=context,
             )
         except Exception:
-            context.log_warning(f"failed to build CfnTemplateResourcePropertiesNode")
+            context.log_warning("failed to build CfnTemplateResourcePropertiesNode")
+
+    def __as_skelton(self, property_node:CfnTemplateResourcePropertyNode) -> Mapping[str, Any]:
+        skelton:Mapping[str, Any] = {}
+        for name, leaf in property_node.property_leaves.items():
+            skelton[name] = leaf.type_repr()
+        for name, node in property_node.property_nodes.items():
+            skelton[name] = self.__as_skelton(node)
+        for name, node in property_node.property_nodes_list.items():
+            skelton[name] = [
+                self.__as_skelton(n) for n in node
+            ]
+        for name, node in property_node.property_nodes_map.items():
+            skelton[name] = {
+                key: self.__as_skelton(value) for key, value in node.items()
+            }
+        return skelton
+
+
+    def as_skelton(self) -> Mapping[str, Any]:
+        skelton:Mapping[str, Any] = {}
+        skelton["Type"] = self.type
+        skelton["Metadata"] = {
+            "CfnDocgen": {
+                "Description" : "",
+                "Properties": {},
+            }
+        }
+        skelton["Properties"] = {}
+        for name, leaf in self.properties_node.property_leaves.items():
+            skelton["Properties"][name] = leaf.type_repr()
+        for name, node in self.properties_node.property_nodes.items():
+            skelton["Properties"][name] = self.__as_skelton(node)
+        for name, node in self.properties_node.property_nodes_list.items():
+            skelton["Properties"][name] = [
+                self.__as_skelton(n) for n in node
+            ]
+        for name, node in self.properties_node.property_nodes_map.items():
+            skelton["Properties"][name] = {
+                key: self.__as_skelton(value) for key, value in node.items()
+            }
+        
+        return skelton
+
+
+
+
 
 
 class CfnTemplateResourceGroupNode:

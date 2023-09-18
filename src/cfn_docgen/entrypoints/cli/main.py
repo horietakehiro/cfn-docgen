@@ -9,8 +9,9 @@ from cfn_docgen.adapters.internal.cache import LocalFileCache
 from cfn_docgen.adapters.internal.file_loader import specification_loader_factory, template_loader_factory
 from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, ConnectionSettings
 from cfn_docgen.domain.model.cfn_document_generator import document_generator_factory
+from cfn_docgen.domain.model.cfn_specification import CfnSpecificationResourceTypeName
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenService
-from cfn_docgen.domain.services.cfn_skelton_service import CfnSkeltonService, CfnSkeltonServiceCommandInput
+from cfn_docgen.domain.services.cfn_skelton_service import CfnSkeltonService, CfnSkeltonServiceCommandInput, SkeltonFormat
 
 from cfn_docgen.entrypoints.cli.model.cli_model import CfnDocgenCLIUnitsOfWork, CliDocgenArguement, SupportedFormat
 
@@ -21,30 +22,66 @@ def main():
 
 @main.command()
 @click.option(
-    "-t", "--type", "skelton_type", required=True, type=click.Choice(["custom-resource-specification"]),
-    help="skelton type to be shown"
+    "-t", "--type", "skelton_type", required=False, type=str, default=None,
+    help="skelton type to be shown (e.g. AWS::EC2::Instance, or Custom::any)"
+)
+@click.option(
+    "-l", "--list", "list_", required=False, is_flag=True, show_default=True, default=False,
+    help="show list of supproted resource types",
+)
+@click.option(
+    "-c", "--custom-resource-specification", "custom_resource_specification", required=False, type=str, default=None,
+    help="local file path or S3 URL for your custom resource specification json file"
+)
+@click.option(
+    "-f", "--format", "fmt", type=click.Choice(["yaml", "json"]), show_default=True, default="yaml",
+    help="format of skelton"
 )
 @click.option(
     "--debug", "debug", required=False, is_flag=True, show_default=True, default=False,
     help="enable logging"
 )
-def skelton(skelton_type:str, debug:bool=False):
-    
+def skelton(
+    skelton_type:Optional[str]=None, 
+    custom_resource_specification:Optional[str]=None, 
+    list_:bool=False, debug:bool=False,
+    fmt: SkeltonFormat="yaml",
+):
     context = AppContext(
         log_level=logging.DEBUG if debug else logging.INFO
     )
-
     try:
-        command_input = CfnSkeltonServiceCommandInput(
-            type=skelton_type
+        if skelton_type is not None:
+            command_input = CfnSkeltonServiceCommandInput(
+                type=CfnSpecificationResourceTypeName(skelton_type, context),
+                list=list_,
+                format=fmt,
+            )
+        else:
+            command_input = CfnSkeltonServiceCommandInput(
+                type=None,
+                list=list_,
+                format=fmt,
+            )
+        
+        service = CfnSkeltonService(
+            cfn_specification_repository=CfnSpecificationRepository(
+                source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+                custom_resource_specification_url=custom_resource_specification,
+                loader_factory=specification_loader_factory,
+                cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
+                recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+                context=context,
+            ),
+            context=context,
         )
-        service = CfnSkeltonService(context=context)
-
         command_output = service.main(command_input)
         click.echo(command_output.skelton)
-        context.log_info(
-            "for more information about AWS CloudFormation Resource Specification, see [https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-resource-specification.html]"
-        )
+
+        if not list_:
+            context.log_info(
+                f"for more information about [{command_output.type}], see [{command_output.document_url}]"
+            )
         sys.exit(0)
 
     except Exception:
