@@ -811,6 +811,8 @@ class CfnTemplateResourceNode:
             skelton[name] = {
                 key: self.__as_skelton(value) for key, value in node.items()
             }
+        keys = sorted(list(skelton.keys()))
+        skelton = {k: skelton[k] for k in keys}
         return skelton
 
 
@@ -818,25 +820,29 @@ class CfnTemplateResourceNode:
         skelton:Mapping[str, Any] = {}
         skelton["Type"] = self.type
         skelton["Metadata"] = {
+            "Documentation": self.spec.Documentation,
             "CfnDocgen": {
                 "Description" : "",
                 "Properties": {},
-            }
+            },
         }
-        skelton["Properties"] = {}
+        properties:Mapping[str, Any] = {}
         for name, leaf in self.properties_node.property_leaves.items():
-            skelton["Properties"][name] = leaf.type_repr()
+            properties[name] = leaf.type_repr()
         for name, node in self.properties_node.property_nodes.items():
-            skelton["Properties"][name] = self.__as_skelton(node)
+            properties[name] = self.__as_skelton(node)
         for name, node in self.properties_node.property_nodes_list.items():
-            skelton["Properties"][name] = [
+            properties[name] = [
                 self.__as_skelton(n) for n in node
             ]
         for name, node in self.properties_node.property_nodes_map.items():
-            skelton["Properties"][name] = {
+            properties[name] = {
                 key: self.__as_skelton(value) for key, value in node.items()
             }
-        
+        keys = sorted(list(properties.keys()))
+        properties = {k: properties[k] for k in keys}
+        skelton["Properties"] = properties
+
         return skelton
 
 
