@@ -917,3 +917,39 @@ def test_CfnTemplateResourcesNode_as_skelton(
     assert tags[0]["Key"] == "String"
     assert tags[0]["Value"] == "String"
 
+
+
+def test_CfnTemplateResourcesNode_as_skelton_complex(
+    spec_repository:CfnSpecificationRepository,
+    context:AppContext,
+):
+    resource_type = CfnSpecificationResourceTypeName(
+        resource_type="AWS::EC2::Instance", context=context,
+    )
+    specs = spec_repository.get_specs_for_resource(resource_type)
+    resource_node = CfnTemplateResourceNode(
+        definition=CfnTemplateResourceDefinition(
+            Type=resource_type.fullname,
+            Properties={},
+        ),
+        resource_info=ResourceInfo(
+            type=resource_type.fullname,
+            is_recursive=spec_repository.is_recursive(resource_type),
+        ),
+        specs=specs,
+        context=context,
+    )
+
+    skelton = resource_node.as_skelton()
+
+    definition = CfnTemplateResourceDefinition(**skelton)
+
+    assert definition.Type == resource_type.fullname
+    assert definition.Metadata is not None and definition.Metadata.CfnDocgen is not None
+    assert definition.Metadata.CfnDocgen.Description == ""
+    assert definition.Metadata.CfnDocgen.Properties == {}
+
+    p = definition.Properties
+
+    assert p["SsmAssociations"][0]["AssociationParameters"][0]["Value"] == "List of String" # type: ignore
+

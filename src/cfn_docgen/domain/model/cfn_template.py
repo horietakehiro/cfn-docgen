@@ -483,6 +483,8 @@ class CfnTemplateResourcePropertyNode:
                         definition_list:List[Any] = []
                         if definitions is not None and isinstance(definitions, dict):
                             definition_list = cast(Mapping[str, List[Any]], definitions).get(property_name, [None])
+                        if definitions is None:
+                            definition_list = [None]
                         if not isinstance(definition_list, list): # type: ignore
                             raise ValueError
                         property_nodes_list:List[CfnTemplateResourcePropertyNode] = []
@@ -522,6 +524,8 @@ class CfnTemplateResourcePropertyNode:
                         definition_map:Mapping[str, Any] = {}
                         if definitions is not None and isinstance(definitions, dict):
                             definition_map = cast(Mapping[str, Mapping[str, Any]], definitions).get(property_name, {"key": None})
+                        if definitions is None:
+                            definition_map = {"key": None}
                         if not isinstance(definition_map, dict): # type: ignore
                             raise ValueError
                         property_nodes_map:Mapping[str, CfnTemplateResourcePropertyNode] = {}
