@@ -8,9 +8,9 @@ from cfn_docgen.config import AppConfig, AppContext, ConnectionSettings, AwsConn
 from cfn_docgen.domain.model.cfn_specification import CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName
 
 
-@pytest.fixture
-def cfn_specification_url():
-    return "https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json"
+# @pytest.fixture
+# def cfn_specification_url():
+#     return "https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json"
 @pytest.fixture
 def custom_resource_specification_url():
     return os.path.join(
@@ -36,13 +36,31 @@ def repository(context:AppContext):
         context=context
     )
 
+@pytest.mark.parametrize("repository_by_region", [
+    (
+        CfnSpecificationRepository(
+            source_url=url,
+            custom_resource_specification_url=None,
+            loader_factory=specification_loader_factory,
+            cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(
+                log_level=logging.DEBUG,
+                connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+            )),
+            recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+            context=AppContext(
+                log_level=logging.DEBUG,
+                connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+            )
+        ) 
+    ) for url in AppConfig.SPECIFICATION_URL_BY_REGION.values()
+])
 def test_CfnSpecificationRepository_get_resource_spec(
-    repository:CfnSpecificationRepository,
+    repository_by_region:CfnSpecificationRepository,
     context:AppContext,
 ):
 
-    for resource_type in repository.spec.ResourceTypes.keys():
-        resource_spec = repository.get_resource_spec(
+    for resource_type in repository_by_region.spec.ResourceTypes.keys():
+        resource_spec = repository_by_region.get_resource_spec(
             CfnSpecificationResourceTypeName(resource_type, context),
         )
         assert resource_spec is not None
@@ -82,13 +100,30 @@ def test_CfnSpecificationRepository_get_property_spec_KeyError(
         repository.get_property_spec(invalid_key)
     assert invalid_key.fullname in ex.value.args 
 
-
+@pytest.mark.parametrize("repository_by_region", [
+    (
+        CfnSpecificationRepository(
+            source_url=url,
+            custom_resource_specification_url=None,
+            loader_factory=specification_loader_factory,
+            cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(
+                log_level=logging.DEBUG,
+                connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+            )),
+            recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+            context=AppContext(
+                log_level=logging.DEBUG,
+                connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+            )
+        )
+    ) for url in AppConfig.SPECIFICATION_URL_BY_REGION.values()
+])
 def test_CfnSpecificationRepository_get_property_spec(
-    repository:CfnSpecificationRepository,
+    repository_by_region:CfnSpecificationRepository,
     context:AppContext,
 ):
-    for property_type in repository.spec.PropertyTypes.keys():
-        property_spec = repository.get_property_spec(CfnSpecificationPropertyTypeName(property_type, context))
+    for property_type in repository_by_region.spec.PropertyTypes.keys():
+        property_spec = repository_by_region.get_property_spec(CfnSpecificationPropertyTypeName(property_type, context))
         assert property_spec is not None
         if property_spec.Documentation is not None:
             assert (

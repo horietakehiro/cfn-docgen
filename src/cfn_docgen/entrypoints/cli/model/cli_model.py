@@ -16,6 +16,7 @@ Subcommand = Literal["docgen", "skelton"]
 @dataclass
 class CliSkeltonArguement:
     subcommand: Subcommand
+    region: str = "us-east-1"
     type: Optional[str] = None
     custom_resource_specification:Optional[str] = None
     format: SkeltonFormat = "yaml"
@@ -25,6 +26,7 @@ class CliSkeltonArguement:
         arg_list = [
             self.subcommand,
             "--format", self.format,
+            "--region", self.region,
         ]
         if self.type is not None:
             arg_list.append("--type")
@@ -44,6 +46,7 @@ class CliDocgenArguement:
     format: SupportedFormat
     source: str
     dest: str
+    region: str = "us-east-1"
     debug: bool = False
 
     def as_list(self) -> List[str]:
@@ -52,6 +55,7 @@ class CliDocgenArguement:
             "--format", self.format,
             "--source", self.source,
             "--dest", self.dest,
+            "--region", self.region,
         ]
         if self.debug:
             arg_list.append("--debug")

@@ -462,7 +462,6 @@ class CfnTemplateResourcePropertyNode:
                         json_path=prop_json_path,
                     )
                     continue
-
             except Exception:
                 context.log_warning(f"failed to build CfnTemplateResourcePropertyLeaf for property [{property_name}]")
                 continue
@@ -582,7 +581,9 @@ class CfnTemplateResourcePropertyNode:
                     context=context,
                 )
                 continue
-
+            except RecursionError as ex:
+                context.log_error(f"failed to build CfnTemplateResourcePropertyNode for recursive property [{property_name}]")
+                raise ex
             except Exception:
                 context.log_warning(f"failed to build CfnTemplateResourcePropertyNode for property [{property_name}]")
                 continue

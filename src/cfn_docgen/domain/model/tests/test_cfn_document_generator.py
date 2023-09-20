@@ -1178,7 +1178,7 @@ def test_CfnMarkdownDocumentGenerator_outputs(
             spec_repository=CfnSpecificationRepository(
                 context=AppContext(log_level=logging.DEBUG),
                 loader_factory=specification_loader_factory,
-                source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+                source_url=url,
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(log_level=logging.DEBUG)),
                 recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
             )
@@ -1244,7 +1244,7 @@ def test_CfnMarkdownDocumentGenerator_outputs(
             "",
             "## Outputs",
         ])
-    )
+    ) for url in AppConfig.SPECIFICATION_URL_BY_REGION.values()
 ])
 def test_CfnMarkdownDocumentGenerator_generate(
     tree:CfnTemplateTree, e_template:str,

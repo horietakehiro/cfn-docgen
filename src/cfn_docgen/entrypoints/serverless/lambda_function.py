@@ -17,6 +17,8 @@ DEST_BUCKET_PREFIX=os.environ["DEST_BUCKET_PREFIX"]
 if DEST_BUCKET_PREFIX.startswith("/"):
     DEST_BUCKET_PREFIX = DEST_BUCKET_PREFIX[1:] # type: ignore
 CUSTOM_RESOURCE_SPECIFICATION_URL=os.environ.get("CUSTOM_RESOURCE_SPECIFICATION_URL", None)
+CFN_SPECIFICATION_REGION=os.environ.get("AWS_REGION", "us-east-1")
+
 
 def lambda_handler(event:Mapping[str, Optional[Any]], context:Any) -> List[str]:
     outputs:List[CfnDocgenServiceCommandOutput] = []
@@ -52,7 +54,9 @@ def lambda_handler(event:Mapping[str, Optional[Any]], context:Any) -> List[str]:
             cfn_document_storage_factory=document_storage_facotory,
             cfn_specification_repository=CfnSpecificationRepository(
                 context=app_context,
-                source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+                source_url=AppConfig.SPECIFICATION_URL_BY_REGION.get(
+                    CFN_SPECIFICATION_REGION, AppConfig.DEFAULT_SPECIFICATION_URL,
+                ),
                 custom_resource_specification_url=CUSTOM_RESOURCE_SPECIFICATION_URL,
                 loader_factory=specification_loader_factory,
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=app_context),

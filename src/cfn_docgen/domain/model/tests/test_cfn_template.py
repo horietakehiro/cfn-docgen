@@ -295,19 +295,25 @@ def spec_repository(context:AppContext):
         recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
     )
 
-def all_resource_types():
-    context = AppContext(log_level=logging.DEBUG)
-    spec_repository = CfnSpecificationRepository(
-        context=context,
-        source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
-        loader_factory=specification_loader_factory,
-        cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
-        recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
-    )
-    return list(spec_repository.spec.ResourceTypes.keys())
-
+@pytest.mark.parametrize("spec_repository_by_region", [
+    (
+        CfnSpecificationRepository(
+            context=AppContext(
+                log_level=logging.DEBUG,
+                connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+            ),
+            source_url=url,
+            loader_factory=specification_loader_factory,
+            cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=AppContext(
+                log_level=logging.DEBUG,
+                connection_settings=ConnectionSettings(aws=AwsConnectionSettings(profile_name=None)),
+            )),
+            recursive_resource_types=AppConfig.RECURSIVE_RESOURCE_TYPES,
+        )
+    ) for url in AppConfig.SPECIFICATION_URL_BY_REGION.values()
+])
 def test_CfnTemplateResourcesNode_aws_ec2_instance(
-    spec_repository:CfnSpecificationRepository,
+    spec_repository_by_region:CfnSpecificationRepository,
     context:AppContext,
 ):
     resource_description = "resource-descirption"
@@ -375,7 +381,7 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(
 
     resources_node = CfnTemplateResourcesNode(
         definitions=definitions,
-        spec_repository=spec_repository,
+        spec_repository=spec_repository_by_region,
         context=context,
         resource_groups={},
     )
@@ -527,43 +533,6 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(
     assert key_name_node.spec.PrimitiveType is not None and key_name_node.spec.PrimitiveType == "String"
     assert key_name_node.definition is None
 
-
-
-# @pytest.mark.skipif(condition=os.environ.get("SKIP_LONG_TEST", False), reason="this test takes long time to run")
-# @pytest.mark.parametrize("resource_type", [
-#     (r) for r in all_resource_types()
-# ])
-# def test_CfnTemplateResourcesNode_all_resource_types(
-#     resource_type:str, spec_repository:CfnSpecificationRepository,
-#     context:AppContext,
-# ):
-#     definitions:Mapping[str, CfnTemplateResourceDefinition] = {
-#         resource_type: CfnTemplateResourceDefinition(
-#             Type=resource_type,
-#             Properties={}
-#         )
-#     }
-
-#     resources_node = CfnTemplateResourcesNode(
-#         definitions=definitions,
-#         spec_repository=spec_repository,
-#         context=context,
-#         resource_groups={},
-#     )
-
-#     resource_node = resources_node.group_nodes[resources_node.group_name_for_independent_resources].resource_nodes.get(resource_type)
-#     assert resource_node is not None
-#     assert resource_node.spec is not None
-#     properties_node = resource_node.properties_node
-#     assert (
-#         len(properties_node.property_leaves) > 0
-#         or len(properties_node.property_nodes) > 0
-#         or len(properties_node.property_nodes_list) > 0
-#         or len(properties_node.property_nodes_map)> 0
-#         # resource types without any properties
-#         or resource_type == "AWS::CloudFormation::WaitConditionHandle"
-#         or resource_type == "AWS::DevOpsGuru::LogAnomalyDetectionIntegration"
-#     )
 
 
 def test_CfnTemplateResourcesNode_avoid_recursion_error(

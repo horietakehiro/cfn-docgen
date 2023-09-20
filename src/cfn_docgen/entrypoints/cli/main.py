@@ -38,6 +38,10 @@ def main():
     help="format of skelton"
 )
 @click.option(
+    "-r", "--region", "region", type=click.Choice(list(AppConfig.SPECIFICATION_URL_BY_REGION.keys())), show_default=True, default="us-east-1",
+    help="aws region for cfn specification file to be referenced at"
+)
+@click.option(
     "--debug", "debug", required=False, is_flag=True, show_default=True, default=False,
     help="enable logging"
 )
@@ -46,6 +50,7 @@ def skelton(
     custom_resource_specification:Optional[str]=None, 
     list_:bool=False, debug:bool=False,
     fmt: SkeltonFormat="yaml",
+    region:str = "us-east-1",
 ):
     context = AppContext(
         log_level=logging.DEBUG if debug else logging.INFO
@@ -66,7 +71,9 @@ def skelton(
         
         service = CfnSkeltonService(
             cfn_specification_repository=CfnSpecificationRepository(
-                source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+                source_url=AppConfig.SPECIFICATION_URL_BY_REGION.get(
+                    region, AppConfig.DEFAULT_SPECIFICATION_URL,
+                ),
                 custom_resource_specification_url=custom_resource_specification,
                 loader_factory=specification_loader_factory,
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),
@@ -113,6 +120,10 @@ def skelton(
     help="local file path or S3 URL for your custom resource specification json file"
 )
 @click.option(
+    "-r", "--region", "region", type=click.Choice(list(AppConfig.SPECIFICATION_URL_BY_REGION.keys())), show_default=True, default="us-east-1",
+    help="aws region for cfn specification file to be referenced at"
+)
+@click.option(
     "--debug", "debug", required=False, is_flag=True, show_default=True, default=False,
     help="enable logging"
 )
@@ -122,6 +133,7 @@ def docgen(
     dest:str, 
     custom_resource_specification:str,
     profile:Optional[str]=None, 
+    region:str = "us-east-1",
     debug:bool=False,
 ):
     context = AppContext(
@@ -157,7 +169,9 @@ def docgen(
             cfn_document_generator_factory=document_generator_factory,
             cfn_document_storage_factory=document_storage_facotory,
             cfn_specification_repository=CfnSpecificationRepository(
-                source_url=AppConfig.DEFAULT_SPECIFICATION_URL,
+                source_url=AppConfig.SPECIFICATION_URL_BY_REGION.get(
+                    region, AppConfig.DEFAULT_SPECIFICATION_URL,
+                ),
                 custom_resource_specification_url=custom_resource_specification,
                 loader_factory=specification_loader_factory,
                 cache=LocalFileCache(AppConfig.CACHE_ROOT_DIR, context=context),

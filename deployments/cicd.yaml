@@ -95,7 +95,7 @@ Resources:
       BadgeEnabled: true
       Description: Run tests and publish cfn-docgen as pypi package, docker image, and esrverless application 
       Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
+        ComputeType: BUILD_GENERAL1_LARGE
         EnvironmentVariables:
           - Name: DOCKERHUB_PASSWORD
             Type: PARAMETER_STORE
