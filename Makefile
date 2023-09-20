@@ -28,7 +28,8 @@ test-bdd: develop build-docker-image synth-cdk docgen-sample
 	behave tests/features/
 
 test-ut: docgen-sample
-	pytest -vv src
+	pytest -vv src --ignore=src/cfn_docgen/domain/model/tests/test_all_resource_types_all_regions.py
+	pytest -v src/cfn_docgen/domain/model/tests/test_all_resource_types_all_regions.py -n 4
 
 deploy-serverless:
 	sam package \

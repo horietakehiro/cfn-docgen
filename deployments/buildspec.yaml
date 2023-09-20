@@ -30,7 +30,8 @@ phases:
       - source .venv/bin/activate && whereis  cfn-docgen
       - source .venv/bin/activate && cfn-docgen --version
       # run unit tests
-      - source .venv/bin/activate && pytest -v --junit-xml UnitTestReports.xml --cov=src --cov-report=xml ./src/
+      - source .venv/bin/activate && pytest -n 4 src/cfn_docgen/domain/model/tests/test_all_resource_types_all_regions.py
+      - source .venv/bin/activate && pytest -v --junit-xml UnitTestReports.xml --cov=src --cov-report=xml --ignore=src/cfn_docgen/domain/model/tests/test_all_resource_types_all_regions.py ./src/
 
       # build docker images for bdd tests
       - source .venv/bin/activate && VERSION=`python -c "from cfn_docgen import __version__; print(__version__)"`
