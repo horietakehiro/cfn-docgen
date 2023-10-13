@@ -1,4 +1,4 @@
-__version__="0.14.0"
+__version__="0.15.0"
 
 from cfn_docgen.domain.model.cfn_document_generator import (
     CfnDocumentDestination as __CfnDocumentDestination
