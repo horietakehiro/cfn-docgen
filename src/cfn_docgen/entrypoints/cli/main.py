@@ -2,6 +2,7 @@ import logging
 import sys
 from typing import Optional
 import click
+import tqdm
 from cfn_docgen.adapters.cfn_document_storage import document_storage_facotory
 from cfn_docgen.adapters.cfn_specification_repository import CfnSpecificationRepository
 from cfn_docgen.adapters.cfn_template_provider import template_provider_factory
@@ -186,7 +187,7 @@ def docgen(
         click.echo(context.log_messages.as_string(logging.INFO))
         sys.exit(1)
 
-    for command_input in units_of_work.provide():
+    for command_input in tqdm.tqdm(units_of_work.provide()):
         try:
             context.log_debug(f"start cfn-docgen process for template source [{command_input.template_source.source}] and document dest [{command_input.document_dest.dest}]")
             result = service.main(command_input=command_input)
