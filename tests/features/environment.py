@@ -154,7 +154,7 @@ class CustomResourceContext:
     custom_resource: str
 
 @dataclass
-class SkeltonContext:
+class SkeletonContext:
     type: str
     stdout: str
 
@@ -274,8 +274,8 @@ def cdk_fixture(
     yield context
 
 @fixture # type: ignore
-def skelton(
-    context:SkeltonContext, 
+def skeleton(
+    context:SkeletonContext, 
     *args, **kwargs # type: ignore
 ):
     context.type = "AWS::EC2::Instance"
@@ -334,8 +334,8 @@ fixture_registry = { # type: ignore
         ],
         {},
     ),
-    "fixture.command_line_tool.skelton.resource_type": (
-        skelton, 
+    "fixture.command_line_tool.skeleton.resource_type": (
+        skeleton, 
         [],
         {},
     ),

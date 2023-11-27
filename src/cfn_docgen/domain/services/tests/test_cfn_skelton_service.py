@@ -11,7 +11,7 @@ from cfn_docgen.adapters.internal.file_loader import specification_loader_factor
 from cfn_docgen.config import AppConfig, AppContext
 from cfn_docgen.domain.model.cfn_specification import CfnSpecificationResourceTypeName
 from cfn_docgen.domain.model.cfn_template import CfnTemplateResourceDefinition
-from cfn_docgen.domain.services.cfn_skelton_service import CfnSkeltonService, CfnSkeltonServiceCommandInput, SkeltonFormat
+from cfn_docgen.domain.services.cfn_skeleton_service import CfnSkeletonService, CfnSkeletonServiceCommandInput, SkeletonFormat
 
 CUSTOM_RESOURCE_SPECIFICATION=os.path.join(
     os.path.dirname(__file__),
@@ -35,22 +35,22 @@ def repository(context:AppContext):
         context=context,
     )
 
-def test_CfnSkeltonService_list_resource_types(
+def test_CfnSkeletonService_list_resource_types(
     repository:CfnSpecificationRepository,
     context:AppContext
 ):
-    service = CfnSkeltonService(
+    service = CfnSkeletonService(
         cfn_specification_repository=repository,
         context=context,
     )
-    command_input = CfnSkeltonServiceCommandInput(
+    command_input = CfnSkeletonServiceCommandInput(
         type=None,
         list=True,
     )
 
     command_output = service.main(command_input)
-    assert "AWS::EC2::Instance" in command_output.skelton
-    assert "Custom::Resource" in command_output.skelton
+    assert "AWS::EC2::Instance" in command_output.skeleton
+    assert "Custom::Resource" in command_output.skeleton
 
 
 @pytest.mark.parametrize("resource_type,fmt", [
@@ -59,16 +59,16 @@ def test_CfnSkeltonService_list_resource_types(
     ("Custom::Resource", "yaml"),
     ("Custom::Resource", "json"),
 ])
-def test_CfnSkeltonService_resource_skelton(
-    resource_type:str,fmt:SkeltonFormat,
+def test_CfnSkeletonService_resource_skeleton(
+    resource_type:str,fmt:SkeletonFormat,
     repository:CfnSpecificationRepository,
     context:AppContext
 ):
-    service = CfnSkeltonService(
+    service = CfnSkeletonService(
         cfn_specification_repository=repository,
         context=context,
     )
-    command_input = CfnSkeltonServiceCommandInput(
+    command_input = CfnSkeletonServiceCommandInput(
         type=CfnSpecificationResourceTypeName(resource_type, context),
         format=fmt,
         list=False,
@@ -77,25 +77,25 @@ def test_CfnSkeltonService_resource_skelton(
     command_output = service.main(command_input)
 
     if fmt == "json":
-        assert command_output.skelton.startswith("{")
-        assert command_output.skelton.endswith("}")
-        CfnTemplateResourceDefinition(**json.loads(command_output.skelton))
+        assert command_output.skeleton.startswith("{")
+        assert command_output.skeleton.endswith("}")
+        CfnTemplateResourceDefinition(**json.loads(command_output.skeleton))
 
     if fmt == "yaml":
         assert f"Type: {resource_type}"
         _ = CfnTemplateResourceDefinition(
-            **json.loads(to_json(command_output.skelton))
+            **json.loads(to_json(command_output.skeleton))
         )
 
-def test_CfnSkeltonService_resource_skelton_error(
+def test_CfnSkeletonService_resource_skeleton_error(
     repository:CfnSpecificationRepository,
     context:AppContext
 ):
-    service = CfnSkeltonService(
+    service = CfnSkeletonService(
         cfn_specification_repository=repository,
         context=context,
     )
-    command_input = CfnSkeltonServiceCommandInput(
+    command_input = CfnSkeletonServiceCommandInput(
         type=CfnSpecificationResourceTypeName("Custom::NotExist", context),
         format="yaml",
         list=False,

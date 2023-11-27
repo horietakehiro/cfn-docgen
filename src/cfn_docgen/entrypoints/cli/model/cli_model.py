@@ -8,18 +8,18 @@ from cfn_docgen.domain.model.cfn_template import CfnTemplateSource
 from cfn_docgen.domain.ports.internal.file_loader import IFileLoader
 
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenServiceCommandInput, SupportedFormat, ext_by_format
-from cfn_docgen.domain.services.cfn_skelton_service import SkeltonFormat
+from cfn_docgen.domain.services.cfn_skeleton_service import SkeletonFormat
 
 
-Subcommand = Literal["docgen", "skelton"]
+Subcommand = Literal["docgen", "skeleton"]
 
 @dataclass
-class CliSkeltonArguement:
+class CliSkeletonArguement:
     subcommand: Subcommand
     region: str = "us-east-1"
     type: Optional[str] = None
     custom_resource_specification:Optional[str] = None
-    format: SkeltonFormat = "yaml"
+    format: SkeletonFormat = "yaml"
     list: bool = False
     debug: bool = False
     def as_list(self) -> List[str]:
