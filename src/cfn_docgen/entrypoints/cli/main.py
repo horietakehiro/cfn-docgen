@@ -12,7 +12,7 @@ from cfn_docgen.config import AppConfig, AppContext, AwsConnectionSettings, Conn
 from cfn_docgen.domain.model.cfn_document_generator import document_generator_factory
 from cfn_docgen.domain.model.cfn_specification import CfnSpecificationResourceTypeName
 from cfn_docgen.domain.services.cfn_docgen_service import CfnDocgenService
-from cfn_docgen.domain.services.cfn_skelton_service import CfnSkeltonService, CfnSkeltonServiceCommandInput, SkeltonFormat
+from cfn_docgen.domain.services.cfn_skeleton_service import CfnSkeletonService, CfnSkeletonServiceCommandInput, SkeletonFormat
 
 from cfn_docgen.entrypoints.cli.model.cli_model import CfnDocgenCLIUnitsOfWork, CliDocgenArguement, SupportedFormat
 
@@ -23,8 +23,8 @@ def main():
 
 @main.command()
 @click.option(
-    "-t", "--type", "skelton_type", required=False, type=str, default=None,
-    help="skelton type to be shown (e.g. AWS::EC2::Instance, or Custom::any)"
+    "-t", "--type", "skeleton_type", required=False, type=str, default=None,
+    help="skeleton type to be shown (e.g. AWS::EC2::Instance, or Custom::any)"
 )
 @click.option(
     "-l", "--list", "list_", required=False, is_flag=True, show_default=True, default=False,
@@ -36,7 +36,7 @@ def main():
 )
 @click.option(
     "-f", "--format", "fmt", type=click.Choice(["yaml", "json"]), show_default=True, default="yaml",
-    help="format of skelton"
+    help="format of skeleton"
 )
 @click.option(
     "-r", "--region", "region", type=click.Choice(list(AppConfig.SPECIFICATION_URL_BY_REGION.keys())), show_default=True, default="us-east-1",
@@ -46,31 +46,31 @@ def main():
     "--debug", "debug", required=False, is_flag=True, show_default=True, default=False,
     help="enable logging"
 )
-def skelton(
-    skelton_type:Optional[str]=None, 
+def skeleton(
+    skeleton_type:Optional[str]=None, 
     custom_resource_specification:Optional[str]=None, 
     list_:bool=False, debug:bool=False,
-    fmt: SkeltonFormat="yaml",
+    fmt: SkeletonFormat="yaml",
     region:str = "us-east-1",
 ):
     context = AppContext(
         log_level=logging.DEBUG if debug else logging.INFO
     )
     try:
-        if skelton_type is not None:
-            command_input = CfnSkeltonServiceCommandInput(
-                type=CfnSpecificationResourceTypeName(skelton_type, context),
+        if skeleton_type is not None:
+            command_input = CfnSkeletonServiceCommandInput(
+                type=CfnSpecificationResourceTypeName(skeleton_type, context),
                 list=list_,
                 format=fmt,
             )
         else:
-            command_input = CfnSkeltonServiceCommandInput(
+            command_input = CfnSkeletonServiceCommandInput(
                 type=None,
                 list=list_,
                 format=fmt,
             )
         
-        service = CfnSkeltonService(
+        service = CfnSkeletonService(
             cfn_specification_repository=CfnSpecificationRepository(
                 source_url=AppConfig.SPECIFICATION_URL_BY_REGION.get(
                     region, AppConfig.DEFAULT_SPECIFICATION_URL,
@@ -84,7 +84,7 @@ def skelton(
             context=context,
         )
         command_output = service.main(command_input)
-        click.echo(command_output.skelton)
+        click.echo(command_output.skeleton)
 
         if not list_:
             context.log_info(
@@ -93,7 +93,7 @@ def skelton(
         sys.exit(0)
 
     except Exception:
-        context.log_error(f"skelton for [{skelton_type}] failed to be shown")
+        context.log_error(f"skeleton for [{skeleton_type}] failed to be shown")
         click.echo(context.log_messages.as_string(level=logging.ERROR))
         sys.exit(1)
 

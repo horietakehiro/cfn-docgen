@@ -51,7 +51,8 @@ def step_impl(context:ServerlessContext):
                     Key=key,
                 )
                 with open(context.master, "rb") as fp:
-                    assert res["Body"].read() == fp.read()
+                    result = res["Body"].read()
+                    assert result == fp.read(), result
                 continue
             break
         except Exception as ex:

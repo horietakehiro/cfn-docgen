@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from cfn_docgen.domain.model.cfn_template import CfnTemplateResourceDefinition
 
 from cfn_docgen.entrypoints.cli.main import main
-from cfn_docgen.entrypoints.cli.model.cli_model import CliDocgenArguement, CliSkeltonArguement
+from cfn_docgen.entrypoints.cli.model.cli_model import CliDocgenArguement, CliSkeletonArguement
 
 INPUT_MASTER_FILE=os.path.join(
     os.path.dirname(__file__),
@@ -235,14 +235,14 @@ def test_cli_continue():
     ("AWS::EC2::Instance", "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html"),
     ("Custom::Resource", "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html"),
 ])
-def test_cli_skelton(
+def test_cli_skeleton(
     resource_type:str, document_url:Optional[str],
     caplog:pytest.LogCaptureFixture
 ):
     caplog.set_level(logging.INFO)
 
-    args = CliSkeltonArguement(
-        subcommand="skelton",
+    args = CliSkeletonArguement(
+        subcommand="skeleton",
         type=resource_type,
         format="json",
         custom_resource_specification=CUSTOM_RESOURCE_SPECIFICATION,
@@ -256,13 +256,13 @@ def test_cli_skelton(
     expected = f"for more information about [{resource_type}], see [{document_url}]"
     assert expected in [r.message for r in caplog.records]
 
-def test_cli_skelton_error(
+def test_cli_skeleton_error(
     caplog:pytest.LogCaptureFixture
 ):
     caplog.set_level(logging.INFO)
 
-    args = CliSkeltonArguement(
-        subcommand="skelton",
+    args = CliSkeletonArguement(
+        subcommand="skeleton",
         type="Custom::NotExist",
         custom_resource_specification=CUSTOM_RESOURCE_SPECIFICATION,
     )
@@ -271,13 +271,13 @@ def test_cli_skelton_error(
     result = runner.invoke(main, args=args.as_list())
     assert result.exit_code == 1
 
-    expected = "skelton for [Custom::NotExist] failed to be shown"
+    expected = "skeleton for [Custom::NotExist] failed to be shown"
     assert expected in [r.message for r in caplog.records]
 
-def test_cli_skelton_list():
+def test_cli_skeleton_list():
 
-    args = CliSkeltonArguement(
-        subcommand="skelton",
+    args = CliSkeletonArguement(
+        subcommand="skeleton",
         list=True,
         custom_resource_specification=CUSTOM_RESOURCE_SPECIFICATION
     )
