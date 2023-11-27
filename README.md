@@ -92,7 +92,7 @@ You can use cfn-docgen as [Visual Studio Code Extension](https://marketplace.vis
 
 ![cfn-docgen-vsc-extension-docgen-sample](https://github.com/horietakehiro/cfn-docgen-vsc-extension/raw/master/images/single-dest-single-source.gif)
 
-![cfn-docgen-vsc-extension-skelton-sample](https://github.com/horietakehiro/cfn-docgen-vsc-extension/raw/master/images/skelton.gif)
+![cfn-docgen-vsc-extension-skeleton-sample](https://github.com/horietakehiro/cfn-docgen-vsc-extension/raw/master/images/skeleton.gif)
 
 ---
 
@@ -285,12 +285,12 @@ $ cfn-docgen docgen \
 
 ---
 
-### Generate skeltons
+### Generate skeletons
 
-You can generate definition skeltons for each resource types.
+You can generate definition skeletons for each resource types.
 
 ```Bash
-$ cfn-docgen skelton --type AWS::EC2::VPC --format yaml
+$ cfn-docgen skeleton --type AWS::EC2::VPC --format yaml
 Type: AWS::EC2::VPC
 Metadata:
   CfnDocgen:
@@ -307,7 +307,7 @@ Properties:
     - Key: String
       Value: String
 
-$ cfn-docgen skelton --type AWS::EC2::VPC --format json
+$ cfn-docgen skeleton --type AWS::EC2::VPC --format json
 {
   "Type": "AWS::EC2::VPC",
   "Metadata": {

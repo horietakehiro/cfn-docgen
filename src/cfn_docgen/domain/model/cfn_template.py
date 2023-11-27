@@ -798,29 +798,29 @@ class CfnTemplateResourceNode:
         except Exception:
             context.log_warning("failed to build CfnTemplateResourcePropertiesNode")
 
-    def __as_skelton(self, property_node:CfnTemplateResourcePropertyNode) -> Mapping[str, Any]:
-        skelton:Mapping[str, Any] = {}
+    def __as_skeleton(self, property_node:CfnTemplateResourcePropertyNode) -> Mapping[str, Any]:
+        skeleton:Mapping[str, Any] = {}
         for name, leaf in property_node.property_leaves.items():
-            skelton[name] = leaf.type_repr()
+            skeleton[name] = leaf.type_repr()
         for name, node in property_node.property_nodes.items():
-            skelton[name] = self.__as_skelton(node)
+            skeleton[name] = self.__as_skeleton(node)
         for name, node in property_node.property_nodes_list.items():
-            skelton[name] = [
-                self.__as_skelton(n) for n in node
+            skeleton[name] = [
+                self.__as_skeleton(n) for n in node
             ]
         for name, node in property_node.property_nodes_map.items():
-            skelton[name] = {
-                key: self.__as_skelton(value) for key, value in node.items()
+            skeleton[name] = {
+                key: self.__as_skeleton(value) for key, value in node.items()
             }
-        keys = sorted(list(skelton.keys()))
-        skelton = {k: skelton[k] for k in keys}
-        return skelton
+        keys = sorted(list(skeleton.keys()))
+        skeleton = {k: skeleton[k] for k in keys}
+        return skeleton
 
 
-    def as_skelton(self) -> Mapping[str, Any]:
-        skelton:Mapping[str, Any] = {}
-        skelton["Type"] = self.type
-        skelton["Metadata"] = {
+    def as_skeleton(self) -> Mapping[str, Any]:
+        skeleton:Mapping[str, Any] = {}
+        skeleton["Type"] = self.type
+        skeleton["Metadata"] = {
             "Documentation": self.spec.Documentation,
             "CfnDocgen": {
                 "Description" : "",
@@ -831,20 +831,20 @@ class CfnTemplateResourceNode:
         for name, leaf in self.properties_node.property_leaves.items():
             properties[name] = leaf.type_repr()
         for name, node in self.properties_node.property_nodes.items():
-            properties[name] = self.__as_skelton(node)
+            properties[name] = self.__as_skeleton(node)
         for name, node in self.properties_node.property_nodes_list.items():
             properties[name] = [
-                self.__as_skelton(n) for n in node
+                self.__as_skeleton(n) for n in node
             ]
         for name, node in self.properties_node.property_nodes_map.items():
             properties[name] = {
-                key: self.__as_skelton(value) for key, value in node.items()
+                key: self.__as_skeleton(value) for key, value in node.items()
             }
         keys = sorted(list(properties.keys()))
         properties = {k: properties[k] for k in keys}
-        skelton["Properties"] = properties
+        skeleton["Properties"] = properties
 
-        return skelton
+        return skeleton
 
 
 

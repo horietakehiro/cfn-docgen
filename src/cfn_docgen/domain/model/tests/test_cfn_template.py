@@ -839,7 +839,7 @@ def test_CfnTemplateResourcesNode_resource_groups(
     assert set(independent_node.resource_nodes.keys()) == set(["independent-resource1", "independent-resource2"])
 
 
-def test_CfnTemplateResourcesNode_as_skelton(
+def test_CfnTemplateResourcesNode_as_skeleton(
     spec_repository:CfnSpecificationRepository,
     context:AppContext,
 ):
@@ -860,9 +860,9 @@ def test_CfnTemplateResourcesNode_as_skelton(
         context=context,
     )
 
-    skelton = resource_node.as_skelton()
+    skeleton = resource_node.as_skeleton()
 
-    definition = CfnTemplateResourceDefinition(**skelton)
+    definition = CfnTemplateResourceDefinition(**skeleton)
 
     assert definition.Type == resource_type.fullname
     assert definition.Metadata is not None and definition.Metadata.CfnDocgen is not None
@@ -888,7 +888,7 @@ def test_CfnTemplateResourcesNode_as_skelton(
 
 
 
-def test_CfnTemplateResourcesNode_as_skelton_complex(
+def test_CfnTemplateResourcesNode_as_skeleton_complex(
     spec_repository:CfnSpecificationRepository,
     context:AppContext,
 ):
@@ -909,9 +909,9 @@ def test_CfnTemplateResourcesNode_as_skelton_complex(
         context=context,
     )
 
-    skelton = resource_node.as_skelton()
+    skeleton = resource_node.as_skeleton()
 
-    definition = CfnTemplateResourceDefinition(**skelton)
+    definition = CfnTemplateResourceDefinition(**skeleton)
 
     assert definition.Type == resource_type.fullname
     assert definition.Metadata is not None and definition.Metadata.CfnDocgen is not None
