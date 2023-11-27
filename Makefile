@@ -13,6 +13,7 @@ build:
 	python setup.py sdist bdist_wheel 
 
 test-bdd: develop build-docker-image synth-cdk docgen-sample
+	rm -fr ~/.cfn-docgen/*
 	source .env
 	sam package \
 		--template-file deployments/serverless.yaml \
@@ -28,6 +29,7 @@ test-bdd: develop build-docker-image synth-cdk docgen-sample
 	behave tests/features/
 
 test-ut: docgen-sample
+	rm -fr ~/.cfn-docgen/*
 	pytest -vv src --ignore=src/cfn_docgen/domain/model/tests/test_all_resource_types_all_regions.py
 	pytest -v src/cfn_docgen/domain/model/tests/test_all_resource_types_all_regions.py -n 4
 

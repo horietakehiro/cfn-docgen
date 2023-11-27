@@ -60,6 +60,7 @@ class AppConfig:
         "AWS::AmplifyUIBuilder::Theme",
         "AWS::Connect::EvaluationForm",
         "AWS::Lex::Bot",
+        "AWS::EMRServerless::Application"
     ]
 
 @dataclass
