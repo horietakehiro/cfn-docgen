@@ -1,0 +1,58 @@
+name: Run Tests
+
+on: [push, pull_request]
+
+jobs:
+  test-bdd:
+    name: Behavior-Driven Development Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements-dev.txt
+        pip install -r requirements.txt
+    - name: Build Docker Image
+      run: |
+        docker build -t cfn-docgen:latest -f ./deployments/Dockerfile .
+    # - uses: actions/setup-node@v4
+    #   with:
+    #     node-version: 20.x
+    # - name: Synth CDK
+    #   run: |
+    #     npx cdk synth -o cdk.out
+    #     cfn-docgen docgen -s cdk.out -d docs/
+
+    - name: Run BDD Tests
+      run: |
+        export PYTHONPATH=./src:$PYTHONPATH
+        behave tests/features/
+      env:
+        TEST_BUCKET_NAME: testsamplebacket
+        SERVERLESS_BUCKET_NAME: testserverlessbacket
+
+  test-ut:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements-dev.txt
+        pip install -r requirements.txt
+    - name: Run Unit Tests
+      run: |
+        pytest -vv src --ignore=src/cfn_docgen/domain/model/tests/test_all_resource_types_all_regions.py
+        pytest -v src/cfn_docgen/domain/model/tests/test_all_resource_types_all_regions.py -n 4
