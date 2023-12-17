@@ -7,7 +7,7 @@ import os
 from jsonpath_ng import parse # type: ignore
 
 from typing import Any, List, Literal, Mapping, Optional, Union, cast
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, Field, PositiveInt, field_validator
 from cfn_docgen.config import AppContext
 from cfn_docgen.domain.model.cfn_specification import CfnSpecificationForResource, CfnSpecificationProperty, CfnSpecificationPropertyTypeName, CfnSpecificationResourceTypeName, CfnSpecificationPropertyType
 
@@ -146,6 +146,12 @@ class CfnTemplateResourceDefinition(BaseModel):
     UpdatePolicy: Optional[Mapping[str, Any]] = None
     UpdateReplacePolicy: Literal["Delete", "Retain", "Snapshot"] = "Delete"
 
+    @field_validator("DependsOn", mode="before")
+    @classmethod
+    def convert_depends(cls, v: List[str] | str | None) -> List[str] | None:
+        if isinstance(v, str):
+            return [v]
+        return v
     
 class CfnTemplateOutputExportDefinition(BaseModel):
     Name: str | Mapping[str, Any]

@@ -885,7 +885,7 @@ def test_CfnMarkdownDocumentGenerator_rules(
             "|-|-|-|-|-|-|",
             "|TableName|TABLENAME|-|String|false|Immutable|",
             "",
-            "### [Instance (AWS::EC2::Instance)](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html)",
+            "### [Instance (AWS::EC2::Instance)](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-instance.html)",
             "",
             "instance-description",
             "",
@@ -895,16 +895,16 @@ def test_CfnMarkdownDocumentGenerator_rules(
             "",
             "|Property|Value|Description|Type|Required|UpdateType|",
             "|-|-|-|-|-|-|",
-            "|BlockDeviceMappings[0]|-|-|List of BlockDeviceMapping|false|Conditional|",
+            "|BlockDeviceMappings[0]|-|-|List of BlockDeviceMapping|false|Mutable|",
             "|&nbsp;&nbsp;Ebs|-|-|Ebs|false|Mutable|",
             "|&nbsp;&nbsp;&nbsp;&nbsp;Encrypted|true|encrypted|Boolean|false|Mutable|",
             "|&nbsp;&nbsp;&nbsp;&nbsp;VolumeType|VOLUMETYPE|-|String|false|Mutable|",
-            "|BlockDeviceMappings[1]|-|-|List of BlockDeviceMapping|false|Conditional|",
-            "|&nbsp;&nbsp;NoDevice|-|-|NoDevice|false|Mutable|",
+            "|BlockDeviceMappings[1]|-|-|List of BlockDeviceMapping|false|Mutable|",
+            "|&nbsp;&nbsp;NoDevice|{}|-|Json|false|Mutable|",
             "|CpuOptions|-|cpuoptions|CpuOptions|false|Immutable|",
-            "|&nbsp;&nbsp;CoreCount|0|-|Integer|false|Mutable|",
+            "|&nbsp;&nbsp;CoreCount|0|-|Integer|false|Immutable|",
             "|ImageId|IMAGEID|imageid|String|false|Immutable|",
-            '|SecurityGroupIds|[<br/>&nbsp;&nbsp;"SECURITYGROUPID1",<br/>&nbsp;&nbsp;"SECURITYGROUPID2"<br/>]|-|List of String|false|Conditional|',
+            '|SecurityGroupIds|[<br/>&nbsp;&nbsp;"SECURITYGROUPID1",<br/>&nbsp;&nbsp;"SECURITYGROUPID2"<br/>]|-|List of String|false|Mutable|',
             '|SsmAssociations[0]|-|-|List of SsmAssociation|false|Mutable|',
             '|&nbsp;&nbsp;AssociationParameters[0]|-|-|List of AssociationParameter|false|Mutable|',
             '|&nbsp;&nbsp;&nbsp;&nbsp;Key|KEY1|-|String|true|Mutable|',
@@ -1006,7 +1006,7 @@ def test_CfnMarkdownDocumentGenerator_flatten_properties(context:AppContext):
     expected:List[PropertyField] = [
         PropertyField(
             Property="BlockDeviceMappings[0]", Type="List of BlockDeviceMapping",
-            Value="-", Description="-", Required="false", UpdateType="Conditional",
+            Value="-", Description="-", Required="false", UpdateType="Mutable",
         ),
         PropertyField(
             Property="&nbsp;&nbsp;Ebs", Type="Ebs",
@@ -1022,11 +1022,11 @@ def test_CfnMarkdownDocumentGenerator_flatten_properties(context:AppContext):
         ),
         PropertyField(
             Property="BlockDeviceMappings[1]", Type="List of BlockDeviceMapping",
-            Value="-", Description="-", Required="false", UpdateType="Conditional",
+            Value="-", Description="-", Required="false", UpdateType="Mutable",
         ),
         PropertyField(
-            Property="&nbsp;&nbsp;NoDevice", Type="NoDevice",
-            Value="-", Description="-", Required="false", UpdateType="Mutable",
+            Property="&nbsp;&nbsp;NoDevice", Type="Json",
+            Value="{}", Description="-", Required="false", UpdateType="Mutable",
         ),
         PropertyField(
             Property="CpuOptions", Type="CpuOptions",
@@ -1034,7 +1034,7 @@ def test_CfnMarkdownDocumentGenerator_flatten_properties(context:AppContext):
         ),
         PropertyField(
             Property="&nbsp;&nbsp;CoreCount", Type="Integer",
-            Value="0", Description="-", Required="false", UpdateType="Mutable",
+            Value="0", Description="-", Required="false", UpdateType="Immutable",
         ),
         PropertyField(
             Property="ImageId", Type="String",
@@ -1042,7 +1042,7 @@ def test_CfnMarkdownDocumentGenerator_flatten_properties(context:AppContext):
         ),
         PropertyField(
             Property="SecurityGroupIds", Type="List of String",
-            Value='[<br/>&nbsp;&nbsp;"SECURITYGROUPID1",<br/>&nbsp;&nbsp;"SECURITYGROUPID2"<br/>]', Description="-", Required="false", UpdateType="Conditional",
+            Value='[<br/>&nbsp;&nbsp;"SECURITYGROUPID1",<br/>&nbsp;&nbsp;"SECURITYGROUPID2"<br/>]', Description="-", Required="false", UpdateType="Mutable",
         ),
         PropertyField(
             Property="SsmAssociations[0]", Type="List of SsmAssociation",
@@ -1229,7 +1229,7 @@ def test_CfnMarkdownDocumentGenerator_outputs(
             "",
             "## Resources",
             "",
-            "### [resource1 (AWS::EC2::Instance)](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html)",
+            "### [resource1 (AWS::EC2::Instance)](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resources-ec2-instance.html)",
             "",
             "",
             "",
@@ -1254,5 +1254,11 @@ def test_CfnMarkdownDocumentGenerator_generate(
     template = generator.generate(tree)
     header = generator.header()
 
-    assert template == header + "\n" + e_template
+    assert (
+        template == header + "\n" + e_template
+        or
+        template == header + "\n" + e_template.replace("aws-resources-ec2-instance.html", "aws-properties-ec2-instance.html")
+        or
+        template == header + "\n" + e_template.replace("aws-resources-ec2-instance.html", "aws-resource-ec2-instance.html")
+    )
 

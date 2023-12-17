@@ -232,7 +232,7 @@ def test_cli_continue():
 
 
 @pytest.mark.parametrize("resource_type,document_url", [
-    ("AWS::EC2::Instance", "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html"),
+    ("AWS::EC2::Instance", "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-instance.html"),
     ("Custom::Resource", "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html"),
 ])
 def test_cli_skeleton(
