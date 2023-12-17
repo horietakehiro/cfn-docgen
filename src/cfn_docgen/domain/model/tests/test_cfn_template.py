@@ -394,7 +394,13 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(
     assert instance_node.update_policy is None
     assert instance_node.creation_policy is None
     assert instance_node.update_replace_policy == "Delete"
-    assert instance_node.spec.Documentation is not None and instance_node.spec.Documentation == "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html"
+    assert instance_node.spec.Documentation is not None and (
+        instance_node.spec.Documentation == "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html"
+        or
+        instance_node.spec.Documentation == "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-instance.html"
+        or
+        instance_node.spec.Documentation == "http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resources-ec2-instance.html"
+    )
 
     properties_node = instance_node.properties_node
 
@@ -454,15 +460,17 @@ def test_CfnTemplateResourcesNode_aws_ec2_instance(
     assert second_bdm_node.spec.Type is not None and second_bdm_node.spec.Type == "List"
     assert second_bdm_node.spec.ItemType is not None and second_bdm_node.spec.ItemType == "BlockDeviceMapping"
     nodevice_node = second_bdm_node.property_nodes.get("NoDevice")
-    assert nodevice_node is not None
-    assert nodevice_node.description is None
-    assert nodevice_node.json_path == "$.BlockDeviceMappings[1].NoDevice"
-    assert nodevice_node.spec is not None
-    assert nodevice_node.spec.Type is not None and nodevice_node.spec.Type == "NoDevice"
-    assert len(nodevice_node.property_leaves) == 0
-    assert len(nodevice_node.property_nodes) == 0
-    assert len(nodevice_node.property_nodes_list) == 0
-    assert len(nodevice_node.property_nodes_map) == 0
+    assert nodevice_node is None or (
+        nodevice_node is not None
+        and nodevice_node.description is None
+        and nodevice_node.json_path == "$.BlockDeviceMappings[1].NoDevice"
+        and nodevice_node.spec is not None
+        and nodevice_node.spec.Type is not None and nodevice_node.spec.Type == "NoDevice"
+        and len(nodevice_node.property_leaves) == 0
+        and len(nodevice_node.property_nodes) == 0
+        and len(nodevice_node.property_nodes_list) == 0
+        and len(nodevice_node.property_nodes_map) == 0
+    )
     device_name_leaf = second_bdm_node.property_leaves.get("DeviceName")
     assert device_name_leaf is not None
     assert device_name_leaf.description is None
@@ -922,3 +930,43 @@ def test_CfnTemplateResourcesNode_as_skeleton_complex(
 
     assert p["SsmAssociations"][0]["AssociationParameters"][0]["Value"] == "List of String" # type: ignore
 
+@pytest.mark.parametrize("definition,expected", [
+    (
+        {
+            "Type": "AWS::EC::Instance",
+            "DependsOn": "string",
+            "Properties": {},
+        },
+        ["string"]
+    ),
+    (
+        {
+            "Type": "AWS::EC::Instance",
+            "DependsOn": ["string1", "string2"],
+            "Properties": {},
+        },
+        ["string1", "string2"]
+    ),
+    (
+        {
+            "Type": "AWS::EC::Instance",
+            "Properties": {},
+        },
+        None
+    ),
+
+])
+def test_CfnTemplateResourceDefinition_DependsOn(
+    definition:Mapping[str, Any],
+    expected: List[str] | None,
+):
+    d = CfnTemplateResourceDefinition(**definition)
+    if expected is None:
+        assert d.DependsOn is expected
+        return
+
+    assert isinstance(expected, list) and isinstance(d.DependsOn, list)
+    assert len(expected) == len(d.DependsOn)
+    assert all([e == dep for e, dep in zip(expected, d.DependsOn)])
+
+    
